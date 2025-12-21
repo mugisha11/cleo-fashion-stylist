@@ -1,0 +1,78 @@
+name: virtual_twin
+description: AI Fashion Try-On App - Virtual Twin MVP
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
+
+  # Firebase
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.3
+  firebase_storage: ^12.3.2
+  cloud_functions: ^5.1.6
+
+  # Supabase (for image/avatar storage)
+  supabase_flutter: ^2.5.6
+  
+  # Authentication Providers
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.3
+
+  # UI & Animations
+  google_fonts: ^6.1.0
+  flutter_animate: ^4.3.0
+  shimmer: ^3.0.0
+  cached_network_image: ^3.3.1
+  flutter_svg: ^2.0.9
+
+  # Image & Media
+  image_picker: ^1.0.7
+  image: ^4.1.3
+  video_player: ^2.8.2
+
+  # Storage & Caching
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.1
+
+  # Networking
+  http: ^1.2.0
+  dio: ^5.4.0
+
+  # 3D Avatar Rendering
+  model_viewer_plus: ^1.5.0
+  
+  # WebView for Ready Player Me
+  webview_flutter: ^4.4.2
+  webview_flutter_web: ^0.2.2+2
+
+  # Utilities
+  intl: ^0.19.0
+  uuid: ^4.2.1
+  equatable: ^2.0.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  build_runner: ^2.4.7
+  riverpod_generator: ^2.3.9
+  hive_generator: ^2.0.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+

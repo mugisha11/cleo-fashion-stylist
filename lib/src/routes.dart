@@ -1,0 +1,132 @@
+import 'package:flutter/material.dart';
+import 'features/auth/screens/signup_screen.dart';
+import 'features/auth/screens/login_screen.dart';
+import 'features/onboarding/screens/onboarding_screen.dart';
+import 'features/home/screens/home_screen.dart';
+import 'features/avatar/screens/avatar_creation_screen.dart';
+import 'features/avatar/screens/avatar_generation_screen.dart';
+import 'features/wardrobe/screens/wardrobe_screen.dart';
+import 'features/wardrobe/screens/add_item_screen.dart';
+import 'features/tryon/screens/luxury_tryon_screen.dart';
+import 'features/recommendations/screens/recommendations_screen.dart';
+import 'features/virtualwearon/screens/virtualwearon_screen.dart';
+import 'features/dashboard/screens/dashboard_screen.dart';
+import 'features/vton/screens/fashion_quiz_screen.dart';
+import 'features/vton/screens/photo_capture_screen.dart';
+import 'features/vton/screens/outfit_source_screen.dart';
+import 'features/vton/screens/tryon_preview_screen.dart';
+import 'features/onboarding/screens/fashion_questionnaire_screen.dart';
+import 'features/calendar/screens/calendar_screen.dart';
+import 'core/widgets/splash_screen.dart';
+
+class Routes {
+  static const String splash = '/';
+  static const String signup = '/signup';
+  static const String login = '/login';
+  static const String onboarding = '/onboarding';
+  static const String home = '/home';
+  static const String avatarCreation = '/avatar-creation';
+  static const String avatarGeneration = '/avatar-generation';
+  static const String wardrobe = '/wardrobe';
+  static const String addItem = '/add-item';
+  static const String tryon = '/tryon';
+  static const String premiumVton = '/premium-vton';
+  static const String mobileVton = '/mobile-vton';
+  static const String recommendations = '/recommendations';
+  static const String virtualwearon = '/virtualwearon';
+  static const String dashboard = '/dashboard';
+  static const String fashionQuiz = '/fashion-quiz';
+  static const String photoCapture = '/photo-capture';
+  static const String outfitSource = '/outfit-source';
+  static const String tryonPreview = '/tryon-preview';
+  static const String fashionQuestionnaire = '/fashion-questionnaire';
+  static const String calendar = '/calendar';
+
+  static Route<dynamic> generateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case splash:
+        return _buildRoute(const SplashScreen(), settings);
+      case signup:
+        return _buildRoute(const SignupScreen(), settings);
+      case login:
+        return _buildRoute(const LoginScreen(), settings);
+      case onboarding:
+        return _buildRoute(const OnboardingScreen(), settings);
+      case home:
+        return _buildRoute(const HomeScreen(), settings);
+      case avatarCreation:
+        return _buildRoute(const AvatarCreationScreen(), settings);
+      case avatarGeneration:
+        return _buildRoute(const AvatarGenerationScreen(), settings);
+      case wardrobe:
+        return _buildRoute(const WardrobeScreen(), settings);
+      case addItem:
+        return _buildRoute(const AddItemScreen(), settings);
+      case tryon:
+        return _buildRoute(const LuxuryTryOnScreen(), settings);
+      case premiumVton:
+        return _buildRoute(const LuxuryTryOnScreen(), settings);
+      case mobileVton:
+        return _buildRoute(const LuxuryTryOnScreen(), settings);
+      case recommendations:
+        return _buildRoute(const RecommendationsScreen(), settings);
+      case virtualwearon:
+        return _buildRoute(const VirtualWearOnScreen(), settings);
+      case dashboard:
+        return _buildRoute(const DashboardScreen(), settings);
+      case fashionQuiz:
+        return _buildRoute(const FashionQuizScreen(), settings);
+      case photoCapture:
+        return _buildRoute(const PhotoCaptureScreen(), settings);
+      case outfitSource:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          OutfitSourceScreen(photoUrl: args?['photoUrl'] ?? ''),
+          settings,
+        );
+      case tryonPreview:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          TryOnPreviewScreen(sessionId: args?['sessionId'] ?? ''),
+          settings,
+        );
+      case fashionQuestionnaire:
+        return _buildRoute(const FashionQuestionnaireScreen(), settings);
+      case calendar:
+        return _buildRoute(const CalendarScreen(), settings);
+      default:
+        return _buildRoute(
+          const Scaffold(
+            body: Center(child: Text('Page not found')),
+          ),
+          settings,
+        );
+    }
+  }
+
+  static PageRoute<dynamic> _buildRoute(Widget page, RouteSettings settings) {
+    return PageRouteBuilder(
+      settings: settings,
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset.zero;
+        const curve = Curves.easeInOut;
+
+        var tween = Tween(begin: begin, end: end).chain(
+          CurveTween(curve: curve),
+        );
+
+        return SlideTransition(
+          position: animation.drive(tween),
+          child: FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+        );
+      },
+      transitionDuration: const Duration(milliseconds: 300),
+    );
+  }
+}
+

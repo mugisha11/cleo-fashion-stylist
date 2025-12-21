@@ -1,0 +1,15 @@
+{
+  "name": "supabase-bucket-setup",
+  "version": "1.0.0",
+  "description": "Script to create Supabase storage buckets",
+  "main": "setup_supabase_bucket.js",
+  "scripts": {
+    "setup-bucket": "node setup_supabase_bucket.js --interactive"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "keywords": ["supabase", "storage", "bucket"],
+  "author": "",
+  "license": "MIT"
+}
