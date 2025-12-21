@@ -1,4 +1,4 @@
-# Virtual Twin – AI Fashion Try-On App
+# Cleo Fashion – AI Fashion Try-On App
 
 A production-ready, cross-platform Flutter application that creates realistic virtual avatars and enables AI-powered virtual try-on experiences for fashion items.
 
