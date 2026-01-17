@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "102834305158",
+    "project_id": "ai-styling-c45cf",
+    "storage_bucket": "ai-styling-c45cf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:102834305158:android:e4285d89148e0b3ac6f907",
+        "android_client_info": {
+          "package_name": "com.aistyling.c45cf"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "102834305158-oh2sl7huahdeg6p1cr7601iaj0on51dj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1oeOV6W8X6V3PMpoJHKszCZMzu_KCvKE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "102834305158-oh2sl7huahdeg6p1cr7601iaj0on51dj.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "102834305158-l23916u6cmgv7ltvp0ked6f3v8b6pgu7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.aistyling.c45cf"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

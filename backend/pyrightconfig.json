@@ -1,0 +1,29 @@
+{
+  "include": [
+    "app",
+    "."
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/node_modules",
+    "**/.venv",
+    "**/venv"
+  ],
+  "reportMissingImports": "warning",
+  "reportMissingTypeStubs": false,
+  "pythonVersion": "3.13",
+  "typeCheckingMode": "basic",
+  "pythonPlatform": "Windows",
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "pythonVersion": "3.13",
+      "pythonPlatform": "Windows",
+      "extraPaths": [
+        "C:\\Users\\PETER\\AppData\\Roaming\\Python\\Python313\\site-packages",
+        "C:\\Python313\\Lib\\site-packages",
+        "C:\\Python313\\Lib"
+      ]
+    }
+  ]
+}
