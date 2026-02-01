@@ -10,26 +10,20 @@ import '../../../core/services/auth_service.dart';
 
 final authStateProvider = StreamProvider<User?>((ref) {
   try {
-    // Check if Firebase is initialized first
+ 
     if (Firebase.apps.isEmpty) {
       debugPrint('⚠️ Firebase not initialized yet - returning null stream');
       return Stream.value(null);
     }
     final auth = FirebaseAuth.instanceFor(app: Firebase.apps.first);
-    // Firebase authStateChanges() is a continuous stream that emits:
-    // - null when user logs out
-    // - User object when user logs in or is already logged in
-    // - Automatically handles token refresh without emitting null
-    // No timeout needed - the stream stays alive as long as the app is running
+    
     return auth.authStateChanges().handleError((error) {
       debugPrint('⚠️ Auth state stream error: $error');
-      // Don't close the stream on error - just log it
-      // The stream will continue to work normally
+     
     });
   } catch (e) {
     debugPrint('⚠️ Auth state initialization error: $e');
-    // On initialization error, return a stream that emits null once
-    // This allows the app to show login screen if Firebase isn't ready
+  
     return Stream.value(null);
   }
 });
