@@ -8,9 +8,7 @@ import '../../../core/widgets/cleo_logo.dart';
 import '../../../core/theme/app_theme_data.dart';
 import '../utils/platform_helper.dart';
 
-/// Premium Fashion Signup Screen
-/// Step-by-step flow: Email → Password → Confirm Password → Name (optional)
-/// Inspired by Dribbble Session, GitHub, and ChatGPT
+
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
