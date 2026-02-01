@@ -8,9 +8,7 @@ import '../../../core/widgets/theme_helpers.dart';
 import '../../../core/widgets/cleo_logo.dart';
 import '../../../core/theme/app_theme_data.dart';
 
-/// Premium Fashion Login Screen
-/// Step-by-step flow: Email → Password
-/// Inspired by Dribbble Session, GitHub, and ChatGPT
+
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
