@@ -1,0 +1,22 @@
+# Minimal deps so the server STARTS on Windows without Visual C++ Build Tools.
+# Install with: pip install -r requirements-minimal.txt
+# For full features (ML, face recognition, etc.) install VC++ Build Tools then: pip install -r requirements.txt
+
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-multipart>=0.0.6
+
+numpy>=1.26.0,<3.0
+opencv-python>=4.8.0
+Pillow>=10.2.0
+
+httpx>=0.28.0,<0.29
+requests>=2.31.0
+
+supabase>=2.0.0
+postgrest>=0.13.0
+
+python-dotenv>=1.0.0
+aiofiles>=23.2.0

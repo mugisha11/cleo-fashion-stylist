@@ -31,7 +31,7 @@ class WeekDateCard extends StatelessWidget {
         duration: FashionDesignSystem.animationMedium,
         curve: Curves.easeOut,
         width: 72,
-        margin: EdgeInsets.only(right: FashionDesignSystem.spacingMD),
+        margin: const EdgeInsets.only(right: FashionDesignSystem.spacingMD),
         decoration: BoxDecoration(
           color: isSelected
               ? FashionDesignSystem.primaryColor.withOpacity(0.1)
@@ -64,7 +64,7 @@ class WeekDateCard extends StatelessWidget {
               ),
             ),
             
-            SizedBox(height: FashionDesignSystem.spacingXS),
+            const SizedBox(height: FashionDesignSystem.spacingXS),
             
             // Date number
             Text(
@@ -77,7 +77,7 @@ class WeekDateCard extends StatelessWidget {
               ),
             ),
             
-            SizedBox(height: FashionDesignSystem.spacingSM),
+            const SizedBox(height: FashionDesignSystem.spacingSM),
             
             // Outfit preview thumbnail or event indicator
             if (hasOutfit && day.outfitImageUrl != null)
@@ -97,7 +97,7 @@ class WeekDateCard extends StatelessWidget {
                     width: 40,
                     height: 40,
                     color: FashionDesignSystem.backgroundLight,
-                    child: Icon(
+                    child: const Icon(
                       Icons.image_outlined,
                       size: 16,
                       color: FashionDesignSystem.textTertiary,
@@ -115,7 +115,7 @@ class WeekDateCard extends StatelessWidget {
                 ),
               )
             else
-              SizedBox(
+              const SizedBox(
                 width: 40,
                 height: 40,
               ),
@@ -123,9 +123,9 @@ class WeekDateCard extends StatelessWidget {
             // AI recommendation badge
             if (day.isRecommended)
               Padding(
-                padding: EdgeInsets.only(top: FashionDesignSystem.spacingXS),
+                padding: const EdgeInsets.only(top: FashionDesignSystem.spacingXS),
                 child: Container(
-                  padding: EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: FashionDesignSystem.spacingXS,
                     vertical: 2,
                   ),

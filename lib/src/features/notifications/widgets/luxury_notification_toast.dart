@@ -1,5 +1,6 @@
 /// Luxury Notification Toast
 /// In-app notification widget with glassmorphic design
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/models/notification_model.dart';

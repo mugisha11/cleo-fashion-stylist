@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/vton_service.dart';
-import '../../../core/models/wardrobe_item_model.dart';
 import '../../wardrobe/providers/wardrobe_provider.dart';
 import 'tryon_preview_screen.dart';
 

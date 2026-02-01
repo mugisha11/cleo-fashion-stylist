@@ -1,9 +1,6 @@
-import 'dart:io' if (dart.library.html) 'dart:html' as html;
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -477,7 +474,7 @@ class EnhancedAiVisionService {
   List<_ColorData> _getDominantColors(img.Image image, int count) {
     final colors = <_ColorData>[];
     final step = math.max(1, math.min(image.width, image.height) ~/ 20);
-    final maxPixels = 5000; // Limit for memory efficiency
+    const maxPixels = 5000; // Limit for memory efficiency
     int pixelCount = 0;
     
     for (int y = 0; y < image.height && pixelCount < maxPixels; y += step) {
@@ -583,7 +580,7 @@ class EnhancedAiVisionService {
 
   bool _hasVerticalLines(img.Image image) {
     int verticalEdges = 0;
-    final step = 5;
+    const step = 5;
     
     for (int y = step; y < image.height - step; y += step) {
       for (int x = step; x < image.width - step; x += step) {
@@ -606,7 +603,7 @@ class EnhancedAiVisionService {
 
   bool _hasHorizontalLines(img.Image image) {
     int horizontalEdges = 0;
-    final step = 5;
+    const step = 5;
     
     for (int y = step; y < image.height - step; y += step) {
       for (int x = step; x < image.width - step; x += step) {
@@ -641,7 +638,7 @@ class EnhancedAiVisionService {
 
   Map<String, dynamic> _analyzeColorDistribution(img.Image image) {
     final colors = <int>[];
-    final step = 10;
+    const step = 10;
     
     for (int y = 0; y < image.height; y += step) {
       for (int x = 0; x < image.width; x += step) {
@@ -663,7 +660,7 @@ class EnhancedAiVisionService {
     double sum = 0;
     double sumSq = 0;
     int count = 0;
-    final step = 10;
+    const step = 10;
     
     for (int y = 0; y < image.height; y += step) {
       for (int x = 0; x < image.width; x += step) {
@@ -708,7 +705,7 @@ class EnhancedAiVisionService {
 
   int _countEdges(img.Image image) {
     int edges = 0;
-    final step = 3;
+    const step = 3;
     
     for (int y = step; y < image.height - step; y += step) {
       for (int x = step; x < image.width - step; x += step) {

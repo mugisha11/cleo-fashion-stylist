@@ -5,8 +5,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/models/wardrobe_item_model.dart';
 import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/theme/app_theme_data.dart';
+import '../../../core/theme/design_tokens.dart';
+import '../../../core/theme/luxury_theme.dart';
 import '../providers/wardrobe_provider.dart';
-import '../../../routes.dart';
 
 /// Wardrobe Item Details Screen
 /// Shows full metadata for a clothing item
@@ -72,6 +73,7 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   @override
   Widget build(BuildContext context) {
     final theme = context.appTheme;
+    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     final item = _loadedItem ?? widget.item;
     final isMobile = MediaQuery.of(context).size.width < 768;
     
@@ -102,36 +104,36 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
                             // Image
                             _buildImageSection(theme, displayImageUrl, isMobile),
                             
-                            SizedBox(height: AppThemeData.spacingLG),
+                            const SizedBox(height: AppThemeData.spacingLG),
                             
                             // Category & Confidence
                             _buildCategorySection(theme, item),
                             
-                            SizedBox(height: AppThemeData.spacingMD),
+                            const SizedBox(height: AppThemeData.spacingMD),
                             
                             // Colors
                             if (item.colorTags.isNotEmpty || item.colorPalette != null)
                               _buildColorsSection(theme, item),
                             
-                            SizedBox(height: AppThemeData.spacingMD),
+                            const SizedBox(height: AppThemeData.spacingMD),
                             
                             // Pattern
                             if (item.pattern != null)
                               _buildPatternSection(theme, item),
                             
-                            SizedBox(height: AppThemeData.spacingMD),
+                            const SizedBox(height: AppThemeData.spacingMD),
                             
                             // Attributes
                             if (item.aiAttributes != null && item.aiAttributes!.isNotEmpty)
                               _buildAttributesSection(theme, item),
                             
-                            SizedBox(height: AppThemeData.spacingMD),
+                            const SizedBox(height: AppThemeData.spacingMD),
                             
                             // Brand & Notes
                             if (item.brand != null || item.notes != null)
                               _buildMetadataSection(theme, item),
                             
-                            SizedBox(height: AppThemeData.spacingMD),
+                            const SizedBox(height: AppThemeData.spacingMD),
                             
                             // Upload Date
                             _buildDateSection(theme, item),
@@ -148,7 +150,7 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
 
   Widget _buildHeader(AppThemeData theme) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.surface,
         border: Border(
@@ -178,14 +180,16 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   }
 
   Widget _buildLoadingState(AppThemeData theme) {
+    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return Center(
       child: CircularProgressIndicator(
-        color: theme.primary,
+        color: accentPink,
       ),
     );
   }
 
   Widget _buildImageSection(AppThemeData theme, String imageUrl, bool isMobile) {
+    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return Container(
       width: double.infinity,
       height: isMobile ? 400 : 500,
@@ -208,7 +212,7 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
             color: theme.surfaceElevated,
             child: Center(
               child: CircularProgressIndicator(
-                color: theme.primary,
+                color: accentPink,
               ),
             ),
           ),
@@ -226,8 +230,9 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   }
 
   Widget _buildCategorySection(AppThemeData theme, WardrobeItemModel item) {
+    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.surface,
         borderRadius: BorderRadius.circular(12),
@@ -239,18 +244,18 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(12),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: theme.primary.withOpacity(0.1),
+              color: accentPink.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               Icons.checkroom,
-              color: theme.primary,
+              color: accentPink,
               size: 24,
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,7 +264,7 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
                   'Category',
                   style: theme.bodySmall(color: theme.textSecondary),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   item.category,
                   style: theme.titleMedium(color: theme.textPrimary).copyWith(
@@ -271,14 +276,14 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
           ),
           if (item.aiConfidence != null)
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: theme.primary.withOpacity(0.1),
+                color: accentPink.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 '${(item.aiConfidence! * 100).toStringAsFixed(0)}%',
-                style: theme.bodySmall(color: theme.primary).copyWith(
+                style: theme.bodySmall(color: accentPink).copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -289,12 +294,13 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   }
 
   Widget _buildColorsSection(AppThemeData theme, WardrobeItemModel item) {
+    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     final colors = item.colorPalette != null
         ? item.colorPalette!.map((c) => c['name'] as String).toList()
         : item.colorTags;
 
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.surface,
         borderRadius: BorderRadius.circular(12),
@@ -308,8 +314,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
         children: [
           Row(
             children: [
-              Icon(Icons.palette, color: theme.primary, size: 20),
-              SizedBox(width: 8),
+              Icon(Icons.palette, color: accentPink, size: 20),
+              const SizedBox(width: 8),
               Text(
                 'Colors',
                 style: theme.bodyMedium(color: theme.textPrimary).copyWith(
@@ -319,7 +325,7 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -331,7 +337,7 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
               final hex = colorData?['hex'] as String? ?? '#000000';
               
               return Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: _hexToColor(hex).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -355,7 +361,7 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
                         ),
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       color,
                       style: theme.bodySmall(color: theme.textPrimary).copyWith(
@@ -373,8 +379,9 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   }
 
   Widget _buildPatternSection(AppThemeData theme, WardrobeItemModel item) {
+    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.surface,
         borderRadius: BorderRadius.circular(12),
@@ -385,8 +392,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
       ),
       child: Row(
         children: [
-          Icon(Icons.texture, color: theme.primary, size: 20),
-          SizedBox(width: 12),
+          Icon(Icons.texture, color: accentPink, size: 20),
+          const SizedBox(width: 12),
           Text(
             'Pattern: ',
             style: theme.bodyMedium(color: theme.textSecondary),
@@ -403,8 +410,9 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   }
 
   Widget _buildAttributesSection(AppThemeData theme, WardrobeItemModel item) {
+    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.surface,
         borderRadius: BorderRadius.circular(12),
@@ -418,8 +426,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
         children: [
           Row(
             children: [
-              Icon(Icons.info_outline, color: theme.primary, size: 20),
-              SizedBox(width: 8),
+              Icon(Icons.info_outline, color: accentPink, size: 20),
+              const SizedBox(width: 8),
               Text(
                 'Attributes',
                 style: theme.bodyMedium(color: theme.textPrimary).copyWith(
@@ -429,10 +437,10 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           ...item.aiAttributes!.entries.map((entry) {
             return Padding(
-              padding: EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
                   Expanded(
@@ -450,15 +458,16 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
   }
 
   Widget _buildMetadataSection(AppThemeData theme, WardrobeItemModel item) {
+    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.surface,
         borderRadius: BorderRadius.circular(12),
@@ -473,8 +482,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
           if (item.brand != null) ...[
             Row(
               children: [
-                Icon(Icons.store, color: theme.primary, size: 20),
-                SizedBox(width: 12),
+                Icon(Icons.store, color: accentPink, size: 20),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     item.brand!,
@@ -485,14 +494,14 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
                 ),
               ],
             ),
-            if (item.notes != null) SizedBox(height: 12),
+            if (item.notes != null) const SizedBox(height: 12),
           ],
           if (item.notes != null)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.note_outlined, color: theme.primary, size: 20),
-                SizedBox(width: 12),
+                Icon(Icons.note_outlined, color: accentPink, size: 20),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     item.notes!,
@@ -507,10 +516,11 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   }
 
   Widget _buildDateSection(AppThemeData theme, WardrobeItemModel item) {
+    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     final dateFormat = '${item.createdAt.day}/${item.createdAt.month}/${item.createdAt.year}';
     
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.surface,
         borderRadius: BorderRadius.circular(12),
@@ -521,8 +531,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
       ),
       child: Row(
         children: [
-          Icon(Icons.calendar_today, color: theme.primary, size: 20),
-          SizedBox(width: 12),
+          Icon(Icons.calendar_today, color: accentPink, size: 20),
+          const SizedBox(width: 12),
           Text(
             'Added: $dateFormat',
             style: theme.bodyMedium(color: theme.textSecondary),

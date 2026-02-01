@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/theme/app_theme_data.dart';
+import '../../../core/theme/design_tokens.dart';
+import '../../../core/theme/luxury_theme.dart';
+import '../../../core/widgets/theme_wrapper.dart';
 
 /// Action tile for settings
 class SettingsActionTile extends StatelessWidget {
@@ -24,6 +26,7 @@ class SettingsActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.appTheme;
+    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
         horizontal: AppThemeData.spacingMD,
@@ -34,7 +37,7 @@ class SettingsActionTile extends StatelessWidget {
               leadingIcon,
               color: isDestructive
                   ? theme.accentError
-                  : theme.primary,
+                  : accentPink,
               size: 24,
             )
           : null,

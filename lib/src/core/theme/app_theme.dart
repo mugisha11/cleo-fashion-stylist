@@ -9,7 +9,7 @@ class AppTheme {
     
     return ThemeData(
       useMaterial3: false,
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         primary: FashionDesignSystem.primaryColor,
         secondary: FashionDesignSystem.accentNude,
         surface: FashionDesignSystem.backgroundWhite,
@@ -18,7 +18,6 @@ class AppTheme {
         onSecondary: Colors.white,
         onSurface: FashionDesignSystem.textCharcoal,
         onError: Colors.white,
-        background: FashionDesignSystem.backgroundIvory,
       ),
       scaffoldBackgroundColor: FashionDesignSystem.backgroundIvory,
       textTheme: textTheme.copyWith(

@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/fashion_design_system.dart';
 import '../../../core/widgets/theme_wrapper.dart';
-import '../../../core/theme/app_theme_data.dart';
 import '../theme/calendar_theme.dart';
 import '../services/calendar_ai_integration.dart';
-import '../providers/calendar_provider.dart';
 
 /// AI Assistant Dialog - Natural language outfit planning
 /// Integrated with calendar system for automatic event creation
@@ -106,7 +103,7 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
           if (mounted) {
             setState(() {
               _messages.add(AIMessage(
-                text: "I had trouble creating the calendar event. Please try again or create it manually.",
+                text: 'I had trouble creating the calendar event. Please try again or create it manually.',
                 isAI: true,
               ));
             });
@@ -136,14 +133,14 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
     }
     
     if (lower.contains('retry') || lower.contains('failed')) {
-      return "I can help you retry that try-on! When would you like to schedule it?";
+      return 'I can help you retry that try-on! When would you like to schedule it?';
     }
     
     if (lower.contains('outfit') && lower.contains('work')) {
       return "For work, I'd suggest something professional yet stylish. Should I show you some options?";
     }
     
-    return "I understand! Let me help you with that. Can you tell me more about the event or occasion?";
+    return 'I understand! Let me help you with that. Can you tell me more about the event or occasion?';
   }
 
   String? _extractEventName(String text) {
@@ -338,7 +335,7 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
                 message.text,
                 style: CalendarTheme.bodyText(
                   color: message.isAI
-                      ? CalendarTheme.deepCharcoal as Color
+                      ? CalendarTheme.deepCharcoal
                       : Colors.white,
                 ),
               ),
@@ -353,7 +350,7 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
                 color: FashionDesignSystem.primaryColor.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.person,
                 color: FashionDesignSystem.primaryColor,
                 size: 18,

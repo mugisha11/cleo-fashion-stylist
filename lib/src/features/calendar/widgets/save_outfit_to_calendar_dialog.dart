@@ -102,7 +102,7 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Outfit saved to calendar'),
+            content: const Text('Outfit saved to calendar'),
             backgroundColor: context.appTheme.accentSuccess,
           ),
         );
@@ -140,7 +140,7 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
           children: [
             // Header
             Container(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
@@ -170,7 +170,7 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
             // Content
             Flexible(
               child: SingleChildScrollView(
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -178,22 +178,22 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
                     if (widget.outfitImageUrl != null || widget.outfitItem != null)
                       _buildOutfitPreview(theme),
 
-                    SizedBox(height: AppThemeData.spacingLG),
+                    const SizedBox(height: AppThemeData.spacingLG),
 
                     // Date Selection
                     _buildDateSelector(theme),
 
-                    SizedBox(height: AppThemeData.spacingMD),
+                    const SizedBox(height: AppThemeData.spacingMD),
 
                     // Time Selection
                     _buildTimeSelector(theme),
 
-                    SizedBox(height: AppThemeData.spacingMD),
+                    const SizedBox(height: AppThemeData.spacingMD),
 
                     // Event Type
                     _buildEventTypeSelector(theme),
 
-                    SizedBox(height: AppThemeData.spacingMD),
+                    const SizedBox(height: AppThemeData.spacingMD),
 
                     // Event Name
                     _buildEventNameInput(theme),
@@ -204,7 +204,7 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
 
             // Actions
             Container(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
@@ -218,24 +218,24 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: Text('Cancel'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: theme.textPrimary,
                         side: BorderSide(color: theme.borderMedium),
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
+                      child: const Text('Cancel'),
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: _saveToCalendar,
-                      child: Text('Save'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.primary,
                         foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
+                      child: const Text('Save'),
                     ),
                   ),
                 ],
@@ -252,7 +252,7 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
         widget.outfitItem?.processedImageUrl ?? 
         widget.outfitItem?.imageUrl;
 
-    if (imageUrl == null) return SizedBox.shrink();
+    if (imageUrl == null) return const SizedBox.shrink();
 
     return Container(
       height: 200,
@@ -288,7 +288,7 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
     return InkWell(
       onTap: _selectDate,
       child: Container(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: theme.surfaceElevated,
           borderRadius: BorderRadius.circular(12),
@@ -300,7 +300,7 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
         child: Row(
           children: [
             Icon(Icons.calendar_today, color: theme.primary, size: 20),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,7 +309,7 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
                     'Date',
                     style: theme.bodySmall(color: theme.textSecondary),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     DateFormat('EEEE, MMMM d, y').format(_selectedDate),
                     style: theme.bodyMedium(color: theme.textPrimary).copyWith(
@@ -330,7 +330,7 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
     return InkWell(
       onTap: _selectTime,
       child: Container(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: theme.surfaceElevated,
           borderRadius: BorderRadius.circular(12),
@@ -342,7 +342,7 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
         child: Row(
           children: [
             Icon(Icons.access_time, color: theme.primary, size: 20),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,7 +351,7 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
                     'Time',
                     style: theme.bodySmall(color: theme.textSecondary),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     _selectedTime.format(context),
                     style: theme.bodyMedium(color: theme.textPrimary).copyWith(
@@ -378,7 +378,7 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
             fontWeight: FontWeight.w500,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -414,7 +414,7 @@ class _SaveOutfitToCalendarDialogState extends ConsumerState<SaveOutfitToCalenda
             fontWeight: FontWeight.w500,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         TextField(
           controller: _eventNameController,
           decoration: InputDecoration(

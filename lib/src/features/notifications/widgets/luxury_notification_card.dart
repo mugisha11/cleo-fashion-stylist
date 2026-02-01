@@ -1,5 +1,6 @@
 /// Luxury Notification Card
 /// Glassmorphic notification card with smooth animations
+library;
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/models/notification_model.dart';

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/theme/app_theme_data.dart';
+import '../../../core/theme/design_tokens.dart';
+import '../../../core/theme/luxury_theme.dart';
+import '../../../core/widgets/theme_wrapper.dart';
 
 /// Toggle tile with description
 class SettingsToggleTile extends StatelessWidget {
@@ -22,13 +24,14 @@ class SettingsToggleTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.appTheme;
+    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(
         horizontal: AppThemeData.spacingMD,
         vertical: AppThemeData.spacingSM,
       ),
       leading: icon != null
-          ? Icon(icon, color: theme.primary, size: 24)
+          ? Icon(icon, color: accentPink, size: 24)
           : null,
       title: Text(
         title,
@@ -46,7 +49,9 @@ class SettingsToggleTile extends StatelessWidget {
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: theme.primary,
+        activeTrackColor: accentPink.withValues(alpha: 0.5),
+        thumbColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected) ? accentPink : null),
       ),
     );
   }

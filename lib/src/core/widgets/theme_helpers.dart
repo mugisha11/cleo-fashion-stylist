@@ -1,5 +1,6 @@
 /// Theme Helper Utilities
 /// Provides theme-aware widgets for dialogs, snackbars, modals, etc.
+library;
 import 'package:flutter/material.dart';
 import 'theme_wrapper.dart';
 import '../theme/app_theme_data.dart';
@@ -307,7 +308,7 @@ class ThemedButton {
             : const Size(0, 48),
       ),
       child: isLoading
-          ? SizedBox(
+          ? const SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(

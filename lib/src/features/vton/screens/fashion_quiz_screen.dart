@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/services/vton_service.dart';
 import '../../../core/models/quiz_model.dart';
 import '../providers/quiz_provider.dart';
-import '../providers/vton_provider.dart';
 
 /// 10-question fashion style preference quiz
 class FashionQuizScreen extends ConsumerStatefulWidget {
@@ -172,7 +170,7 @@ class _QuestionCard extends StatefulWidget {
 }
 
 class _QuestionCardState extends State<_QuestionCard> {
-  bool _imageLoaded = false;
+  final bool _imageLoaded = false;
 
   @override
   Widget build(BuildContext context) {

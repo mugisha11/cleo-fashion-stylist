@@ -26,37 +26,43 @@ class FashionDrawer extends StatelessWidget {
   });
 
   static final List<DrawerItem> items = [
-    DrawerItem(
+    const DrawerItem(
       icon: Icons.home_outlined,
       activeIcon: Icons.home,
       label: 'Dashboard',
       route: Routes.dashboard,
     ),
-    DrawerItem(
+    const DrawerItem(
       icon: Icons.auto_awesome_outlined,
       activeIcon: Icons.auto_awesome,
       label: 'Virtual Try-On',
       route: Routes.tryon,
     ),
-    DrawerItem(
+    const DrawerItem(
       icon: Icons.checkroom_outlined,
       activeIcon: Icons.checkroom,
       label: 'Digital Wardrobe',
       route: Routes.wardrobe,
     ),
-    DrawerItem(
+    const DrawerItem(
       icon: Icons.star_outline,
       activeIcon: Icons.star,
       label: 'AI Recommendations',
       route: Routes.recommendations,
     ),
-    DrawerItem(
+    const DrawerItem(
       icon: Icons.calendar_today_outlined,
       activeIcon: Icons.calendar_today,
       label: 'Calendar',
       route: Routes.calendar,
     ),
-    DrawerItem(
+    const DrawerItem(
+      icon: Icons.grid_view_rounded,
+      activeIcon: Icons.grid_view_rounded,
+      label: 'Style Feed',
+      route: Routes.styleFeed,
+    ),
+    const DrawerItem(
       icon: Icons.settings_outlined,
       activeIcon: Icons.settings,
       label: 'Settings',

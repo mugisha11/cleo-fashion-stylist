@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/fashion_scaffold.dart';
 import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/theme/app_theme_data.dart';
+import '../../../core/theme/design_tokens.dart';
+import '../../../core/theme/luxury_theme.dart';
 import '../../../core/models/tryon_session_model.dart';
 import '../../../core/providers/tryon_memory_provider.dart';
 import '../../../routes.dart';
@@ -17,6 +19,7 @@ class SavedTryOnsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = context.appTheme;
+    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     final savedTryOnsAsync = ref.watch(savedTryOnsProvider);
 
     return FashionScaffold(
@@ -29,20 +32,20 @@ class SavedTryOnsScreen extends ConsumerWidget {
             ? BoxDecoration(gradient: theme.backgroundGradient)
             : BoxDecoration(color: theme.backgroundPrimary),
         child: savedTryOnsAsync.when(
-          loading: () => _buildLoadingState(theme),
+          loading: () => _buildLoadingState(theme, accentPink),
           error: (error, stack) => _buildErrorState(error, theme),
-          data: (tryOns) => _buildTryOnsGrid(context, theme, tryOns),
+          data: (tryOns) => _buildTryOnsGrid(context, theme, accentPink, tryOns),
         ),
       ),
     );
   }
 
-  Widget _buildLoadingState(AppThemeData theme) {
+  Widget _buildLoadingState(AppThemeData theme, Color accentPink) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(color: theme.primary),
+          CircularProgressIndicator(color: accentPink),
           const SizedBox(height: 24),
           Text(
             'Loading saved try-ons...',
@@ -81,6 +84,7 @@ class SavedTryOnsScreen extends ConsumerWidget {
   Widget _buildTryOnsGrid(
     BuildContext context,
     AppThemeData theme,
+    Color accentPink,
     List<TryOnSession> tryOns,
   ) {
     if (tryOns.isEmpty) {
@@ -100,7 +104,7 @@ class SavedTryOnsScreen extends ConsumerWidget {
       ),
       itemCount: tryOns.length,
       itemBuilder: (context, index) {
-        return _buildTryOnCard(context, theme, tryOns[index]);
+        return _buildTryOnCard(context, theme, accentPink, tryOns[index]);
       },
     );
   }
@@ -108,10 +112,11 @@ class SavedTryOnsScreen extends ConsumerWidget {
   Widget _buildTryOnCard(
     BuildContext context,
     AppThemeData theme,
+    Color accentPink,
     TryOnSession session,
   ) {
     return GestureDetector(
-      onTap: () => _showTryOnDetails(context, theme, session),
+      onTap: () => _showTryOnDetails(context, theme, accentPink, session),
       child: Container(
         decoration: BoxDecoration(
           color: theme.surface,
@@ -134,7 +139,8 @@ class SavedTryOnsScreen extends ConsumerWidget {
             // Image
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
                 child: CachedNetworkImage(
                   imageUrl: session.resultImageUrl,
                   fit: BoxFit.cover,
@@ -143,7 +149,7 @@ class SavedTryOnsScreen extends ConsumerWidget {
                     color: theme.surfaceElevated,
                     child: Center(
                       child: CircularProgressIndicator(
-                        color: theme.primary,
+                        color: accentPink,
                         strokeWidth: 2,
                       ),
                     ),
@@ -226,21 +232,23 @@ class SavedTryOnsScreen extends ConsumerWidget {
   void _showTryOnDetails(
     BuildContext context,
     AppThemeData theme,
+    Color accentPink,
     TryOnSession session,
   ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _TryOnDetailSheet(session: session),
+      builder: (context) => _TryOnDetailSheet(session: session, accentPink: accentPink),
     );
   }
 }
 
 class _TryOnDetailSheet extends ConsumerWidget {
   final TryOnSession session;
+  final Color accentPink;
 
-  const _TryOnDetailSheet({required this.session});
+  const _TryOnDetailSheet({required this.session, required this.accentPink});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -301,7 +309,7 @@ class _TryOnDetailSheet extends ConsumerWidget {
               imageUrl: session.resultImageUrl,
               fit: BoxFit.contain,
               placeholder: (context, url) => Center(
-                child: CircularProgressIndicator(color: theme.primary),
+                child: CircularProgressIndicator(color: accentPink),
               ),
               errorWidget: (context, url, error) => Center(
                 child: Icon(Icons.error, color: theme.accentError),
@@ -329,7 +337,7 @@ class _TryOnDetailSheet extends ConsumerWidget {
                       style: theme.bodyMedium(color: theme.surface),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.primary,
+                      backgroundColor: accentPink,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -346,17 +354,17 @@ class _TryOnDetailSheet extends ConsumerWidget {
                         onPressed: () {
                           // TODO: Save to calendar
                         },
-                        icon: Icon(Icons.calendar_today, color: theme.primary),
+                        icon: Icon(Icons.calendar_today, color: accentPink),
                         label: Text(
                           'Save to Calendar',
-                          style: theme.bodyMedium(color: theme.primary),
+                          style: theme.bodyMedium(color: accentPink),
                         ),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          side: BorderSide(color: theme.primary),
+                          side: BorderSide(color: accentPink),
                         ),
                       ),
                     ),
@@ -372,13 +380,14 @@ class _TryOnDetailSheet extends ConsumerWidget {
                             HapticFeedback.mediumImpact();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Try-on deleted'),
+                                content: const Text('Try-on deleted'),
                                 backgroundColor: theme.accentSuccess,
                               ),
                             );
                           }
                         },
-                        icon: Icon(Icons.delete_outline, color: theme.accentError),
+                        icon: Icon(Icons.delete_outline,
+                            color: theme.accentError),
                         label: Text(
                           'Delete',
                           style: theme.bodyMedium(color: theme.accentError),

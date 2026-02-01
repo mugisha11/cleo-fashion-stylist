@@ -5,8 +5,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/chat_model.dart';
 import 'multilingual_nlu_service.dart';
-import 'fashion_ai_chat_service.dart';
-import '../../features/dashboard/providers/ai_providers.dart' show multilingualNLUServiceProvider;
+import '../../features/dashboard/providers/ai_providers.dart'
+    show multilingualNLUServiceProvider;
 
 /// Chat service for AI conversations with persistent storage
 class ChatService {
@@ -17,7 +17,7 @@ class ChatService {
   ChatService(this._supabase, this._auth, [this._nluService]);
 
   String get _userId => _auth.currentUser?.uid ?? '';
-  
+
   // Expose userId for provider access
   String get userId => _userId;
 
@@ -71,7 +71,8 @@ class ChatService {
   }
 
   /// Send user message and get AI response
-  Future<ChatMessage> sendMessage(String conversationId, String userMessage) async {
+  Future<ChatMessage> sendMessage(
+      String conversationId, String userMessage) async {
     try {
       // Process multilingual input
       String processedMessage = userMessage;
@@ -85,7 +86,7 @@ class ChatService {
 
       // Get conversation history
       final history = await getMessages(conversationId);
-      
+
       // Get next sequence number
       final nextSequence = history.length + 1;
 
@@ -108,7 +109,7 @@ class ChatService {
       // Fallback to local FastAPI server if Edge Function not available
       String? aiContent;
       Map<String, dynamic>? metadata;
-      
+
       try {
         // Option 1: Use Supabase Edge Function (recommended - no local server needed)
         try {
@@ -118,13 +119,15 @@ class ChatService {
               'conversation_id': conversationId,
               'user_id': _userId,
               'message': processedMessage,
-              'history': history.map((m) => <String, String>{
-                'role': m.role,
-                'content': m.content,
-              }).toList(),
+              'history': history
+                  .map((m) => <String, String>{
+                        'role': m.role,
+                        'content': m.content,
+                      })
+                  .toList(),
             },
           );
-          
+
           if (edgeFunctionResponse.status == 200) {
             final data = edgeFunctionResponse.data as Map<String, dynamic>;
             aiContent = data['content'] as String?;
@@ -137,25 +140,29 @@ class ChatService {
       } catch (_) {
         // Option 2: Fallback to local FastAPI server
         try {
-          const apiBaseUrl = 'http://localhost:8000';
-          
+          const apiBaseUrl = 'http://localhost:8001';
+
           final requestBody = {
             'conversation_id': conversationId,
             'user_id': _userId,
             'message': processedMessage,
-            'history': history.map((m) => <String, String>{
-              'role': m.role,
-              'content': m.content,
-            }).toList(),
+            'history': history
+                .map((m) => <String, String>{
+                      'role': m.role,
+                      'content': m.content,
+                    })
+                .toList(),
           };
 
-          final response = await http.post(
-            Uri.parse('$apiBaseUrl/chat/completion'),
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode(requestBody),
-          ).timeout(const Duration(seconds: 10));
+          final response = await http
+              .post(
+                Uri.parse('$apiBaseUrl/chat/completion'),
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: jsonEncode(requestBody),
+              )
+              .timeout(const Duration(seconds: 10));
 
           if (response.statusCode != 200) {
             throw Exception('Server returned ${response.statusCode}');
@@ -166,23 +173,22 @@ class ChatService {
           metadata = aiData['metadata'] as Map<String, dynamic>?;
         } catch (e) {
           // Both options failed - provide helpful error
-          if (e.toString().contains('Failed to fetch') || 
+          if (e.toString().contains('Failed to fetch') ||
               e.toString().contains('Connection refused') ||
               e.toString().contains('NetworkException')) {
-            throw Exception(
-              'Chat service unavailable. Please ensure:\n'
-              '1. Supabase Edge Function "chat-completion" is deployed, OR\n'
-              '2. Local FastAPI server is running on port 8000\n\n'
-              'To start local server: cd server/api && python -m uvicorn main:app --reload --port 8000'
-            );
+            throw Exception('Chat service unavailable. Please ensure:\n'
+                '1. Supabase Edge Function "chat-completion" is deployed, OR\n'
+                '2. Local FastAPI server is running on port 8000\n\n'
+                'To start local server: cd server/api && python -m uvicorn main:app --reload --port 8000');
           }
           rethrow;
         }
       }
-      
+
       // If still no response, throw error
       if (aiContent == null || aiContent.isEmpty) {
-        throw Exception('AI service returned empty response. Please try again.');
+        throw Exception(
+            'AI service returned empty response. Please try again.');
       }
 
       // Save AI response
@@ -248,4 +254,3 @@ final chatServiceProvider = Provider<ChatService>((ref) {
     return ChatService(supabase, auth, null);
   }
 });
-

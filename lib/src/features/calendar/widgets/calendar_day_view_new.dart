@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/theme/app_theme_data.dart';
 import '../../../core/models/calendar_day_model.dart';

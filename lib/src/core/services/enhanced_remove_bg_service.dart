@@ -1,4 +1,3 @@
-import 'dart:io' if (dart.library.html) 'dart:html' as html;
 import 'dart:typed_data';
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -204,7 +203,7 @@ class EnhancedRemoveBgService {
   /// Detect edges in image
   List<double> _detectEdges(img.Image image) {
     final edges = List<double>.filled(image.width * image.height, 0.0);
-    final step = 1;
+    const step = 1;
 
     for (int y = step; y < image.height - step; y++) {
       for (int x = step; x < image.width - step; x++) {
@@ -229,7 +228,7 @@ class EnhancedRemoveBgService {
 
   /// Analyze corners to detect background color
   Map<String, dynamic> _analyzeCorners(img.Image image) {
-    final cornerSize = 50;
+    const cornerSize = 50;
     final corners = <String, List<int>>{
       'topLeft': [],
       'topRight': [],
@@ -349,7 +348,7 @@ class EnhancedRemoveBgService {
 
       // Sample pixels to check for transparency
       int transparentPixels = 0;
-      final sampleSize = 100;
+      const sampleSize = 100;
       final step = (image.width * image.height / sampleSize).round().clamp(1, 100);
 
       for (int i = 0; i < image.width * image.height; i += step) {
@@ -358,7 +357,7 @@ class EnhancedRemoveBgService {
         if (y < image.height) {
           final pixel = image.getPixel(x, y);
           // Check alpha channel (if available)
-          if (pixel.a != null && pixel.a! < 255) {
+          if (pixel.a < 255) {
             transparentPixels++;
           }
         }

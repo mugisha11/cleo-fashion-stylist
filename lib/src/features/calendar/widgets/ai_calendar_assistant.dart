@@ -15,8 +15,8 @@ class AICalendarAssistant extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.all(FashionDesignSystem.spacingLG),
-      padding: EdgeInsets.all(FashionDesignSystem.spacingXXL),
+      margin: const EdgeInsets.all(FashionDesignSystem.spacingLG),
+      padding: const EdgeInsets.all(FashionDesignSystem.spacingXXL),
       decoration: BoxDecoration(
         color: FashionDesignSystem.backgroundWhite,
         borderRadius: BorderRadius.circular(FashionDesignSystem.radiusLG),
@@ -35,14 +35,14 @@ class AICalendarAssistant extends StatelessWidget {
               color: FashionDesignSystem.primaryColor.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
+            child: const Icon(
               Icons.auto_awesome,
               size: FashionDesignSystem.iconSize,
               color: FashionDesignSystem.primaryColor,
             ),
           ),
           
-          SizedBox(width: FashionDesignSystem.spacingLG),
+          const SizedBox(width: FashionDesignSystem.spacingLG),
           
           // Message
           Expanded(

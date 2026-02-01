@@ -133,7 +133,7 @@ class QuoraDesignSystem {
   static const Duration animationSlow = Duration(milliseconds: 300);
   
   // Card Styling (Quora-style)
-  static BoxDecoration get cardDecoration => BoxDecoration(
+  static BoxDecoration get cardDecoration => const BoxDecoration(
     color: backgroundWhite,
     border: Border(
       bottom: BorderSide(color: dividerColor, width: 1),

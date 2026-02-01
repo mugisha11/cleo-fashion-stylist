@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../../core/widgets/fashion_scaffold.dart';
+import '../../../core/widgets/dashboard_components.dart';
 import '../../../core/theme/fashion_design_system.dart';
+import '../../../core/theme/design_tokens.dart';
+import '../../../core/theme/luxury_theme.dart';
 import '../../../core/services/recommendations_service.dart';
+import '../../../core/providers/user_image_provider.dart';
 import '../../wardrobe/providers/wardrobe_provider.dart';
+import '../../settings/screens/fashion_preferences_screen.dart';
 import '../providers/recommendations_provider.dart';
 import '../../tryon/providers/tryon_provider.dart';
 import '../../../routes.dart';
+import '../../../core/widgets/theme_wrapper.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class RecommendationsScreen extends ConsumerWidget {
@@ -17,49 +25,191 @@ class RecommendationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final recommendationsAsync = ref.watch(recommendationsProvider);
+    final theme = context.appTheme;
 
-    return FashionScaffold(
-      title: 'AI Recommendations',
-      currentRoute: Routes.recommendations,
+    return Scaffold(
+      appBar: DashboardTopBar(
+        aiStatus: 'AI Recommendations',
+        isAITyping: false,
+        notificationCount: 0,
+        onProfileTap: () {
+          Navigator.of(context).pushNamed(Routes.settings);
+        },
+        onNotificationsTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No new notifications')),
+          );
+        },
+      ),
+      drawer: _buildNavigationDrawer(context),
+      backgroundColor: theme.backgroundPrimary,
       body: Column(
         children: [
           // Refresh button in header area
           Padding(
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: FashionDesignSystem.spacingLG,
               vertical: FashionDesignSystem.spacingMD,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-          IconButton(
-                  icon: Icon(
+                IconButton(
+                  icon: const Icon(
                     Icons.refresh,
                     size: FashionDesignSystem.iconSize,
                     color: FashionDesignSystem.primaryColor,
                   ),
-            onPressed: () {
-              ref.invalidate(recommendationsProvider);
-            },
+                  onPressed: () {
+                    ref.invalidate(recommendationsProvider);
+                  },
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-          ),
-          
+
           // Recommendations content
           Expanded(
             child: recommendationsAsync.when(
-        data: (recommendations) => recommendations.isEmpty
-            ? _buildEmptyState(context)
-            : _buildRecommendationsList(context, recommendations, ref),
-        loading: () => _buildLoadingState(),
-        error: (error, stack) => Center(
-          child: Text('Error loading recommendations: $error'),
-        ),
-      ),
+              data: (recommendations) => recommendations.isEmpty
+                  ? _buildEmptyState(context)
+                  : _buildRecommendationsList(context, recommendations, ref),
+              loading: () => _buildLoadingState(),
+              error: (error, stack) => Center(
+                child: Text('Error loading recommendations: $error'),
+              ),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildNavigationDrawer(BuildContext context) {
+    final isDark = context.isDarkMode;
+    return Drawer(
+      child: Container(
+        color:
+            isDark ? DesignTokens.darkBackground : DesignTokens.lightBackground,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
+                border: Border(
+                  bottom: BorderSide(
+                    color: isDark
+                        ? DesignTokens.darkBorder
+                        : DesignTokens.lightBorder,
+                  ),
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Cleo Fashion',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: isDark
+                              ? DesignTokens.darkAccent
+                              : DesignTokens.lightAccent,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your AI Fashion Assistant',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.home,
+              label: 'Dashboard',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.dashboard);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.checkroom,
+              label: 'Wardrobe',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.wardrobe);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.image_search,
+              label: 'Virtual Try-On',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.tryon);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.lightbulb,
+              label: 'Recommendations',
+              onTap: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.calendar_today,
+              label: 'Calendar & Events',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.calendar);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.grid_view_rounded,
+              label: 'Style Feed',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.styleFeed);
+              },
+            ),
+            const Divider(),
+            _buildNavItem(
+              context: context,
+              icon: Icons.settings,
+              label: 'Settings',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.settings);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final isDark = context.isDarkMode;
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isDark ? DesignTokens.darkAccent : DesignTokens.lightAccent,
+      ),
+      title: Text(label),
+      onTap: onTap,
+      hoverColor: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
     );
   }
 
@@ -142,9 +292,11 @@ class RecommendationsScreen extends ConsumerWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -167,7 +319,8 @@ class RecommendationsScreen extends ConsumerWidget {
               future: ref.read(wardrobeItemsProvider.future),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return const SkeletonLoader(width: double.infinity, height: 120);
+                  return const SkeletonLoader(
+                      width: double.infinity, height: 120);
                 }
                 final items = snapshot.data!;
                 final recommendedItems = items
@@ -237,8 +390,101 @@ class RecommendationsScreen extends ConsumerWidget {
     RecommendedOutfit recommendation,
     WidgetRef ref,
   ) async {
-    // Navigate to try-on screen with pre-selected items
-    Navigator.of(context).pushNamed(Routes.tryon);
+    // Check if user has uploaded photo
+    final userImage = ref.read(userImageProvider);
+    if (userImage.base64Image == null) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Upload Your Photo'),
+          content: const Text(
+            'Upload your full-body photo in Preferences to use Try-On.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Later'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const FashionPreferencesScreen(),
+                  ),
+                );
+              },
+              child: const Text('Go to Preferences'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // Show loading
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Generating try-on preview...')),
+      );
+    }
+
+    try {
+      // Get user image bytes
+      final userImageBytesAsync = ref.read(userImageBytesProvider);
+      Uint8List? userImageBytes;
+
+      await userImageBytesAsync.when(
+        data: (bytes) {
+          userImageBytes = bytes;
+        },
+        loading: () {},
+        error: (error, _) {},
+      );
+
+      if (userImageBytes == null) {
+        throw Exception('Failed to load user image');
+      }
+
+      // Get recommended items
+      final wardrobeAsync = ref.read(wardrobeItemsProvider);
+      final wardrobe = wardrobeAsync.value;
+      if (wardrobe == null) throw Exception('Wardrobe not loaded');
+
+      final selectedItems = wardrobe
+          .where((item) => recommendation.itemIds.contains(item.id))
+          .toList();
+      final imageUrls = selectedItems.map((item) => item.imageUrl).toList();
+
+      if (imageUrls.isEmpty) {
+        throw Exception('No items to try on');
+      }
+
+      // Convert to Base64
+      final base64UserImage = base64Encode(userImageBytes!);
+      final userImageBase64 = 'data:image/jpeg;base64,$base64UserImage';
+
+      // Generate try-on
+      final tryOnService = ref.read(tryOnServiceProvider);
+      final previewUrl = await tryOnService.generateTryOnPreviewFromBase64(
+        userImageBase64: userImageBase64,
+        clothingImageUrls: imageUrls,
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        // Navigate to try-on with result
+        Navigator.of(context).pushNamed(Routes.tryon);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _saveOutfit(
@@ -268,4 +514,3 @@ class RecommendationsScreen extends ConsumerWidget {
     }
   }
 }
-

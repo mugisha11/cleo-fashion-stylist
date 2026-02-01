@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/theme/fashion_design_system.dart';
 import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/theme/app_theme_data.dart';
 import '../../../core/models/calendar_day_model.dart';
-import '../theme/calendar_theme.dart';
 import '../screens/fashion_event_detail_screen.dart';
 import '../../../routes.dart';
 

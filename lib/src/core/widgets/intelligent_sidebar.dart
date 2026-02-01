@@ -1,5 +1,6 @@
 /// Intelligent Sidebar
 /// Tiny, elegant, minimal navigation - "Less UI, more intelligence"
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -220,6 +221,13 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
                         route: Routes.calendar,
                         isActive: widget.currentRoute == Routes.calendar,
                         showBadge: false,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.grid_view_rounded,
+                        activeIcon: Icons.grid_view_rounded,
+                        label: 'Style Feed',
+                        route: Routes.styleFeed,
+                        isActive: widget.currentRoute == Routes.styleFeed,
                       ),
                       _buildNavItem(
                         icon: Icons.notifications_outlined,

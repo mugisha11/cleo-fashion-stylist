@@ -91,7 +91,7 @@ class _CalendarFiltersState extends State<CalendarFilters> {
     final hasActiveFilters = _selectedOccasion != 'All' || _outfitReady != null || _tryOnDone != null;
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: theme.surface,
         border: Border(
@@ -108,14 +108,14 @@ class _CalendarFiltersState extends State<CalendarFilters> {
           Row(
             children: [
               Icon(Icons.filter_list, color: theme.primary, size: 20),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 'Filters',
                 style: theme.bodyMedium(color: theme.textPrimary).copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               if (hasActiveFilters)
                 TextButton(
                   onPressed: _clearFilters,
@@ -127,7 +127,7 @@ class _CalendarFiltersState extends State<CalendarFilters> {
             ],
           ),
           
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           
           // Occasion Filter
           Wrap(
@@ -149,7 +149,7 @@ class _CalendarFiltersState extends State<CalendarFilters> {
             }).toList(),
           ),
           
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           
           // Status Filters
           Row(
@@ -163,7 +163,7 @@ class _CalendarFiltersState extends State<CalendarFilters> {
                   icon: Icons.checkroom,
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Expanded(
                 child: _buildStatusFilter(
                   theme,
@@ -198,7 +198,7 @@ class _CalendarFiltersState extends State<CalendarFilters> {
         }
       },
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: value != null
               ? (value ? theme.accentSuccess.withOpacity(0.1) : theme.surfaceElevated)
@@ -221,7 +221,7 @@ class _CalendarFiltersState extends State<CalendarFilters> {
                   ? theme.accentSuccess
                   : theme.textSecondary,
             ),
-            SizedBox(width: 6),
+            const SizedBox(width: 6),
             Expanded(
               child: Text(
                 label,

@@ -31,6 +31,16 @@ class ConfigService {
     }
   }
   
+  /// Clear OpenAI API Key
+  static Future<void> clearOpenAIApiKey() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_openaiApiKeyKey);
+    } catch (e) {
+      // Silently fail
+    }
+  }
+
   /// Set OpenAI API Key securely
   static Future<void> setOpenAIApiKey(String apiKey) async {
     try {

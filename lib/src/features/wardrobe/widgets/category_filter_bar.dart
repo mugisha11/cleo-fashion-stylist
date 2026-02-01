@@ -27,10 +27,10 @@ class CategoryFilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 56,
-      padding: EdgeInsets.symmetric(vertical: FashionDesignSystem.spacingMD),
+      padding: const EdgeInsets.symmetric(vertical: FashionDesignSystem.spacingMD),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: FashionDesignSystem.spacingLG),
+        padding: const EdgeInsets.symmetric(horizontal: FashionDesignSystem.spacingLG),
         itemCount: categories.length,
         itemBuilder: (context, index) {
           final category = categories[index];

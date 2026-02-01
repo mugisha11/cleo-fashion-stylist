@@ -337,18 +337,18 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
           // Title
           _buildTitle(theme, isMobile),
           
-          SizedBox(height: AppThemeData.spacingXL),
+          const SizedBox(height: AppThemeData.spacingXL),
           
           // Step indicator
           _buildStepIndicator(theme),
           
-          SizedBox(height: AppThemeData.spacingXL),
+          const SizedBox(height: AppThemeData.spacingXL),
           
           // Error message
           if (_errorMessage != null) 
             _buildErrorMessage(theme),
           
-          if (_errorMessage != null) SizedBox(height: AppThemeData.spacingLG),
+          if (_errorMessage != null) const SizedBox(height: AppThemeData.spacingLG),
           
           // Step content
           AnimatedSwitcher(
@@ -373,12 +373,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
             child: _buildCurrentStep(theme, isMobile),
           ),
           
-          SizedBox(height: AppThemeData.spacingXL),
+          const SizedBox(height: AppThemeData.spacingXL),
           
           // Social auth (only on email step)
           if (_currentStep == 0) _buildSocialAuth(theme),
           
-          if (_currentStep == 0) SizedBox(height: AppThemeData.spacingLG),
+          if (_currentStep == 0) const SizedBox(height: AppThemeData.spacingLG),
           
           // Footer
           _buildFooter(theme),

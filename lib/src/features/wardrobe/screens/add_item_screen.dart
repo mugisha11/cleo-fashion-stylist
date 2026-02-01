@@ -7,9 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/widgets/platform_image.dart';
 import '../../../core/widgets/fashion_scaffold.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/fashion_design_system.dart';
 import '../providers/wardrobe_provider.dart';
-import '../../../routes.dart';
 
 class AddItemScreen extends ConsumerStatefulWidget {
   const AddItemScreen({super.key});
@@ -27,7 +27,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
   
   io.File? _selectedImage;
   Uint8List? _selectedImageBytes; // For web compatibility
-  List<String> _selectedColors = [];
+  final List<String> _selectedColors = [];
   bool _isUploading = false;
 
   final List<String> _categories = [
@@ -164,11 +164,14 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final accent = Theme.of(context).brightness == Brightness.dark
+        ? DesignTokens.darkAccent
+        : DesignTokens.lightAccent;
     return FashionScaffold(
       title: 'Add Item',
       showBottomNav: false,
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(FashionDesignSystem.spacingLG),
+        padding: const EdgeInsets.all(FashionDesignSystem.spacingLG),
         child: Form(
           key: _formKey,
           child: Column(
@@ -202,9 +205,9 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                             Icon(
                               Icons.add_photo_alternate_outlined,
                               size: 64,
-                              color: FashionDesignSystem.primaryColor,
+                              color: accent,
                             ),
-                            SizedBox(height: FashionDesignSystem.spacingMD),
+                            const SizedBox(height: FashionDesignSystem.spacingMD),
                             Text(
                               'Tap to select image',
                               style: FashionDesignSystem.titleMedium(),
@@ -213,10 +216,10 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                         ),
                 ),
               ),
-              SizedBox(height: FashionDesignSystem.spacingXXL),
+              const SizedBox(height: FashionDesignSystem.spacingXXL),
               // Category (Optional - AI will auto-detect if not provided)
               DropdownButtonFormField<String>(
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Category (Optional - AI will auto-detect)',
                   helperText: 'Leave empty for automatic detection',
                   prefixIcon: Icon(
@@ -234,17 +237,17 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                     value: category,
                     child: Text(category),
                   );
-                }).toList(),
+                }),
                 ],
                 onChanged: (value) {
                   _categoryController.text = value ?? '';
                 },
               ),
-              SizedBox(height: FashionDesignSystem.spacingLG),
+              const SizedBox(height: FashionDesignSystem.spacingLG),
               // Brand (optional)
               TextFormField(
                 controller: _brandController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Brand (Optional)',
                   prefixIcon: Icon(
                     Icons.store_outlined,
@@ -252,7 +255,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: FashionDesignSystem.spacingLG),
+              const SizedBox(height: FashionDesignSystem.spacingLG),
               // Colors (Optional - AI will auto-detect if not provided)
               Row(
                 children: [
@@ -261,7 +264,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                     style: FashionDesignSystem.titleMedium(),
                   ),
                   const SizedBox(width: 8),
-                  Tooltip(
+                  const Tooltip(
                     message: 'AI will automatically detect colors if none selected',
                     child: Icon(
                       Icons.info_outline,
@@ -278,7 +281,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                   fontStyle: FontStyle.italic,
                 ),
               ),
-              SizedBox(height: FashionDesignSystem.spacingMD),
+              const SizedBox(height: FashionDesignSystem.spacingMD),
               Wrap(
                 spacing: FashionDesignSystem.spacingSM,
                 runSpacing: FashionDesignSystem.spacingSM,
@@ -287,8 +290,8 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                   return FilterChip(
                     label: Text(color),
                     selected: isSelected,
-                    selectedColor: FashionDesignSystem.primaryColor.withOpacity(0.2),
-                    checkmarkColor: FashionDesignSystem.primaryColor,
+                    selectedColor: accent.withOpacity(0.2),
+                    checkmarkColor: accent,
                     onSelected: (selected) {
                       setState(() {
                         if (selected) {
@@ -301,11 +304,11 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                   );
                 }).toList(),
               ),
-              SizedBox(height: FashionDesignSystem.spacingLG),
+              const SizedBox(height: FashionDesignSystem.spacingLG),
               // Notes (optional)
               TextFormField(
                 controller: _notesController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Notes (Optional)',
                   prefixIcon: Icon(
                     Icons.note_outlined,
@@ -314,14 +317,14 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                 ),
                 maxLines: 3,
               ),
-              SizedBox(height: FashionDesignSystem.spacingXXXL),
+              const SizedBox(height: FashionDesignSystem.spacingXXXL),
               // Upload button
               ElevatedButton(
                 onPressed: _isUploading ? null : _uploadItem,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: FashionDesignSystem.primaryColor,
+                  backgroundColor: accent,
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     vertical: FashionDesignSystem.spacingMD,
                   ),
                   shape: RoundedRectangleBorder(
@@ -329,7 +332,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                   ),
                 ),
                 child: _isUploading
-                    ? SizedBox(
+                    ? const SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(

@@ -1,5 +1,7 @@
 /// Multilingual Natural Language Understanding Service
 /// Handles multilingual user input and AI responses
+library;
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
@@ -8,7 +10,7 @@ import 'dart:convert';
 class MultilingualNLUService {
   final SupabaseClient _supabase;
   final FirebaseAuth _auth;
-  static const String _backendUrl = 'http://localhost:8000';
+  static const String _backendUrl = 'http://localhost:8001';
 
   MultilingualNLUService(this._supabase, this._auth);
 
@@ -17,11 +19,13 @@ class MultilingualNLUService {
   /// Detect language from user input
   Future<String> detectLanguage(String text) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_backendUrl/nlu/detect-language'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'text': text}),
-      ).timeout(const Duration(seconds: 5));
+      final response = await http
+          .post(
+            Uri.parse('$_backendUrl/nlu/detect-language'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'text': text}),
+          )
+          .timeout(const Duration(seconds: 5));
 
       if (response.statusCode != 200) {
         return 'en'; // Default to English
@@ -39,15 +43,17 @@ class MultilingualNLUService {
     try {
       final language = await detectLanguage(userQuery);
 
-      final response = await http.post(
-        Uri.parse('$_backendUrl/nlu/process-query'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'query': userQuery,
-          'language': language,
-          'user_id': _userId,
-        }),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse('$_backendUrl/nlu/process-query'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'query': userQuery,
+              'language': language,
+              'user_id': _userId,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw Exception('NLU processing failed: ${response.body}');
@@ -64,14 +70,16 @@ class MultilingualNLUService {
   /// Translate text to target language
   Future<String> translate(String text, String targetLanguage) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_backendUrl/nlu/translate'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'text': text,
-          'target_language': targetLanguage,
-        }),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse('$_backendUrl/nlu/translate'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'text': text,
+              'target_language': targetLanguage,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) {
         return text; // Return original on failure

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/fashion_design_system.dart';
 import 'theme_wrapper.dart';
 import 'fashion_header.dart';
 import 'fashion_drawer.dart';
@@ -109,6 +108,8 @@ class _FashionScaffoldState extends State<FashionScaffold> {
         Navigator.of(context).pushReplacementNamed(Routes.recommendations);
       } else if (route == Routes.calendar) {
         Navigator.of(context).pushReplacementNamed(Routes.calendar);
+      } else if (route == Routes.styleFeed) {
+        Navigator.of(context).pushReplacementNamed(Routes.styleFeed);
       } else if (route == Routes.settings || route == '/profile') {
         Navigator.of(context).pushNamed(Routes.settings);
       } else {
@@ -128,6 +129,9 @@ class _FashionScaffoldState extends State<FashionScaffold> {
             break;
           case '/calendar':
             Navigator.of(context).pushReplacementNamed(Routes.calendar);
+            break;
+          case '/style-feed':
+            Navigator.of(context).pushReplacementNamed(Routes.styleFeed);
             break;
           case '/settings':
             Navigator.of(context).pushNamed(Routes.settings);

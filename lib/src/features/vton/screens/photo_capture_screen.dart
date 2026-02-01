@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/services/vton_service.dart';
 import '../../../core/services/mediapipe_service.dart';
-import '../providers/vton_provider.dart';
 import 'outfit_source_screen.dart';
 
 /// Photo capture screen with quality checks

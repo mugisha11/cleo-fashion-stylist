@@ -176,8 +176,7 @@ class _VirtualWearOnScreenState extends ConsumerState<VirtualWearOnScreen>
   }
 
   Future<void> _generateAvatar() async {
-    if (_measurements == null) {
-      _measurements = BodyMeasurements(
+    _measurements ??= BodyMeasurements(
         height: double.tryParse(_heightController.text) ?? 170.0,
         weight: double.tryParse(_weightController.text) ?? 70.0,
         bodyType: _selectedBodyType,
@@ -185,7 +184,6 @@ class _VirtualWearOnScreenState extends ConsumerState<VirtualWearOnScreen>
         stylePreference: _selectedStyle,
         age: int.tryParse(_ageController.text) ?? 25,
       );
-    }
 
     await ref.read(virtualWearOnProvider.notifier).generateAvatar(
       selfieFile: kIsWeb ? _selectedSelfieBytes : _selectedSelfie,
@@ -421,7 +419,7 @@ class _VirtualWearOnScreenState extends ConsumerState<VirtualWearOnScreen>
                               right: 8,
                               child: Container(
                                 padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   color: Colors.black54,
                                   shape: BoxShape.circle,
                                 ),
@@ -1089,7 +1087,7 @@ class _VirtualWearOnScreenState extends ConsumerState<VirtualWearOnScreen>
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,
-                placeholder: (context, url) => SkeletonLoader(
+                placeholder: (context, url) => const SkeletonLoader(
                   width: 120,
                   height: 120,
                 ),

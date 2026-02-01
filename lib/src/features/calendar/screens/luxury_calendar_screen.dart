@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import '../../../core/theme/fashion_design_system.dart';
 import '../../../core/widgets/fashion_scaffold.dart';
 import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/theme/app_theme_data.dart';
@@ -18,7 +16,6 @@ import '../widgets/ai_assistant_button.dart';
 import '../widgets/ai_assistant_dialog.dart';
 import '../widgets/calendar_filters.dart';
 import '../widgets/schedule_suggestions_card.dart';
-import '../screens/fashion_event_detail_screen.dart';
 import '../../../routes.dart';
 
 /// Luxury AI Calendar Screen - Stunning, emotion-driven, intelligent

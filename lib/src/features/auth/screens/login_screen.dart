@@ -263,18 +263,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           // Title
           _buildTitle(theme, isMobile),
           
-          SizedBox(height: AppThemeData.spacingXL),
+          const SizedBox(height: AppThemeData.spacingXL),
           
           // Step indicator (subtle)
           if (_currentStep > 0) _buildStepIndicator(theme),
           
-          if (_currentStep > 0) SizedBox(height: AppThemeData.spacingXL),
+          if (_currentStep > 0) const SizedBox(height: AppThemeData.spacingXL),
           
           // Error message
           if (_errorMessage != null) 
             _buildErrorMessage(theme),
           
-          if (_errorMessage != null) SizedBox(height: AppThemeData.spacingLG),
+          if (_errorMessage != null) const SizedBox(height: AppThemeData.spacingLG),
           
           // Step content
           AnimatedSwitcher(
@@ -301,12 +301,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 : _buildPasswordStep(theme, isMobile),
           ),
           
-          SizedBox(height: AppThemeData.spacingXL),
+          const SizedBox(height: AppThemeData.spacingXL),
           
           // Social auth (only on email step)
           if (_currentStep == 0) _buildSocialAuth(theme),
           
-          if (_currentStep == 0) SizedBox(height: AppThemeData.spacingLG),
+          if (_currentStep == 0) const SizedBox(height: AppThemeData.spacingLG),
           
           // Footer
           _buildFooter(theme),

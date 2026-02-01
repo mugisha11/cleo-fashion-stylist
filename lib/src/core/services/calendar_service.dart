@@ -60,7 +60,7 @@ class CalendarService {
           .maybeSingle();
 
       if (response == null) return null;
-      return CalendarDay.fromJson(response as Map<String, dynamic>);
+      return CalendarDay.fromJson(response);
     } catch (e) {
       return null;
     }
@@ -189,7 +189,7 @@ class CalendarService {
           .eq('date', dateStr)
           .maybeSingle();
       
-      final existing = existingResponse as Map<String, dynamic>?;
+      final existing = existingResponse;
 
       final calendarDayData = {
         'user_id': _userId,

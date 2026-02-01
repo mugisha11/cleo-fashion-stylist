@@ -44,18 +44,27 @@ stage5_generation = Stage5ImageGeneration(use_pro_model=settings.GEMINI_USE_PRO_
 
 class TryOnRequest(BaseModel):
     """Request for virtual try-on"""
-    user_image_url: str = Field(..., description="URL of user photo")
+    user_image_url: str = Field(None, description="URL of user photo")
     garment_image_urls: List[str] = Field(..., description="List of clothing image URLs")
+
+
+class TryOnBase64Request(BaseModel):
+    """Request for virtual try-on with Base64 encoded user image"""
+    user_image_base64: str = Field(..., description="User image as Base64 data URI or raw Base64")
+    garment_images: List[str] = Field(..., description="List of clothing image URLs")
+    source: str = Field(default="app", description="Source of request (app or recommendation)")
 
 
 class TryOnResponse(BaseModel):
     """Response from virtual try-on API"""
     status: str = Field(..., description="success or failed")
     result_image_url: Optional[str] = Field(None, description="CDN URL of result image")
+    result_image_base64: Optional[str] = Field(None, description="Result image as Base64")
     message: Optional[str] = Field(None, description="Error message if failed")
     code: Optional[str] = Field(None, description="Error code if failed")
 
 
+# EXACT instruction prompt template (MUST NOT be altered)
 # EXACT instruction prompt template (MUST NOT be altered)
 TRY_ON_INSTRUCTION = """Redraw the person in the first image wearing the clothing from the following images.
 Preserve the exact same face, hairstyle, facial features, skin tone, body shape, pose, camera angle, lighting, and background.
@@ -65,6 +74,45 @@ Do NOT modify the face, head, hands, body proportions, or posture.
 Fit the clothing naturally to the body according to real human anatomy.
 Maintain realistic fabric drape, shadows, and lighting.
 This is a photorealistic virtual try-on, not an illustration or art."""
+
+
+def decode_base64_image(base64_string: str) -> np.ndarray:
+    """
+    Decode Base64 image string to numpy array.
+    Handles both data URI format and raw Base64.
+    
+    Args:
+        base64_string: Base64 string with or without data URI prefix
+        
+    Returns:
+        np.ndarray: Decoded image
+        
+    Raises:
+        ImageProcessingError: If decoding fails
+    """
+    try:
+        # Remove data URI prefix if present
+        if ',' in base64_string:
+            base64_string = base64_string.split(',')[1]
+        
+        # Decode Base64
+        image_bytes = base64.b64decode(base64_string)
+        image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)
+        
+        if image is None:
+            raise ImageProcessingError(
+                code=ErrorCode.IMAGE_DECODE_FAILED,
+                message="Failed to decode Base64 image",
+                details="Invalid Base64 format or corrupted image data"
+            )
+        
+        return image
+    except Exception as e:
+        raise ImageProcessingError(
+            code=ErrorCode.IMAGE_DECODE_FAILED,
+            message=f"Base64 decoding failed: {str(e)}",
+            details=str(e)
+        )
 
 
 async def download_image(url: str, trace_id: str) -> np.ndarray:
@@ -123,9 +171,128 @@ async def tryon_health():
 
 
 @router.post("", response_model=TryOnResponse)
+async def tryon_base64(request: TryOnBase64Request):
+    """
+    Virtual Try-On Endpoint with Base64 User Image
+    
+    Accepts Base64 encoded user image and generates try-on using Gemini.
+    This is the primary endpoint for mobile/web apps.
+    
+    Request:
+    {
+        "user_image_base64": "data:image/jpeg;base64,..." or raw base64,
+        "garment_images": ["https://...", "..."],
+        "source": "app" or "recommendation"
+    }
+    
+    Returns:
+    {
+        "status": "success",
+        "result_image_base64": "data:image/jpeg;base64,..."
+    }
+    """
+    trace_id = str(uuid.uuid4())
+    
+    try:
+        # Validate Base64 image
+        if not request.user_image_base64:
+            raise ValidationError(
+                code=ErrorCode.VALIDATION_MISSING_FIELD,
+                message="user_image_base64 is required",
+                details="Provide image as Base64 with or without data URI prefix"
+            )
+        
+        # Validate garment images
+        if not request.garment_images or len(request.garment_images) == 0:
+            raise ValidationError(
+                code=ErrorCode.VALIDATION_MISSING_FIELD,
+                message="At least one garment image URL required",
+                details="garment_images list cannot be empty"
+            )
+        
+        logger.info(
+            f"[{trace_id}] Processing Base64 try-on request from {request.source}: "
+            f"{len(request.garment_images)} garment(s)"
+        )
+        
+        # Decode user image from Base64
+        logger.info(f"[{trace_id}] Decoding Base64 user image")
+        user_image = decode_base64_image(request.user_image_base64)
+        logger.info(f"[{trace_id}] User image decoded: {user_image.shape}")
+        
+        # Download first garment image
+        garment_url = request.garment_images[0]
+        logger.info(f"[{trace_id}] Downloading garment image from: {garment_url}")
+        garment_image = await download_image(garment_url, trace_id)
+        logger.info(f"[{trace_id}] Garment image downloaded: {garment_image.shape}")
+        
+        # Generate try-on image using DIRECT Gemini API
+        try:
+            generated_image = await stage5_generation.execute(
+                user_image=user_image,
+                garment_image=garment_image,
+                prompt=TRY_ON_INSTRUCTION,
+                garment_type="garment",
+                aspect_ratio=None
+            )
+            
+            # Convert to Base64
+            _, buffer = cv2.imencode('.jpg', generated_image)
+            image_bytes = buffer.tobytes()
+            image_b64 = base64.b64encode(image_bytes).decode('utf-8')
+            result_image_base64 = f"data:image/jpeg;base64,{image_b64}"
+            
+            logger.info(f"[{trace_id}] Try-on generated successfully using {stage5_generation.model_name}")
+            
+            return TryOnResponse(
+                status="success",
+                result_image_base64=result_image_base64,
+            )
+            
+        except (APIError, GenerationError) as e:
+            logger.error(f"[{trace_id}] Generation error: {e}")
+            return TryOnResponse(
+                status="failed",
+                message=e.message,
+                code=e.code.value
+            )
+        except httpx.HTTPStatusError as e:
+            error_msg = f"API error HTTP {e.response.status_code}"
+            logger.error(f"[{trace_id}] {error_msg}")
+            return TryOnResponse(
+                status="failed",
+                message=error_msg,
+                code="API_ERROR"
+            )
+        except Exception as e:
+            error_msg = f"Generation error: {str(e)}"
+            logger.error(f"[{trace_id}] {error_msg}")
+            return TryOnResponse(
+                status="failed",
+                message=error_msg,
+                code="GENERATION_ERROR"
+            )
+            
+    except ValidationError as e:
+        logger.error(f"[{trace_id}] Validation error: {e}")
+        return TryOnResponse(
+            status="failed",
+            message=e.message,
+            code=e.code.value
+        )
+    except Exception as e:
+        logger.error(f"[{trace_id}] Unexpected error: {e}")
+        return TryOnResponse(
+            status="failed",
+            message="Internal server error",
+            code="SERVER_ERROR"
+        )
+
+
+@router.post("/legacy", response_model=TryOnResponse)
 async def tryon(request: TryOnRequest):
     """
-    Simple Virtual Try-On Endpoint
+    Simple Virtual Try-On Endpoint (LEGACY - use base64 endpoint instead)
     
     Uses DIRECT Gemini API (Nano Banana) for image generation.
     NO OpenRouter fallback for Gemini image models (hard requirement).

@@ -84,7 +84,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: SettingsTheme.spacingLG),
-              Text(
+              const Text(
                 'Current Email',
                 style: SettingsTheme.tileTitle,
               ),

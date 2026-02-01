@@ -1,5 +1,6 @@
 /// Push Notification Service
 /// Handles Firebase Cloud Messaging (FCM) for Android, iOS, and Web
+library;
 import 'dart:async';
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -7,10 +8,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import '../models/notification_model.dart';
 import 'notification_intelligence.dart';
-import 'deep_link_service.dart';
 
 /// Background message handler (must be top-level function)
 @pragma('vm:entry-point')

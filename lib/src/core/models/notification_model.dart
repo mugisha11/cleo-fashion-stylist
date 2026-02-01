@@ -1,5 +1,6 @@
 /// Notification Model
 /// Fashion AI-aware notification system
+library;
 import 'package:equatable/equatable.dart';
 
 /// Notification types with AI-aware visual differentiation

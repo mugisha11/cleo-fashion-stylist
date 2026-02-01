@@ -2,7 +2,6 @@ import 'dart:typed_data';
 import 'dart:convert';
 import '../utils/io_stub.dart' if (dart.library.io) 'dart:io' as io;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -97,7 +96,7 @@ class AvatarService {
       // Try to create 3D avatar using Ready Player Me API
       try {
         // Get default body measurements (can be enhanced with user input later)
-        final measurements = BodyMeasurements(
+        const measurements = BodyMeasurements(
           height: 170.0, // Default height in cm
           weight: 70.0, // Default weight in kg
           bodyType: 'average',

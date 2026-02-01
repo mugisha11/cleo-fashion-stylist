@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/theme/app_theme_data.dart';
 import '../../../core/models/calendar_day_model.dart';
-import 'fashion_event_card_new.dart';
 
 /// Calendar Month View - Clean grid layout with event indicators
 class CalendarMonthViewNew extends StatelessWidget {

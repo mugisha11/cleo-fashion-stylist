@@ -90,7 +90,7 @@ class QuestionnaireResponse extends Equatable {
 class FashionQuestionnaire {
   static List<FashionQuestion> getQuestions() {
     return [
-      FashionQuestion(
+      const FashionQuestion(
         id: 'q1',
         questionNumber: 1,
         question: 'What\'s your go-to fashion style?',
@@ -122,7 +122,7 @@ class FashionQuestionnaire {
           ),
         ],
       ),
-      FashionQuestion(
+      const FashionQuestion(
         id: 'q2',
         questionNumber: 2,
         question: 'Which color palette do you prefer?',
@@ -154,7 +154,7 @@ class FashionQuestionnaire {
           ),
         ],
       ),
-      FashionQuestion(
+      const FashionQuestion(
         id: 'q3',
         questionNumber: 3,
         question: 'What occasions do you dress for most?',
@@ -186,7 +186,7 @@ class FashionQuestionnaire {
           ),
         ],
       ),
-      FashionQuestion(
+      const FashionQuestion(
         id: 'q4',
         questionNumber: 4,
         question: 'How do you prefer your fits?',
@@ -218,7 +218,7 @@ class FashionQuestionnaire {
           ),
         ],
       ),
-      FashionQuestion(
+      const FashionQuestion(
         id: 'q5',
         questionNumber: 5,
         question: 'What patterns do you like?',
@@ -250,7 +250,7 @@ class FashionQuestionnaire {
           ),
         ],
       ),
-      FashionQuestion(
+      const FashionQuestion(
         id: 'q6',
         questionNumber: 6,
         question: 'Preferred season style?',
@@ -282,7 +282,7 @@ class FashionQuestionnaire {
           ),
         ],
       ),
-      FashionQuestion(
+      const FashionQuestion(
         id: 'q7',
         questionNumber: 7,
         question: 'What accessories do you prefer?',
@@ -314,7 +314,7 @@ class FashionQuestionnaire {
           ),
         ],
       ),
-      FashionQuestion(
+      const FashionQuestion(
         id: 'q8',
         questionNumber: 8,
         question: 'How do you feel about trends?',
@@ -346,7 +346,7 @@ class FashionQuestionnaire {
           ),
         ],
       ),
-      FashionQuestion(
+      const FashionQuestion(
         id: 'q9',
         questionNumber: 9,
         question: 'What\'s your budget range?',
@@ -378,7 +378,7 @@ class FashionQuestionnaire {
           ),
         ],
       ),
-      FashionQuestion(
+      const FashionQuestion(
         id: 'q10',
         questionNumber: 10,
         question: 'How do you want to feel in your clothes?',

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 /// Cleo Logo Widget
 /// Reusable logo component for consistent branding throughout the app

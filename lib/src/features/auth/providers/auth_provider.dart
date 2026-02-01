@@ -51,7 +51,7 @@ final authServiceProvider = Provider<AuthService>((ref) {
     });
     if (!kIsWeb) {
       io.File(logPath)
-          .writeAsStringSync('$payload\n', mode: io.FileMode.append, flush: true);
+          .writeAsStringSync('$payload\n', flush: true);
     } else {
       // ignore: avoid_print
       print(payload);

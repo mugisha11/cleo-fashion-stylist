@@ -111,7 +111,7 @@ class ClaudeService {
     String? userQuery,
     String? wardrobeContext,
   }) async {
-    final systemPrompt = '''You are a luxury fashion AI stylist with deep expertise in:
+    const systemPrompt = '''You are a luxury fashion AI stylist with deep expertise in:
 - Clothing identification and categorization
 - Color theory and color harmony
 - Style analysis (casual, formal, streetwear, bohemian, etc.)
@@ -174,7 +174,7 @@ Provide detailed, structured analysis of fashion images. Be concise, elegant, an
     String? userQuery,
     Map<String, dynamic>? wardrobeContext,
   }) async {
-    final systemPrompt = '''You are an expert fashion AI assistant specializing in virtual try-on recommendations.
+    const systemPrompt = '''You are an expert fashion AI assistant specializing in virtual try-on recommendations.
     
     Your role:
     1. Analyze clothing items and user photos
@@ -241,7 +241,7 @@ Provide detailed, structured analysis of fashion images. Be concise, elegant, an
     required String context,
     required String question,
   }) async {
-    final systemPrompt = '''You are a luxury fashion stylist and AI assistant. 
+    const systemPrompt = '''You are a luxury fashion stylist and AI assistant. 
 Provide elegant, feminine, and modern fashion advice.
 
 Be warm, professional, and inspiring in your responses.''';
@@ -277,7 +277,7 @@ Provide a helpful, inspiring response.''';
     required List<String> clothingItems,
     required String occasion,
   }) async {
-    final systemPrompt = '''You are an expert fashion stylist analyzing outfit compatibility.
+    const systemPrompt = '''You are an expert fashion stylist analyzing outfit compatibility.
 Provide detailed assessments with scores, suggestions, and color harmony analysis.''';
     
     final prompt = '''Analyze this outfit for a $occasion occasion:

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/models/wardrobe_item_model.dart';
-import '../../../core/theme/app_theme_data.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../core/widgets/theme_wrapper.dart';
 
 /// Luxury Wardrobe Item Card - Fashion-grade with transparent background
@@ -70,6 +70,9 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
   @override
   Widget build(BuildContext context) {
     final theme = context.appTheme;
+    final accent = Theme.of(context).brightness == Brightness.dark
+        ? DesignTokens.darkAccent
+        : DesignTokens.lightAccent;
     final isMobile = MediaQuery.of(context).size.width < 768;
     
     // CRITICAL: Always use processed image (background-removed) if available
@@ -112,7 +115,7 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
                     ),
                     if (widget.isSelected)
                       BoxShadow(
-                        color: theme.primary.withOpacity(0.3),
+                        color: accent.withOpacity(0.3),
                         blurRadius: 24,
                         offset: const Offset(0, 8),
                         spreadRadius: 3,
@@ -150,7 +153,7 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
                                 height: 24,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(theme.primary),
+                                  valueColor: AlwaysStoppedAnimation<Color>(accent),
                                 ),
                               ),
                             ),
@@ -186,7 +189,7 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
                           child: Icon(
                             _getCategoryIcon(widget.item.category),
                             size: 16,
-                            color: theme.primary,
+                            color: accent,
                           ),
                         ),
                       ),
@@ -196,10 +199,10 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
                         Positioned.fill(
                           child: Container(
                             decoration: BoxDecoration(
-                              color: theme.primary.withOpacity(0.15),
+                              color: accent.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: theme.primary,
+                                color: accent,
                                 width: 2.5,
                               ),
                             ),
@@ -207,11 +210,11 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: theme.primary,
+                                  color: accent,
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: theme.primary.withOpacity(0.4),
+                                      color: accent.withOpacity(0.4),
                                       blurRadius: 12,
                                       spreadRadius: 2,
                                     ),

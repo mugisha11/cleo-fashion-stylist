@@ -90,7 +90,7 @@ class _AvatarGenerationScreenState
 
   /// Inject JavaScript to listen for postMessage from Ready Player Me
   void _injectPostMessageListener() {
-    final script = '''
+    const script = '''
       (function() {
         window.addEventListener('message', function(event) {
           // Ready Player Me sends avatar data via postMessage
@@ -210,8 +210,8 @@ class _AvatarGenerationScreenState
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Avatar saved successfully!'),
+          const SnackBar(
+            content: Text('Avatar saved successfully!'),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
@@ -246,21 +246,21 @@ class _AvatarGenerationScreenState
       body: Container(
         decoration: BoxDecoration(
           gradient: isDark
-              ? LinearGradient(
+              ? const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    const Color(0xFF121212),
-                    const Color(0xFF1E1E1E),
-                    const Color(0xFF121212),
+                    Color(0xFF121212),
+                    Color(0xFF1E1E1E),
+                    Color(0xFF121212),
                   ],
                 )
-              : LinearGradient(
+              : const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
                     Colors.white,
-                    const Color(0xFFFDFDFD),
+                    Color(0xFFFDFDFD),
                     Colors.white,
                   ],
                 ),
@@ -466,9 +466,9 @@ class _AvatarGenerationScreenState
             children: [
               Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.info_outline,
-                    color: const Color(0xFF4B39EF),
+                    color: Color(0xFF4B39EF),
                     size: 24,
                   ),
                   const SizedBox(width: 12),
@@ -516,8 +516,8 @@ class _AvatarGenerationScreenState
           Container(
             width: 24,
             height: 24,
-            decoration: BoxDecoration(
-              color: const Color(0xFF4B39EF),
+            decoration: const BoxDecoration(
+              color: Color(0xFF4B39EF),
               shape: BoxShape.circle,
             ),
             child: Center(

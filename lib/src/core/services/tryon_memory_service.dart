@@ -1,7 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/tryon_session_model.dart';
-import 'supabase_storage_service.dart';
 
 /// Try-On Memory Service - Saves and retrieves try-on sessions
 class TryOnMemoryService {
@@ -93,7 +92,7 @@ class TryOnMemoryService {
           .maybeSingle();
 
       if (response == null) return null;
-      return TryOnSession.fromJson(response as Map<String, dynamic>);
+      return TryOnSession.fromJson(response);
     } catch (e) {
       return null;
     }

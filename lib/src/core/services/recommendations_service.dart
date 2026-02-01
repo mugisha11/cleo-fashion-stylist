@@ -1,6 +1,5 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/outfit_model.dart';
 import '../models/wardrobe_item_model.dart';
 import '../models/user_model.dart';
 

@@ -267,7 +267,7 @@ class _DayDetailSheetState extends ConsumerState<DayDetailSheet>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.calendar_today_outlined,
                 size: 64,
                 color: GrokDesignSystem.textSecondary,

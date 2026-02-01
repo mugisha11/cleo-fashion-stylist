@@ -93,7 +93,7 @@ class SoraVTONService {
       }
     }
 
-    final status = result['status'] as String? ?? result['success'] == true ? 'success' : 'failed';
+    final status = (result['status'] as String?) ?? (result['success'] == true ? 'success' : 'failed');
 
     if (status == 'success' && imageBase64 != null) {
       return TryOnResult(

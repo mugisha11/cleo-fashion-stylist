@@ -1,5 +1,6 @@
 /// App Theme Data Model
 /// Centralized theme data structure for all themes
+library;
 import 'package:flutter/material.dart';
 import 'app_theme_mode.dart';
 
@@ -30,6 +31,9 @@ class AppThemeData {
   // Border Colors
   final Color borderLight;
   final Color borderMedium;
+  
+  // Shadow Color
+  final Color shadowColor;
   
   // Chat Colors
   final Color chatUserBubble;
@@ -83,6 +87,7 @@ class AppThemeData {
     this.textInverse,
     required this.borderLight,
     required this.borderMedium,
+    required this.shadowColor,
     required this.chatUserBubble,
     required this.chatAIBubble,
     required this.chatAIBorder,
@@ -109,7 +114,6 @@ class AppThemeData {
         onSecondary: Colors.white,
         onSurface: textPrimary,
         onError: Colors.white,
-        background: backgroundPrimary,
       ),
       scaffoldBackgroundColor: backgroundPrimary,
       cardTheme: CardThemeData(

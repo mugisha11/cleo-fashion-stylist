@@ -153,8 +153,8 @@ class _LuxuryEventCardState extends ConsumerState<LuxuryEventCard>
             ),
             
             // Action Icon
-            Padding(
-              padding: const EdgeInsets.all(16),
+            const Padding(
+              padding: EdgeInsets.all(16),
               child: Icon(
                 Icons.arrow_forward_ios,
                 size: 20,
@@ -189,7 +189,7 @@ class _LuxuryEventCardState extends ConsumerState<LuxuryEventCard>
             ),
             errorWidget: (context, url, error) => Container(
               color: FashionDesignSystem.backgroundLight,
-              child: Icon(
+              child: const Icon(
                 Icons.image_outlined,
                 color: FashionDesignSystem.textTertiary,
               ),
@@ -225,14 +225,14 @@ class _LuxuryEventCardState extends ConsumerState<LuxuryEventCard>
     return Container(
       width: 100,
       height: 100,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: FashionDesignSystem.backgroundLight,
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
           bottomLeft: Radius.circular(20),
         ),
       ),
-      child: Icon(
+      child: const Icon(
         Icons.checkroom_outlined,
         size: 40,
         color: FashionDesignSystem.textTertiary,

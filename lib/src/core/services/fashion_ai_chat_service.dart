@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/wardrobe_item_model.dart';
 import '../models/tryon_session_model.dart';
-import '../models/calendar_day_model.dart';
 import 'weather_service.dart';
 import 'tryon_memory_service.dart';
 import 'wardrobe_service.dart';
@@ -221,7 +220,7 @@ class FashionAIChatService {
   ) async {
     const apiKey = 'YOUR_OPENAI_API_KEY'; // TODO: Move to config
 
-    final systemPrompt = '''You are a world-class AI fashion stylist with the reasoning ability of ChatGPT and the taste of a luxury fashion consultant.
+    const systemPrompt = '''You are a world-class AI fashion stylist with the reasoning ability of ChatGPT and the taste of a luxury fashion consultant.
 
 CRITICAL RULES:
 - Generate exactly 5 outfit recommendations
@@ -311,7 +310,7 @@ Context:
               userId: '',
               baseImageUrl: '',
               resultImageUrl: '',
-              outfitIds: [],
+              outfitIds: const [],
               createdAt: DateTime.now(),
             ),
       );

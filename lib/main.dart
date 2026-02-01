@@ -23,14 +23,14 @@ void main() async {
     debugPrint('🌐 Web platform detected - initializing Firebase synchronously');
     try {
       // Explicitly use Web options to ensure correct API key is used
-      final webOptions = DefaultFirebaseOptions.web;
+      const webOptions = DefaultFirebaseOptions.web;
       
       // Check if API key is placeholder - but still try to initialize
       if (webOptions.apiKey.contains('Dummy') || webOptions.apiKey.contains('YOUR_')) {
         debugPrint('⚠️ WARNING: Firebase Web API key appears to be a placeholder');
         debugPrint('⚠️ Firebase may not work correctly until you update the API key');
         debugPrint('⚠️ Get it from: https://console.firebase.google.com/project/ai-styling-c45cf/settings/general');
-        debugPrint('⚠️ Run: .\get_firebase_web_key.ps1 for step-by-step instructions');
+        debugPrint('⚠️ Run: .get_firebase_web_key.ps1 for step-by-step instructions');
         // Continue anyway - let Firebase try to initialize
       }
       

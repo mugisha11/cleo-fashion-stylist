@@ -7,13 +7,12 @@ import 'features/avatar/screens/avatar_creation_screen.dart';
 import 'features/avatar/screens/avatar_generation_screen.dart';
 import 'features/wardrobe/screens/wardrobe_screen.dart';
 import 'features/wardrobe/screens/add_item_screen.dart';
-import 'features/tryon/screens/luxury_tryon_screen.dart';
 import 'features/tryon/screens/production_tryon_screen.dart';
+import 'features/tryon/screens/luxury_tryon_screen.dart';
 import 'features/tryon/screens/tryon_history_screen.dart';
 import 'features/recommendations/screens/recommendations_screen.dart';
 import 'features/virtualwearon/screens/virtualwearon_screen.dart';
-import 'features/dashboard/screens/dashboard_screen.dart';
-import 'features/dashboard/screens/intelligent_fashion_dashboard.dart';
+import 'screens/dashboard_screen.dart';
 import 'features/vton/screens/fashion_quiz_screen.dart';
 import 'features/vton/screens/photo_capture_screen.dart';
 import 'features/vton/screens/outfit_source_screen.dart';
@@ -21,6 +20,13 @@ import 'features/vton/screens/tryon_preview_screen.dart';
 import 'features/onboarding/screens/fashion_questionnaire_screen.dart';
 import 'features/calendar/screens/fashion_calendar_screen.dart';
 import 'features/settings/screens/settings_page.dart';
+import 'features/style_feed/screens/style_feed_screen.dart';
+import 'features/style_feed/screens/post_look_screen.dart';
+import 'features/social/screens/chats_list_screen.dart';
+import 'features/social/screens/chat_screen.dart';
+import 'features/social/screens/friend_requests_screen.dart';
+import 'features/social/screens/discover_people_screen.dart';
+import 'features/notifications/screens/notification_center_screen.dart';
 import 'core/widgets/splash_screen.dart';
 
 class Routes {
@@ -34,6 +40,7 @@ class Routes {
   static const String wardrobe = '/wardrobe';
   static const String addItem = '/add-item';
   static const String tryon = '/tryon';
+  static const String luxuryTryon = '/luxury-tryon';
   static const String premiumVton = '/premium-vton';
   static const String mobileVton = '/mobile-vton';
   static const String recommendations = '/recommendations';
@@ -47,6 +54,13 @@ class Routes {
   static const String calendar = '/calendar';
   static const String settings = '/settings';
   static const String tryonHistory = '/tryon-history';
+  static const String styleFeed = '/style-feed';
+  static const String postLook = '/post-look';
+  static const String chats = '/chats';
+  static const String chat = '/chat';
+  static const String friendRequests = '/friend-requests';
+  static const String discoverPeople = '/discover-people';
+  static const String notificationCenter = '/notifications';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -69,9 +83,11 @@ class Routes {
       case addItem:
         return _buildRoute(const AddItemScreen(), settings);
       case tryon:
-        return _buildRoute(const ProductionTryOnScreen(), settings);
+        return _buildRoute(const LuxuryTryOnScreen(), settings);
+      case luxuryTryon:
+        return _buildRoute(const LuxuryTryOnScreen(), settings);
       case premiumVton:
-        return _buildRoute(const ProductionTryOnScreen(), settings);
+        return _buildRoute(const LuxuryTryOnScreen(), settings);
       case mobileVton:
         return _buildRoute(const ProductionTryOnScreen(), settings);
       case recommendations:
@@ -104,6 +120,39 @@ class Routes {
         return _buildRoute(const SettingsPage(), settings);
       case Routes.tryonHistory:
         return _buildRoute(const TryOnHistoryScreen(), settings);
+      case Routes.styleFeed:
+        return _buildRoute(const StyleFeedScreen(), settings);
+      case Routes.postLook:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          PostLookScreen(
+            imagePath: args?['imagePath'] as String?,
+            imageBytes: args?['imageBytes'] is List<int>
+                ? args!['imageBytes'] as List<int>
+                : null,
+            suggestedCaption: args?['suggestedCaption'] as String?,
+          ),
+          settings,
+        );
+      case Routes.chats:
+        return _buildRoute(const ChatsListScreen(), settings);
+      case Routes.chat:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          ChatScreen(
+            chatId: args?['chatId'] as String?,
+            otherUserId: args?['otherUserId'] as String? ?? '',
+            otherUserName: args?['otherUserName'] as String? ?? 'User',
+            otherUserAvatar: args?['otherUserAvatar'] as String?,
+          ),
+          settings,
+        );
+      case Routes.friendRequests:
+        return _buildRoute(const FriendRequestsScreen(), settings);
+      case Routes.discoverPeople:
+        return _buildRoute(const DiscoverPeopleScreen(), settings);
+      case Routes.notificationCenter:
+        return _buildRoute(const NotificationCenterScreen(), settings);
       default:
         return _buildRoute(
           const Scaffold(
@@ -139,4 +188,3 @@ class Routes {
     );
   }
 }
-

@@ -1,6 +1,7 @@
 /// Dark AI Theme
 /// ChatGPT/Grok inspired: Minimal, dark, typography-focused
 /// Optimized for long conversations and AI reasoning
+library;
 import 'package:flutter/material.dart';
 import 'app_theme_data.dart';
 import 'app_theme_mode.dart';
@@ -39,7 +40,7 @@ class DarkAITheme {
   static const Color _warning = Color(0xFFFF9800);
   static const Color _error = Color(0xFFF44336);
 
-  static AppThemeData get theme => AppThemeData(
+  static AppThemeData get theme => const AppThemeData(
     mode: AppThemeMode.darkAI,
     primary: _blueMuted,
     primaryLight: _blueMutedLight,
@@ -55,6 +56,7 @@ class DarkAITheme {
     textInverse: Colors.white,
     borderLight: _borderSubtle,
     borderMedium: _borderMedium,
+    shadowColor: Colors.black,
     chatUserBubble: _chatUser,
     chatAIBubble: _chatAI,
     chatAIBorder: _chatAIBorder,

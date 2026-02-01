@@ -1,11 +1,9 @@
 /// Calendar Intelligence Service
 /// AI-powered outfit planning and calendar integration
+library;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../models/calendar_day_model.dart';
-import '../models/wardrobe_item_model.dart';
 import 'ai_reasoning_service.dart';
 
 class CalendarIntelligenceService {

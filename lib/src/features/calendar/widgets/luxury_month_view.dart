@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import '../../../core/theme/fashion_design_system.dart';
 import '../../../core/models/calendar_day_model.dart';
 import '../theme/calendar_theme.dart';
@@ -169,7 +168,7 @@ class LuxuryMonthView extends StatelessWidget {
                   child: Container(
                     width: 4,
                     height: 4,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: CalendarTheme.tryOnGreen,
                       shape: BoxShape.circle,
                     ),

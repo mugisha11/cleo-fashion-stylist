@@ -1,5 +1,6 @@
 /// Production VTON State Provider
 /// Manages state for the 7-stage production virtual try-on pipeline
+library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/production_vton_state.dart';
 import '../services/production_vton_service.dart';
@@ -33,9 +34,12 @@ class ProductionVTONNotifier extends StateNotifier<ProductionVTONState> {
       final backendStage = result['stage'] as String?;
 
       if (status == 'success') {
+        // Backend returns result_image_url (data URL) or image (base64)
+        final String? resultUrl = result['result_image_url'] as String? ??
+            (result['image'] != null ? 'data:image/jpeg;base64,${result['image']}' : null);
         state = ProductionVTONState(
           stage: ProductionVTONStage.success,
-          resultImageUrl: result['result_image_url'] as String?,
+          resultImageUrl: resultUrl,
           metadata: result['metadata'] as Map<String, dynamic>?,
           qualityMetrics: result['quality_metrics'] as Map<String, dynamic>?,
         );
@@ -53,13 +57,14 @@ class ProductionVTONNotifier extends StateNotifier<ProductionVTONState> {
         );
       }
     } catch (e) {
+      print('[ProductionVTON] executeTryOn error: $e');
       // Provide user-friendly error messages
       String errorMessage = e.toString();
       
       if (errorMessage.contains('Failed to connect') || 
           errorMessage.contains('Failed to fetch') ||
           errorMessage.contains('NetworkError')) {
-        errorMessage = 'Cannot connect to backend server. Please ensure the backend is running on localhost:8000 or configure the correct URL in settings.';
+        errorMessage = 'Cannot connect to backend server. Please ensure the backend is running on localhost:8001 or configure the correct URL in settings.';
       } else if (errorMessage.contains('timeout')) {
         errorMessage = 'Request timed out. The backend may be processing or unavailable.';
       }

@@ -53,16 +53,16 @@ class Settings(BaseSettings):
     TEMP_DIR: str = os.getenv("TEMP_DIR", "/tmp/vton")
     
     # OpenAI Configuration (for GPT-5-mini prompt synthesis)
-    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "sk-proj-9syQcT4EnyxOzejdnwtAT3BlbkFJi2xir3aaZLrXVbNFgagn")
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-5-mini-2025-08-07")
     OPENAI_BASE_URL: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
     
     # Claude AI Configuration
-    CLAUDE_API_KEY: str = os.getenv("CLAUDE_API_KEY", "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")
+    CLAUDE_API_KEY: str = os.getenv("CLAUDE_API_KEY", "")
     CLAUDE_MODEL: str = os.getenv("CLAUDE_MODEL", "claude-3-5-sonnet-20241022")
     
-    # OpenRouter Configuration (for GPT-4.1 Vision reasoning)
-    OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "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")
+    # OpenRouter Configuration (for GPT-4.1 Vision reasoning and Claude analysis in production-vton)
+    OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
     OPENROUTER_MODEL_VISION: str = os.getenv("OPENROUTER_MODEL_VISION", "openai/gpt-4o")  # GPT-4.1 Vision
     OPENROUTER_MODEL_MINI: str = os.getenv("OPENROUTER_MODEL_MINI", "openai/gpt-4o-mini")  # GPT-4.1-mini
     OPENROUTER_BASE_URL: str = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
@@ -72,8 +72,9 @@ class Settings(BaseSettings):
     BODY_PARSING_METHOD: str = os.getenv("BODY_PARSING_METHOD", "mediapipe")  # mediapipe, densepose, openpose, schp
     
     # Gemini API Configuration (for Nano Banana - gemini-2.5-flash-image)
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "AIzaSyCTFE6YQT1CBzztYorEie0pPPMj_t3ESTQ")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-image")  # Nano Banana - image generation model
+    GEMINI_IMAGE_MODEL: str = ""  # Override for production-vton only; if unset uses GEMINI_MODEL. e.g. gemini-2.0-flash-preview-image-generation
     GEMINI_USE_PRO_MODEL: bool = os.getenv("GEMINI_USE_PRO_MODEL", "False").lower() == "true"  # Use Nano Banana Pro for high-quality try-ons
     
     # Remove.bg API Configuration
@@ -86,6 +87,9 @@ class Settings(BaseSettings):
     # Segmentation Configuration
     SEGMENTATION_METHOD: str = os.getenv("SEGMENTATION_METHOD", "rembg")  # rembg, sam, opencv
     SAM_CHECKPOINT_PATH: Optional[str] = os.getenv("SAM_CHECKPOINT_PATH", None)
+    
+    # Product search (AI shopping) - SerpAPI Google Shopping
+    SERP_API_KEY: str = os.getenv("SERP_API_KEY", "")
     
     class Config:
         env_file = ".env"

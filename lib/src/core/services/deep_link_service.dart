@@ -1,5 +1,6 @@
 /// Deep Link Service
 /// Handles navigation from notifications to app screens
+library;
 import 'package:flutter/material.dart';
 import '../../routes.dart';
 

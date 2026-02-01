@@ -21,12 +21,12 @@ class UpcomingEventCard extends StatelessWidget {
     final timeStr = day.eventName ?? day.eventType ?? 'Event';
 
     return Container(
-      margin: EdgeInsets.only(
+      margin: const EdgeInsets.only(
         bottom: FashionDesignSystem.spacingMD,
         left: FashionDesignSystem.spacingLG,
         right: FashionDesignSystem.spacingLG,
       ),
-      padding: EdgeInsets.all(FashionDesignSystem.spacingLG),
+      padding: const EdgeInsets.all(FashionDesignSystem.spacingLG),
       decoration: FashionDesignSystem.cardDecoration,
       child: Row(
         children: [
@@ -48,7 +48,7 @@ class UpcomingEventCard extends StatelessWidget {
                   width: 60,
                   height: 60,
                   color: FashionDesignSystem.backgroundLight,
-                  child: Icon(
+                  child: const Icon(
                     Icons.image_outlined,
                     size: 24,
                     color: FashionDesignSystem.textTertiary,
@@ -64,14 +64,14 @@ class UpcomingEventCard extends StatelessWidget {
                 color: FashionDesignSystem.backgroundLight,
                 borderRadius: BorderRadius.circular(FashionDesignSystem.radiusMD),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.event_outlined,
                 size: 24,
                 color: FashionDesignSystem.textTertiary,
               ),
             ),
           
-          SizedBox(width: FashionDesignSystem.spacingLG),
+          const SizedBox(width: FashionDesignSystem.spacingLG),
           
           // Event Info
           Expanded(
@@ -84,7 +84,7 @@ class UpcomingEventCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: FashionDesignSystem.spacingXS),
+                const SizedBox(height: FashionDesignSystem.spacingXS),
                 Text(
                   dateStr,
                   style: FashionDesignSystem.bodySmall().copyWith(

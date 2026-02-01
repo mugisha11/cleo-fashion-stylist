@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../../core/theme/fashion_design_system.dart';
 import '../../../core/models/calendar_day_model.dart';
 import 'week_date_card.dart';
@@ -34,11 +33,11 @@ class WeekCalendarStrip extends StatelessWidget {
 
     return Container(
       height: 120,
-      padding: EdgeInsets.symmetric(vertical: FashionDesignSystem.spacingMD),
+      padding: const EdgeInsets.symmetric(vertical: FashionDesignSystem.spacingMD),
       child: ListView.builder(
         controller: scrollController,
         scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: FashionDesignSystem.spacingLG),
+        padding: const EdgeInsets.symmetric(horizontal: FashionDesignSystem.spacingLG),
         itemCount: weekDates.length,
         itemBuilder: (context, index) {
           final date = weekDates[index];

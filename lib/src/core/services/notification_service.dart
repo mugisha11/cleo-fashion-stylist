@@ -2,7 +2,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:convert';
 import '../models/notification_model.dart';
 
 /// Smart Notification Service
@@ -233,7 +232,7 @@ class NotificationService {
           .eq('user_id', currentUserId)
           .single();
       
-      final responseMap = response as Map<String, dynamic>;
+      final responseMap = response;
       final payload = Map<String, dynamic>.from(responseMap['payload'] ?? {});
       payload['is_saved'] = true;
       
@@ -282,7 +281,7 @@ class NotificationService {
           .eq('user_id', currentUserId)
           .maybeSingle();
       
-      return response as Map<String, dynamic>?;
+      return response;
     } catch (e) {
       debugPrint('Error fetching notification preferences: $e');
       return null;

@@ -230,7 +230,7 @@ class _FashionQuestionnaireScreenState extends ConsumerState<FashionQuestionnair
             // Image
             Expanded(
               child: ClipRRect(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(GrokDesignSystem.radiusLG)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(GrokDesignSystem.radiusLG)),
                 child: CachedNetworkImage(
                   imageUrl: option.imageUrl,
                   fit: BoxFit.cover,

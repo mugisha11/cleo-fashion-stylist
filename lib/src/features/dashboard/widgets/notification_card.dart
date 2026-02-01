@@ -1,5 +1,6 @@
 /// Premium Notification Card Widget
 /// Fashion-styled card with smooth animations
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -77,7 +78,7 @@ class _NotificationCardState extends State<NotificationCard>
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Container(
-          margin: EdgeInsets.only(
+          margin: const EdgeInsets.only(
             bottom: GrokDesignSystem.spacingSM,
             left: GrokDesignSystem.spacingMD,
             right: GrokDesignSystem.spacingMD,
@@ -109,7 +110,7 @@ class _NotificationCardState extends State<NotificationCard>
               onTap: _handleTap,
               borderRadius: BorderRadius.circular(GrokDesignSystem.radiusMD),
               child: Padding(
-                padding: EdgeInsets.all(GrokDesignSystem.spacingMD),
+                padding: const EdgeInsets.all(GrokDesignSystem.spacingMD),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -133,7 +134,7 @@ class _NotificationCardState extends State<NotificationCard>
                         ),
                       ),
                     ),
-                    SizedBox(width: GrokDesignSystem.spacingMD),
+                    const SizedBox(width: GrokDesignSystem.spacingMD),
 
                     // Center: Title + Message
                     Expanded(
@@ -153,7 +154,7 @@ class _NotificationCardState extends State<NotificationCard>
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: GrokDesignSystem.spacingXS),
+                          const SizedBox(height: GrokDesignSystem.spacingXS),
 
                           // Message
                           Text(
@@ -165,7 +166,7 @@ class _NotificationCardState extends State<NotificationCard>
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: GrokDesignSystem.spacingXS),
+                          const SizedBox(height: GrokDesignSystem.spacingXS),
 
                           // Time
                           Text(
@@ -179,7 +180,7 @@ class _NotificationCardState extends State<NotificationCard>
                       ),
                     ),
 
-                    SizedBox(width: GrokDesignSystem.spacingSM),
+                    const SizedBox(width: GrokDesignSystem.spacingSM),
 
                     // Right: Action dot (if unread)
                     if (_isUnread)

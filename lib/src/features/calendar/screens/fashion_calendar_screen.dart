@@ -3,7 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/widgets/fashion_scaffold.dart';
 import '../../../core/widgets/theme_wrapper.dart';
+import '../../../core/widgets/dashboard_components.dart';
 import '../../../core/theme/app_theme_data.dart';
+import '../../../core/theme/design_tokens.dart';
+import '../../../core/theme/luxury_theme.dart';
 import '../../../core/models/calendar_day_model.dart';
 import '../providers/calendar_provider.dart';
 import '../widgets/calendar_header_new.dart';
@@ -21,7 +24,8 @@ class FashionCalendarScreen extends ConsumerStatefulWidget {
   const FashionCalendarScreen({super.key});
 
   @override
-  ConsumerState<FashionCalendarScreen> createState() => _FashionCalendarScreenState();
+  ConsumerState<FashionCalendarScreen> createState() =>
+      _FashionCalendarScreenState();
 }
 
 enum CalendarViewMode { day, week, month }
@@ -40,17 +44,17 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _viewTransitionController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    
+
     _drawerController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
-    
+
     _drawerAnimation = CurvedAnimation(
       parent: _drawerController,
       curve: Curves.easeOutCubic,
@@ -71,7 +75,7 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
 
   void _switchView(CalendarViewMode mode) {
     if (_viewMode == mode) return;
-    
+
     HapticFeedback.selectionClick();
     setState(() => _viewMode = mode);
     // Reset animation controller to ensure content is visible
@@ -113,15 +117,26 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
     final calendarState = ref.watch(calendarStateProvider);
     final calendarDaysAsync = ref.watch(
       calendarDaysProvider(
-        DateTime(calendarState.currentMonth.year, calendarState.currentMonth.month),
+        DateTime(
+            calendarState.currentMonth.year, calendarState.currentMonth.month),
       ),
     );
 
-    return FashionScaffold(
-      title: 'Calendar',
-      currentBottomNavIndex: 0,
-      currentRoute: Routes.calendar,
-      backgroundColor: theme.backgroundPrimary,
+    return Scaffold(
+      appBar: DashboardTopBar(
+        aiStatus: 'Calendar & Events',
+        isAITyping: false,
+        notificationCount: 0,
+        onProfileTap: () {
+          Navigator.of(context).pushNamed(Routes.settings);
+        },
+        onNotificationsTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No new notifications')),
+          );
+        },
+      ),
+      drawer: _buildNavigationDrawer(context),
       body: Container(
         decoration: theme.backgroundGradient != null
             ? BoxDecoration(gradient: theme.backgroundGradient)
@@ -134,6 +149,134 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildNavigationDrawer(BuildContext context) {
+    final isDark = context.isDarkMode;
+    return Drawer(
+      child: Container(
+        color:
+            isDark ? DesignTokens.darkBackground : DesignTokens.lightBackground,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
+                border: Border(
+                  bottom: BorderSide(
+                    color: isDark
+                        ? DesignTokens.darkBorder
+                        : DesignTokens.lightBorder,
+                  ),
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Cleo Fashion',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: isDark
+                              ? DesignTokens.darkAccent
+                              : DesignTokens.lightAccent,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your AI Fashion Assistant',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.home,
+              label: 'Dashboard',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.dashboard);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.checkroom,
+              label: 'Wardrobe',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.wardrobe);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.image_search,
+              label: 'Virtual Try-On',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.tryon);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.lightbulb,
+              label: 'Recommendations',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.recommendations);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.calendar_today,
+              label: 'Calendar & Events',
+              onTap: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.grid_view_rounded,
+              label: 'Style Feed',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.styleFeed);
+              },
+            ),
+            const Divider(),
+            _buildNavItem(
+              context: context,
+              icon: Icons.settings,
+              label: 'Settings',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.settings);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final isDark = context.isDarkMode;
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isDark ? DesignTokens.darkAccent : DesignTokens.lightAccent,
+      ),
+      title: Text(label),
+      onTap: onTap,
+      hoverColor: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
     );
   }
 
@@ -177,7 +320,8 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
     );
   }
 
-  Widget _buildCalendarContent(AppThemeData theme, Map<DateTime, CalendarDay> calendarDays) {
+  Widget _buildCalendarContent(
+      AppThemeData theme, Map<DateTime, CalendarDay> calendarDays) {
     return Stack(
       children: [
         // Main Calendar Content
@@ -191,8 +335,10 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
               onDateChanged: (date) {
                 setState(() => _selectedDate = date);
                 // Only update month if we're in month view or if month actually changed
-                final currentMonth = ref.read(calendarStateProvider).currentMonth;
-                if (date.year != currentMonth.year || date.month != currentMonth.month) {
+                final currentMonth =
+                    ref.read(calendarStateProvider).currentMonth;
+                if (date.year != currentMonth.year ||
+                    date.month != currentMonth.month) {
                   ref.read(calendarStateProvider.notifier).setMonth(date);
                 }
               },
@@ -219,10 +365,11 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
           GestureDetector(
             onTap: _closeEventDrawer,
             child: Container(
-              color: Colors.black.withValues(alpha: 0.5 * _drawerAnimation.value),
+              color:
+                  Colors.black.withValues(alpha: 0.5 * _drawerAnimation.value),
             ),
           ),
-        
+
         if (_showEventDrawer && _selectedEvent != null)
           SlideTransition(
             position: Tween<Offset>(

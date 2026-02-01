@@ -114,9 +114,9 @@ class _ReadyPlayerMeViewerState extends State<ReadyPlayerMeViewer> {
         children: [
           WebViewWidget(controller: _controller),
           if (_isLoading)
-            Center(
+            const Center(
               child: CircularProgressIndicator(
-                valueColor: const AlwaysStoppedAnimation<Color>(GrokDesignSystem.primaryCharcoal),
+                valueColor: AlwaysStoppedAnimation<Color>(GrokDesignSystem.primaryCharcoal),
               ),
             ),
         ],

@@ -1,7 +1,9 @@
 /// Production Stage Indicator
 /// Shows current backend processing stage
+library;
 import 'package:flutter/material.dart';
 import '../../../core/models/production_vton_state.dart';
+import '../../../core/theme/design_tokens.dart';
 
 class ProductionStageIndicator extends StatelessWidget {
   final ProductionVTONStage stage;
@@ -17,6 +19,9 @@ class ProductionStageIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final stageName = _getStageName(stage);
     final progress = _getProgress(stage);
+    final accent = Theme.of(context).brightness == Brightness.dark
+        ? DesignTokens.darkAccent
+        : DesignTokens.lightAccent;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -25,7 +30,7 @@ class ProductionStageIndicator extends StatelessWidget {
         LinearProgressIndicator(
           value: progress,
           backgroundColor: colorScheme.surfaceContainerHighest,
-          valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+          valueColor: AlwaysStoppedAnimation<Color>(accent),
           minHeight: 2,
         ),
         const SizedBox(height: 8),

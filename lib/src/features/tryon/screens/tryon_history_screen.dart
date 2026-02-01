@@ -1,10 +1,12 @@
 /// Try-On History Screen
 /// Grid view of saved try-on results
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/design_tokens.dart';
 
 class TryOnHistoryScreen extends ConsumerStatefulWidget {
   const TryOnHistoryScreen({super.key});
@@ -18,9 +20,12 @@ class _TryOnHistoryScreenState extends ConsumerState<TryOnHistoryScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final accent = Theme.of(context).brightness == Brightness.dark
+        ? DesignTokens.darkAccent
+        : DesignTokens.lightAccent;
 
     return Scaffold(
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(
           'Try-On History',
@@ -33,11 +38,11 @@ class _TryOnHistoryScreenState extends ConsumerState<TryOnHistoryScreen> {
         elevation: 0,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
       ),
-      body: _buildHistoryGrid(context, colorScheme, theme),
+      body: _buildHistoryGrid(context, colorScheme, theme, accent),
     );
   }
 
-  Widget _buildHistoryGrid(BuildContext context, ColorScheme colorScheme, ThemeData theme) {
+  Widget _buildHistoryGrid(BuildContext context, ColorScheme colorScheme, ThemeData theme, Color accent) {
     // TODO: Load from database/provider
     final historyItems = <TryOnHistoryItem>[];
 
@@ -73,7 +78,7 @@ class _TryOnHistoryScreenState extends ConsumerState<TryOnHistoryScreen> {
       ),
       itemCount: historyItems.length,
       itemBuilder: (context, index) {
-        return _buildHistoryCard(historyItems[index], colorScheme, theme, index);
+        return _buildHistoryCard(historyItems[index], colorScheme, theme, accent, index);
       },
     );
   }
@@ -82,6 +87,7 @@ class _TryOnHistoryScreenState extends ConsumerState<TryOnHistoryScreen> {
     TryOnHistoryItem item,
     ColorScheme colorScheme,
     ThemeData theme,
+    Color accent,
     int index,
   ) {
     return GestureDetector(
@@ -111,7 +117,7 @@ class _TryOnHistoryScreenState extends ConsumerState<TryOnHistoryScreen> {
                     color: colorScheme.surfaceContainerHighest,
                     child: Center(
                       child: CircularProgressIndicator(
-                        color: colorScheme.primary,
+                        color: accent,
                       ),
                     ),
                   ),

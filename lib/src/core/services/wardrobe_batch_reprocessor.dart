@@ -109,7 +109,7 @@ class WardrobeBatchReprocessor {
       }
 
       // Upload processed image
-      final userId = _auth.currentUser?.uid!;
+      final userId = _auth.currentUser?.uid;
       final imageId = item.id;
       final processedImagePath = 'wardrobe/$userId/${imageId}_processed.png';
       

@@ -3,7 +3,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/theme_wrapper.dart';
-import '../../../core/theme/app_theme_data.dart';
 import '../../../core/models/calendar_day_model.dart';
 
 /// Fashion Event Card - Premium event card with outfit preview
@@ -108,7 +107,7 @@ class FashionEventCardNew extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.auto_awesome, color: Colors.white, size: 14),
+                              const Icon(Icons.auto_awesome, color: Colors.white, size: 14),
                               const SizedBox(width: 4),
                               Text(
                                 'AI',

@@ -21,7 +21,7 @@ class OutfitOfTheDayCard extends StatelessWidget {
     final hasOutfit = day?.hasOutfit ?? false;
 
     return Container(
-      margin: EdgeInsets.all(FashionDesignSystem.spacingLG),
+      margin: const EdgeInsets.all(FashionDesignSystem.spacingLG),
       decoration: FashionDesignSystem.heroCardDecoration,
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -34,7 +34,7 @@ class OutfitOfTheDayCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
                   color: FashionDesignSystem.backgroundLight,
-                  child: Center(
+                  child: const Center(
                     child: CircularProgressIndicator(
                       color: FashionDesignSystem.primaryColor,
                     ),
@@ -42,7 +42,7 @@ class OutfitOfTheDayCard extends StatelessWidget {
                 ),
                 errorWidget: (context, url, error) => Container(
                   color: FashionDesignSystem.backgroundLight,
-                  child: Icon(
+                  child: const Icon(
                     Icons.image_outlined,
                     size: 64,
                     color: FashionDesignSystem.textTertiary,
@@ -57,12 +57,12 @@ class OutfitOfTheDayCard extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.checkroom_outlined,
                       size: 64,
                       color: FashionDesignSystem.textTertiary,
                     ),
-                    SizedBox(height: FashionDesignSystem.spacingMD),
+                    const SizedBox(height: FashionDesignSystem.spacingMD),
                     Text(
                       'No outfit planned',
                       style: FashionDesignSystem.bodyMedium().copyWith(
@@ -96,7 +96,7 @@ class OutfitOfTheDayCard extends StatelessWidget {
             left: 0,
             right: 0,
             child: Padding(
-              padding: EdgeInsets.all(FashionDesignSystem.spacingXXL),
+              padding: const EdgeInsets.all(FashionDesignSystem.spacingXXL),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -118,7 +118,7 @@ class OutfitOfTheDayCard extends StatelessWidget {
                       ),
                     ),
                   
-                  SizedBox(height: FashionDesignSystem.spacingSM),
+                  const SizedBox(height: FashionDesignSystem.spacingSM),
                   
                   // Tags
                   if (hasOutfit && day!.eventType != null)
@@ -131,7 +131,7 @@ class OutfitOfTheDayCard extends StatelessWidget {
                       ],
                     ),
                   
-                  SizedBox(height: FashionDesignSystem.spacingLG),
+                  const SizedBox(height: FashionDesignSystem.spacingLG),
                   
                   // Action Buttons
                   Row(
@@ -140,15 +140,15 @@ class OutfitOfTheDayCard extends StatelessWidget {
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: onTryOn,
-                            icon: Icon(
+                            icon: const Icon(
                               Icons.auto_awesome,
                               size: FashionDesignSystem.iconSize,
                             ),
-                            label: Text('Try On'),
+                            label: const Text('Try On'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: FashionDesignSystem.primaryColor,
                               foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(
+                              padding: const EdgeInsets.symmetric(
                                 vertical: FashionDesignSystem.spacingMD,
                               ),
                               shape: RoundedRectangleBorder(
@@ -161,7 +161,7 @@ class OutfitOfTheDayCard extends StatelessWidget {
                         ),
                       
                       if (hasOutfit && onTryOn != null)
-                        SizedBox(width: FashionDesignSystem.spacingMD),
+                        const SizedBox(width: FashionDesignSystem.spacingMD),
                       
                       TextButton(
                         onPressed: onChangeOutfit,
@@ -186,7 +186,7 @@ class OutfitOfTheDayCard extends StatelessWidget {
 
   Widget _buildTag(String label) {
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: FashionDesignSystem.spacingMD,
         vertical: FashionDesignSystem.spacingXS,
       ),

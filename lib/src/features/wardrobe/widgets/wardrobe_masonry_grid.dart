@@ -37,7 +37,7 @@ class WardrobeMasonryGrid extends StatelessWidget {
     }
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: FashionDesignSystem.spacingMD),
+      padding: const EdgeInsets.symmetric(horizontal: FashionDesignSystem.spacingMD),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -53,7 +53,7 @@ class WardrobeMasonryGrid extends StatelessWidget {
             ),
           ),
           
-          SizedBox(width: FashionDesignSystem.spacingMD),
+          const SizedBox(width: FashionDesignSystem.spacingMD),
           
           // Right Column
           Expanded(

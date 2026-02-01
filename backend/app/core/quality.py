@@ -93,3 +93,34 @@ class QualityGates:
             logger.error(f"Quality validation error: {e}", exc_info=True)
             metrics["error"] = str(e)
             return False, metrics
+
+
+class QualityChecker:
+    """
+    Quality checker for vton_pipeline. Compatible with check_all(original, result, face_region).
+    """
+    def __init__(
+        self,
+        face_similarity_threshold: float = 0.90,
+        min_sharpness: float = 0.2,
+        min_clothing_coverage: float = 0.5,
+        min_pose_consistency: float = 0.6,
+    ):
+        self.face_similarity_threshold = face_similarity_threshold
+        self.min_sharpness = min_sharpness
+        self.min_clothing_coverage = min_clothing_coverage
+        self.min_pose_consistency = min_pose_consistency
+
+    def check_all(
+        self,
+        original: np.ndarray,
+        result: np.ndarray,
+        face_region: Optional[Any] = None,
+    ) -> tuple:
+        """Returns (quality_passed, quality_scores, quality_error)."""
+        is_valid, metrics = QualityGates().validate_all(
+            original, result,
+            np.ones_like(original[:, :, 0]) if original.size > 0 else np.zeros((1, 1)),
+            np.zeros_like(original[:, :, 0]) if original.size > 0 else np.zeros((1, 1)),
+        )
+        return is_valid, metrics, None if is_valid else metrics.get("error")

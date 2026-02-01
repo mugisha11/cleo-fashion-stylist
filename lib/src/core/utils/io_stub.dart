@@ -1,17 +1,42 @@
+// Stub file for dart:io on web - provides no-op implementations
+
 class File {
-  final String path;
-  File(this.path);
-
-  Future<File> create({bool recursive = false}) async => this;
-  Future<void> writeAsBytes(List<int> bytes) async {}
-  // Accepts optional mode to mirror dart:io signature; ignored in stub
-  void writeAsStringSync(String data, {FileMode mode = FileMode.write, bool flush = false}) {}
-  Future<void> delete() async {}
+  File(String path);
+  
+  void writeAsStringSync(String contents, {FileMode? mode, bool flush = false}) {}
+  
+  Future<void> writeAsBytes(List<int> bytes, {FileMode? mode, bool flush = false}) async {}
+  
+  Future<File> delete({bool recursive = false}) async => this;
+  
+  @override
+  String toString() => 'File (stub)';
 }
 
-class FileMode {
-  static const write = FileMode._();
-  static const append = FileMode._();
-  const FileMode._();
+class Directory {
+  Directory(String path);
+  
+  @override
+  String toString() => 'Directory (stub)';
 }
 
+class FileSystemException implements Exception {
+  final String message;
+  FileSystemException(this.message);
+  
+  @override
+  String toString() => message;
+}
+
+enum FileMode {
+  read,
+  write,
+  append,
+}
+
+class IOSink {
+  void write(Object? obj) {}
+  void writeln(Object? obj) {}
+  Future<void> close() => Future.value();
+  Future<void> flush() => Future.value();
+}

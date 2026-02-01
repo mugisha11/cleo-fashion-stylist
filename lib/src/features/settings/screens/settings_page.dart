@@ -3,18 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/theme/app_theme_mode.dart';
+import '../../../core/theme/design_tokens.dart';
+import '../../../core/theme/luxury_theme.dart';
 import '../../../core/providers/theme_provider.dart';
 import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/widgets/theme_helpers.dart';
+import '../../../core/widgets/language_selector.dart';
 import '../../../core/widgets/cleo_logo.dart';
+import '../../../core/widgets/dashboard_components.dart';
 import '../../../core/theme/app_theme_data.dart';
 import '../../../core/models/user_model.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../social/providers/social_provider.dart';
 import '../providers/settings_provider.dart';
 import '../models/settings_state.dart';
 import '../widgets/settings_section_card.dart';
 import '../widgets/settings_toggle_tile.dart';
 import '../widgets/settings_action_tile.dart';
+import '../../../routes.dart';
 import 'edit_profile_screen.dart';
 import 'fashion_preferences_screen.dart';
 import 'change_email_screen.dart';
@@ -52,21 +58,26 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final theme = context.appTheme;
+    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     final settings = ref.watch(settingsProvider);
     final userAsync = ref.watch(currentUserProvider);
     final firebaseUser = ref.watch(authStateProvider).value;
 
+    final unreadCount = ref.watch(socialUnreadCountProvider);
     return Scaffold(
       backgroundColor: theme.backgroundPrimary,
-      appBar: AppBar(
-        title: Text(
-          'Settings',
-          style: theme.titleLarge(),
-        ),
-        backgroundColor: theme.surface,
-        elevation: 0,
-        iconTheme: IconThemeData(color: theme.textPrimary),
+      appBar: DashboardTopBar(
+        aiStatus: 'Settings',
+        isAITyping: false,
+        notificationCount: unreadCount,
+        onProfileTap: () {
+          Scaffold.of(context).closeDrawer();
+        },
+        onNotificationsTap: () {
+          Navigator.of(context).pushNamed(Routes.notificationCenter);
+        },
       ),
+      drawer: _buildNavigationDrawer(context),
       body: RefreshIndicator(
         onRefresh: () async {
           // Refresh both settings and user data
@@ -74,35 +85,41 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ref.invalidate(authStateProvider);
           await ref.read(settingsProvider.notifier).loadSettings();
         },
-        color: theme.primary,
+        color: accentPink,
         child: ListView(
           children: [
             const SizedBox(height: AppThemeData.spacingMD),
-            
+
             // Profile Section
             _buildProfileSection(userAsync, firebaseUser),
-            
+
+            // Friends & Messages
+            _buildSocialSection(),
+
             // Account Settings
             _buildAccountSettingsSection(),
-            
+
             // Fashion Preferences
             _buildFashionPreferencesSection(settings),
-            
+
             // AI & Try-On Settings
             _buildAISettingsSection(settings),
-            
+
             // Theme Settings
             _buildThemeSection(),
-            
+
+            // Language Settings
+            _buildLanguageSection(),
+
             // Notifications
             _buildNotificationsSection(settings),
-            
+
             // Privacy & Data
             _buildPrivacySection(),
-            
+
             // App Information
             _buildAppInfoSection(),
-            
+
             const SizedBox(height: AppThemeData.spacingXL),
           ],
         ),
@@ -110,17 +127,146 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     );
   }
 
-  Widget _buildProfileSection(AsyncValue<UserModel?> userAsync, User? firebaseUser) {
+  Widget _buildNavigationDrawer(BuildContext context) {
+    final isDark = context.isDarkMode;
+    return Drawer(
+      child: Container(
+        color:
+            isDark ? DesignTokens.darkBackground : DesignTokens.lightBackground,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
+                border: Border(
+                  bottom: BorderSide(
+                    color: isDark
+                        ? DesignTokens.darkBorder
+                        : DesignTokens.lightBorder,
+                  ),
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Cleo Fashion',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: isDark
+                              ? DesignTokens.darkAccent
+                              : DesignTokens.lightAccent,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your AI Fashion Assistant',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.home,
+              label: 'Dashboard',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.dashboard);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.checkroom,
+              label: 'Wardrobe',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.wardrobe);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.image_search,
+              label: 'Virtual Try-On',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.tryon);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.lightbulb,
+              label: 'Recommendations',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.recommendations);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.calendar_today,
+              label: 'Calendar & Events',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.calendar);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.grid_view_rounded,
+              label: 'Style Feed',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.styleFeed);
+              },
+            ),
+            const Divider(),
+            _buildNavItem(
+              context: context,
+              icon: Icons.settings,
+              label: 'Settings',
+              onTap: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final isDark = context.isDarkMode;
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isDark ? DesignTokens.darkAccent : DesignTokens.lightAccent,
+      ),
+      title: Text(label),
+      onTap: onTap,
+      hoverColor: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
+    );
+  }
+
+  Widget _buildProfileSection(
+      AsyncValue<UserModel?> userAsync, User? firebaseUser) {
     final theme = context.appTheme;
-    
+
     // Get user data from Firestore first, fallback to Firebase user
     final userModel = userAsync.value;
     final displayName = userModel?.displayName ?? firebaseUser?.displayName;
-    final email = userModel?.email.isNotEmpty == true 
-        ? userModel!.email 
+    final email = userModel?.email.isNotEmpty == true
+        ? userModel!.email
         : (firebaseUser?.email ?? 'No email');
     final photoUrl = userModel?.avatarUrl ?? firebaseUser?.photoURL;
-    
+
     return SettingsSectionCard(
       title: 'Profile',
       children: [
@@ -130,10 +276,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             children: [
               CircleAvatar(
                 radius: 40,
-                backgroundColor: theme.primary,
-                backgroundImage: photoUrl != null
-                    ? NetworkImage(photoUrl)
-                    : null,
+                backgroundColor: context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent,
+                backgroundImage:
+                    photoUrl != null ? NetworkImage(photoUrl) : null,
                 child: photoUrl == null
                     ? Text(
                         displayName?.substring(0, 1).toUpperCase() ??
@@ -177,6 +322,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               MaterialPageRoute(builder: (_) => const EditProfileScreen()),
             );
           },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSocialSection() {
+    final isDark = context.isDarkMode;
+    final accent = isDark ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+    return SettingsSectionCard(
+      title: 'Friends & Messages',
+      children: [
+        SettingsActionTile(
+          title: 'Friend requests',
+          subtitle: 'View pending and sent requests',
+          leadingIcon: Icons.person_add_rounded,
+          onTap: () => Navigator.of(context).pushNamed(Routes.friendRequests),
+        ),
+        SettingsActionTile(
+          title: 'Messages',
+          subtitle: 'Chat with friends',
+          leadingIcon: Icons.chat_bubble_outline_rounded,
+          onTap: () => Navigator.of(context).pushNamed(Routes.chats),
         ),
       ],
     );
@@ -248,7 +415,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           value: settings.autoRecommendations,
           icon: Icons.auto_awesome,
           onChanged: (value) {
-            ref.read(settingsProvider.notifier).updateAutoRecommendations(value);
+            ref
+                .read(settingsProvider.notifier)
+                .updateAutoRecommendations(value);
           },
         ),
         Divider(height: 1, color: theme.borderLight),
@@ -258,7 +427,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           value: settings.highQualityRendering,
           icon: Icons.high_quality,
           onChanged: (value) {
-            ref.read(settingsProvider.notifier).updateHighQualityRendering(value);
+            ref
+                .read(settingsProvider.notifier)
+                .updateHighQualityRendering(value);
           },
         ),
         Divider(height: 1, color: theme.borderLight),
@@ -268,7 +439,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           value: settings.backgroundPreservation,
           icon: Icons.image_outlined,
           onChanged: (value) {
-            ref.read(settingsProvider.notifier).updateBackgroundPreservation(value);
+            ref
+                .read(settingsProvider.notifier)
+                .updateBackgroundPreservation(value);
           },
         ),
       ],
@@ -306,8 +479,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           value: settings.recommendationAlerts,
           icon: Icons.star_outline,
           onChanged: (value) {
-            ref.read(settingsProvider.notifier).updateRecommendationAlerts(value);
+            ref
+                .read(settingsProvider.notifier)
+                .updateRecommendationAlerts(value);
           },
+        ),
+        Divider(height: 1, color: theme.borderLight),
+        SettingsActionTile(
+          title: 'View all notifications',
+          subtitle: 'Friend requests, messages, likes, comments',
+          leadingIcon: Icons.notifications_active_outlined,
+          onTap: () => Navigator.of(context).pushNamed(Routes.notificationCenter),
         ),
       ],
     );
@@ -316,7 +498,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget _buildThemeSection() {
     final currentTheme = ref.watch(themeModeProvider);
     final themeData = ref.watch(themeDataProvider);
-    
+
     return SettingsSectionCard(
       title: 'Appearance',
       children: [
@@ -342,6 +524,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             selected: isSelected,
           );
         }),
+      ],
+    );
+  }
+
+  Widget _buildLanguageSection() {
+    final theme = context.appTheme;
+
+    return SettingsSectionCard(
+      title: 'Language',
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(AppThemeData.spacingMD),
+          child: LanguageSelector(
+            onLanguageChanged: () {
+              // Language changed, UI will update automatically via Riverpod
+            },
+          ),
+        ),
       ],
     );
   }
@@ -407,10 +607,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       title: 'App Information',
       children: [
         // Logo
-        Padding(
-          padding: const EdgeInsets.all(AppThemeData.spacingMD),
+        const Padding(
+          padding: EdgeInsets.all(AppThemeData.spacingMD),
           child: Center(
-            child: const CleoLogo.medium(
+            child: CleoLogo.medium(
               borderRadius: BorderRadius.all(Radius.circular(16)),
             ),
           ),
@@ -452,7 +652,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ThemedDialog.show(
       context: context,
       title: 'Data Usage',
-      content: 'We use your data to provide personalized fashion recommendations and improve your experience. Your data is encrypted and stored securely.',
+      content:
+          'We use your data to provide personalized fashion recommendations and improve your experience. Your data is encrypted and stored securely.',
       confirmText: 'OK',
       onConfirm: () => Navigator.pop(context),
     );
@@ -462,7 +663,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ThemedDialog.show(
       context: context,
       title: 'AI Image Processing',
-      content: 'Your images are processed using AI to create virtual try-on results. Images are processed securely and not shared with third parties.',
+      content:
+          'Your images are processed using AI to create virtual try-on results. Images are processed securely and not shared with third parties.',
       confirmText: 'OK',
       onConfirm: () => Navigator.pop(context),
     );
@@ -472,7 +674,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ThemedDialog.show(
       context: context,
       title: 'Delete All Data?',
-      content: 'This will permanently delete all your data including wardrobe, preferences, and try-on history. This action cannot be undone.',
+      content:
+          'This will permanently delete all your data including wardrobe, preferences, and try-on history. This action cannot be undone.',
       confirmText: 'Delete',
       cancelText: 'Cancel',
       isDestructive: true,
@@ -496,7 +699,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         final authService = ref.read(authServiceProvider);
         await authService.signOut();
         if (context.mounted) {
-          Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil('/login', (route) => false);
         }
       },
       onCancel: () => Navigator.pop(context),
@@ -507,7 +711,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ThemedDialog.show(
       context: context,
       title: 'Delete Account?',
-      content: 'This will permanently delete your account and all associated data. This action cannot be undone.',
+      content:
+          'This will permanently delete your account and all associated data. This action cannot be undone.',
       confirmText: 'Delete Account',
       cancelText: 'Cancel',
       isDestructive: true,

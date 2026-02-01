@@ -1,5 +1,6 @@
 /// Theme Provider
 /// Manages theme state and persistence
+library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_theme_mode.dart';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/fashion_design_system.dart';
 import '../../../core/models/wardrobe_item_model.dart';
 
@@ -20,11 +21,14 @@ class WardrobeItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = Theme.of(context).brightness == Brightness.dark
+        ? DesignTokens.darkAccent
+        : DesignTokens.lightAccent;
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
-        margin: EdgeInsets.only(bottom: FashionDesignSystem.spacingMD),
+        margin: const EdgeInsets.only(bottom: FashionDesignSystem.spacingMD),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(FashionDesignSystem.radiusLG),
           boxShadow: FashionDesignSystem.cardShadow,
@@ -45,16 +49,16 @@ class WardrobeItemCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
                   color: FashionDesignSystem.backgroundLight,
-                  child: Center(
+                  child: const Center(
                     child: CircularProgressIndicator(
-                      color: FashionDesignSystem.primaryColor,
+                      color: accent,
                       strokeWidth: 2,
                     ),
                   ),
                 ),
                 errorWidget: (context, url, error) => Container(
                   color: FashionDesignSystem.backgroundLight,
-                  child: Icon(
+                  child: const Icon(
                     Icons.image_outlined,
                     size: 48,
                     color: FashionDesignSystem.textTertiary,
@@ -89,14 +93,14 @@ class WardrobeItemCard extends StatelessWidget {
               left: 0,
               right: 0,
               child: Padding(
-                padding: EdgeInsets.all(FashionDesignSystem.spacingMD),
+                padding: const EdgeInsets.all(FashionDesignSystem.spacingMD),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Category Tag
                     Container(
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: FashionDesignSystem.spacingMD,
                         vertical: FashionDesignSystem.spacingXS,
                       ),
@@ -119,7 +123,7 @@ class WardrobeItemCard extends StatelessWidget {
                     
                     // Brand (if available)
                     if (item.brand != null) ...[
-                      SizedBox(height: FashionDesignSystem.spacingXS),
+                      const SizedBox(height: FashionDesignSystem.spacingXS),
                       Text(
                         item.brand!,
                         style: FashionDesignSystem.bodySmall().copyWith(
@@ -148,7 +152,7 @@ class WardrobeItemCard extends StatelessWidget {
                     color: Colors.black.withOpacity(0.3),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.more_vert,
                     size: 18,
                     color: Colors.white,

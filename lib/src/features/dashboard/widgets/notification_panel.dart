@@ -1,9 +1,9 @@
 /// Premium Notification Panel
 /// Bottom sheet with glassmorphism, smooth animations, swipe gestures
+library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/grok_design_system.dart';
 import '../../../core/models/notification_model.dart';
 import '../../../core/services/deep_link_service.dart';
@@ -158,7 +158,7 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
 
                         // Header
                         Padding(
-                          padding: EdgeInsets.all(GrokDesignSystem.spacingMD),
+                          padding: const EdgeInsets.all(GrokDesignSystem.spacingMD),
                           child: Row(
                             children: [
                               Text(
@@ -197,7 +197,7 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                                 loading: () => const SizedBox.shrink(),
                                 error: (_, __) => const SizedBox.shrink(),
                               ),
-                              SizedBox(width: GrokDesignSystem.spacingMD),
+                              const SizedBox(width: GrokDesignSystem.spacingMD),
                               // Mark all as read button
                               TextButton(
                                 onPressed: () {
@@ -219,7 +219,7 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                         ),
 
                         // Divider
-                        Divider(
+                        const Divider(
                           height: 1,
                           color: GrokDesignSystem.borderLight,
                         ),
@@ -233,12 +233,12 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(
+                                      const Icon(
                                         Icons.notifications_none,
                                         size: 64,
                                         color: GrokDesignSystem.textTertiary,
                                       ),
-                                      SizedBox(
+                                      const SizedBox(
                                         height: GrokDesignSystem.spacingMD,
                                       ),
                                       Text(
@@ -255,7 +255,7 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                               }
 
                               return ListView.builder(
-                                padding: EdgeInsets.only(
+                                padding: const EdgeInsets.only(
                                   top: GrokDesignSystem.spacingSM,
                                   bottom: GrokDesignSystem.spacingXL,
                                 ),
@@ -266,7 +266,7 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                                     key: Key(notification.id),
                                     direction: DismissDirection.horizontal,
                                     background: Container(
-                                      margin: EdgeInsets.symmetric(
+                                      margin: const EdgeInsets.symmetric(
                                         horizontal: GrokDesignSystem.spacingMD,
                                       ),
                                       decoration: BoxDecoration(
@@ -276,7 +276,7 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                                         ),
                                       ),
                                       alignment: Alignment.centerLeft,
-                                      padding: EdgeInsets.only(
+                                      padding: const EdgeInsets.only(
                                         left: GrokDesignSystem.spacingMD,
                                       ),
                                       child: const Icon(
@@ -285,7 +285,7 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                                       ),
                                     ),
                                     secondaryBackground: Container(
-                                      margin: EdgeInsets.symmetric(
+                                      margin: const EdgeInsets.symmetric(
                                         horizontal: GrokDesignSystem.spacingMD,
                                       ),
                                       decoration: BoxDecoration(
@@ -295,7 +295,7 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                                         ),
                                       ),
                                       alignment: Alignment.centerRight,
-                                      padding: EdgeInsets.only(
+                                      padding: const EdgeInsets.only(
                                         right: GrokDesignSystem.spacingMD,
                                       ),
                                       child: const Icon(
@@ -324,7 +324,7 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                                 },
                               );
                             },
-                            loading: () => Center(
+                            loading: () => const Center(
                               child: CircularProgressIndicator(
                                 color: GrokDesignSystem.accentBlue,
                               ),
@@ -333,12 +333,12 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     Icons.error_outline,
                                     size: 48,
                                     color: GrokDesignSystem.error,
                                   ),
-                                  SizedBox(
+                                  const SizedBox(
                                     height: GrokDesignSystem.spacingMD,
                                   ),
                                   Text(

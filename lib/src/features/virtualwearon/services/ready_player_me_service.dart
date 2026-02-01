@@ -260,14 +260,10 @@ class ReadyPlayerMeService {
         }
         
         // Format 2: { "id": "..." }
-        if (avatarId == null) {
-          avatarId = json['id'] as String?;
-        }
+        avatarId ??= json['id'] as String?;
         
         // Format 3: { "avatarId": "..." }
-        if (avatarId == null) {
-          avatarId = json['avatarId'] as String?;
-        }
+        avatarId ??= json['avatarId'] as String?;
         
         if (avatarId != null) {
           debugPrint('Avatar draft created successfully: $avatarId');

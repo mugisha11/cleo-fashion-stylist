@@ -2,12 +2,11 @@
 /// ChatGPT-like chat interface for try-on
 /// Centered, expands to fullscreen on focus, supports image attachments
 /// Maintains chat history for 7 days
+library;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/chat_model.dart';
-import '../../../core/services/chat_service.dart';
-import '../../../core/providers/fashion_ai_chat_provider.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../dashboard/providers/chat_provider.dart';
 
 class ProductionChatInterface extends ConsumerStatefulWidget {
@@ -55,6 +54,9 @@ class _ProductionChatInterfaceState extends ConsumerState<ProductionChatInterfac
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final accent = Theme.of(context).brightness == Brightness.dark
+        ? DesignTokens.darkAccent
+        : DesignTokens.lightAccent;
     final chatMessagesAsync = ref.watch(chatMessagesProvider);
 
     return Container(
@@ -107,7 +109,7 @@ class _ProductionChatInterfaceState extends ConsumerState<ProductionChatInterfac
                 }).toList();
 
                 if (recentMessages.isEmpty) {
-                  return _buildEmptyState(context);
+                  return _buildEmptyState(context, accent);
                 }
 
                 return ListView.builder(
@@ -115,16 +117,16 @@ class _ProductionChatInterfaceState extends ConsumerState<ProductionChatInterfac
                   padding: const EdgeInsets.all(16),
                   itemCount: recentMessages.length,
                   itemBuilder: (context, index) {
-                    return _buildMessage(recentMessages[index], theme);
+                    return _buildMessage(recentMessages[index], theme, accent);
                   },
                 );
               },
               loading: () => Center(
                 child: CircularProgressIndicator(
-                  color: widget.colorScheme.primary,
+                  color: accent,
                 ),
               ),
-              error: (_, __) => _buildEmptyState(context),
+              error: (_, __) => _buildEmptyState(context, accent),
             ),
           ),
 
@@ -142,7 +144,7 @@ class _ProductionChatInterfaceState extends ConsumerState<ProductionChatInterfac
               children: [
                 // Image attach button
                 IconButton(
-                  icon: Icon(Icons.image, color: widget.colorScheme.primary),
+                  icon: Icon(Icons.image, color: accent),
                   onPressed: widget.onImageAttach,
                   tooltip: 'Attach image',
                 ),
@@ -178,7 +180,7 @@ class _ProductionChatInterfaceState extends ConsumerState<ProductionChatInterfac
                 const SizedBox(width: 8),
                 // Send button
                 IconButton(
-                  icon: Icon(Icons.send, color: widget.colorScheme.primary),
+                  icon: Icon(Icons.send, color: accent),
                   onPressed: _sendMessage,
                   tooltip: 'Send',
                 ),
@@ -190,7 +192,7 @@ class _ProductionChatInterfaceState extends ConsumerState<ProductionChatInterfac
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, Color accent) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -214,7 +216,7 @@ class _ProductionChatInterfaceState extends ConsumerState<ProductionChatInterfac
               icon: const Icon(Icons.checkroom),
               label: const Text('Try On Selected Items'),
               style: FilledButton.styleFrom(
-                backgroundColor: widget.colorScheme.primary,
+                backgroundColor: accent,
                 foregroundColor: widget.colorScheme.onPrimary,
               ),
             ),
@@ -224,7 +226,7 @@ class _ProductionChatInterfaceState extends ConsumerState<ProductionChatInterfac
     );
   }
 
-  Widget _buildMessage(ChatMessage message, ThemeData theme) {
+  Widget _buildMessage(ChatMessage message, ThemeData theme, Color accent) {
     final isUser = message.role == 'user';
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -234,7 +236,7 @@ class _ProductionChatInterfaceState extends ConsumerState<ProductionChatInterfac
         constraints: const BoxConstraints(maxWidth: 280),
         decoration: BoxDecoration(
           color: isUser
-              ? widget.colorScheme.primary
+              ? accent
               : widget.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
         ),

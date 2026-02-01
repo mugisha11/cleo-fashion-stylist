@@ -1,6 +1,10 @@
 """
 Stage 5: Image Generation
 Uses Gemini API for image generation
+
+CRITICAL: httpx.AsyncClient is now DEPENDENCY INJECTED via lifespan manager.
+This prevents orphaned async tasks and ensures proper cleanup.
+Never create new httpx clients here - always use the injected instance.
 """
 import logging
 import numpy as np
@@ -20,19 +24,39 @@ class Stage5ImageGeneration:
     """
     Stage 5: Image generation using Gemini API.
     Generates try-on result using user image, garment, and prompt.
+    
+    IMPORTANT: httpx.AsyncClient is injected via dependency injection.
+    This prevents resource leaks and orphaned async tasks.
     """
     
-    def __init__(self, use_pro_model: bool = False):
+    def __init__(self, use_pro_model: bool = False, httpx_client: Optional[httpx.AsyncClient] = None):
         """
         Initialize image generation stage.
         
         Args:
             use_pro_model: Whether to use Pro model (higher quality)
+            httpx_client: Optional injected httpx client. If None, will attempt to get from app context.
+                         This allows testing and dependency injection.
         """
         self.use_pro_model = use_pro_model
         self.model_name = self._get_model_name()
         self.api_key = settings.GEMINI_API_KEY
         self.base_url = "https://generativelanguage.googleapis.com/v1beta"
+        
+        # Store injected client - will be set by lifespan manager
+        self._httpx_client = httpx_client
+        logger.info(f"Stage5ImageGeneration initialized with model: {self.model_name}")
+    
+    
+    def set_httpx_client(self, client: httpx.AsyncClient):
+        """
+        Set the httpx client (called by lifespan manager).
+        
+        Args:
+            client: The managed httpx.AsyncClient from lifespan manager
+        """
+        self._httpx_client = client
+        logger.info("Stage5ImageGeneration: httpx client injected")
     
     def _get_model_name(self) -> str:
         """Get model name based on configuration"""
@@ -72,6 +96,14 @@ class Stage5ImageGeneration:
                 details="Set GEMINI_API_KEY environment variable"
             )
         
+        # Ensure httpx client is available
+        if self._httpx_client is None:
+            raise APIError(
+                code=ErrorCode.CONFIG_MISSING_API_KEY,
+                message="httpx client not initialized",
+                details="Lifespan manager did not inject httpx client. This is a startup error."
+            )
+        
         try:
             # Convert images to base64
             user_b64 = self._image_to_base64(user_image)
@@ -106,68 +138,64 @@ class Stage5ImageGeneration:
                 }
             }
             
-            # Make request
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                logger.info(f"Calling Gemini API: {url}")
-                logger.info(f"Model: {self.model_name}")
-                response = await client.post(
-                    url,
-                    headers={
-                        "Content-Type": "application/json",
-                        "x-goog-api-key": self.api_key
-                    },
-                    json=payload
-                )
+            # Use injected httpx client (DO NOT create new AsyncClient context)
+            logger.info(f"Calling Gemini API: {url}")
+            logger.info(f"Model: {self.model_name}")
+            response = await self._httpx_client.post(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": self.api_key
+                },
+                json=payload
+            )
+            
+            # Log response status for debugging
+            logger.info(f"Gemini API response status: {response.status_code}")
+            
+            if response.status_code != 200:
+                error_text = response.text[:500]
+                logger.error(f"Gemini API error ({response.status_code}): {error_text}")
                 
-                # Log response status for debugging
-                logger.info(f"Gemini API response status: {response.status_code}")
-                
-                if response.status_code != 200:
-                    error_text = response.text[:500]
-                    logger.error(f"Gemini API error ({response.status_code}): {error_text}")
-                    
-                    # Map HTTP status codes to typed exceptions
-                    if response.status_code == 404:
-                        raise APIError(
-                            code=ErrorCode.API_MODEL_NOT_FOUND,
-                            message="Gemini model or endpoint not found",
-                            details=f"HTTP 404: {error_text[:200]}"
-                        )
-                    elif response.status_code == 429:
-                        raise APIError(
-                            code=ErrorCode.API_RATE_LIMIT,
-                            message="API rate limit exceeded",
-                            details="Please wait a moment and try again"
-                        )
-                    elif response.status_code == 401:
-                        raise APIError(
-                            code=ErrorCode.API_UNAUTHORIZED,
-                            message="Gemini API authentication failed",
-                            details="Check GEMINI_API_KEY configuration"
-                        )
-                    elif response.status_code >= 500:
-                        raise APIError(
+                # Map HTTP status codes to typed exceptions
+                if response.status_code == 404:
+                    raise APIError(
+                        code=ErrorCode.API_MODEL_NOT_FOUND,
+                        message="Gemini model or endpoint not found",
+                        details=f"HTTP 404: {error_text[:200]}"
+                    )
+                elif response.status_code == 429:
+                    raise APIError(
+                        code=ErrorCode.API_RATE_LIMIT,
+                        message="API rate limit exceeded",
+                        details="Please wait a moment and try again"
+                    )
+                elif response.status_code == 401:
+                    raise APIError(
+                        code=ErrorCode.API_UNAUTHORIZED,
+                        message="Gemini API authentication failed",
+                        details="Check GEMINI_API_KEY configuration"
+                    )
+                elif response.status_code >= 500:
+                    raise APIError(
                             code=ErrorCode.API_SERVER_ERROR,
                             message="Gemini API server error",
                             details=f"HTTP {response.status_code}: {error_text[:200]}"
                         )
-                    else:
-                        try:
-                            error_json = response.json()
-                            error_detail = error_json.get("error", {}).get("message", error_text)
-                        except:
-                            error_detail = error_text
-                        
-                        raise APIError(
-                            code=ErrorCode.API_SERVER_ERROR,
-                            message=f"Gemini API error: HTTP {response.status_code}",
-                            details=error_detail[:200]
-                        )
-                
-                response.raise_for_status()
-                result = response.json()
+                else:
+                    try:
+                        error_json = response.json()
+                        error_detail = error_json.get("error", {}).get("message", error_text)
+                    except:
+                        error_detail = error_text
+                    
+                    raise APIError(
+                        code=ErrorCode.API_SERVER_ERROR,
+                        message=f"Gemini API error: HTTP {response.status_code}",
+                        details=error_detail[:200]
+                    )
             
-            # Extract image from response
+            result = response.json()
             generated_image = self._extract_image_from_response(result)
             
             if generated_image is None:

@@ -1,6 +1,7 @@
 /// Neon Fashion AI Theme
 /// Default theme: Electric blue, glowing, fashion-tech aesthetic
 /// Inspired by futuristic fashion interfaces with subtle neon accents
+library;
 import 'package:flutter/material.dart';
 import 'app_theme_data.dart';
 import 'app_theme_mode.dart';
@@ -54,6 +55,7 @@ class NeonFashionTheme {
     textTertiary: _textMuted,
     borderLight: _borderSubtle,
     borderMedium: _borderGlow,
+    shadowColor: Colors.black87,
     chatUserBubble: _chatUser,
     chatAIBubble: _chatAI,
     chatAIBorder: _chatAIBorder,

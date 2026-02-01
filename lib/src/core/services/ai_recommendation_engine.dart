@@ -38,7 +38,7 @@ class AIRecommendationEngine {
       if (_userId.isEmpty) return [];
 
       final targetDate = forDate ?? DateTime.now();
-      
+
       // Check cache first
       final cached = await _getCachedRecommendations(targetDate);
       if (cached != null && cached.isNotEmpty) {
@@ -135,12 +135,14 @@ class AIRecommendationEngine {
               'is_raining': weather.isRaining,
             }
           : null,
-      'calendar_events': calendarEvents.map((e) => {
-            'date': e.date.toIso8601String(),
-            'event_type': e.eventType,
-            'event_name': e.eventName,
-            'occasion': e.eventType,
-          }).toList(),
+      'calendar_events': calendarEvents
+          .map((e) => {
+                'date': e.date.toIso8601String(),
+                'event_type': e.eventType,
+                'event_name': e.eventName,
+                'occasion': e.eventType,
+              })
+          .toList(),
       'wardrobe_summary': {
         'total_items': wardrobe.length,
         'categories': wardrobe.map((w) => w.category).toSet().toList(),
@@ -174,7 +176,7 @@ class AIRecommendationEngine {
       }
 
       // Fallback to local server
-      const apiBaseUrl = 'http://localhost:8000';
+      const apiBaseUrl = 'http://localhost:8001';
       final httpResponse = await http
           .post(
             Uri.parse('$apiBaseUrl/ai/generate-recommendations'),
@@ -208,28 +210,26 @@ class AIRecommendationEngine {
         return [];
       }
 
-      return recommendations
-          .take(5)
-          .map((item) {
-            final data = item as Map<String, dynamic>;
-            final outfitIds = (data['outfit_item_ids'] as List<dynamic>?)
-                    ?.map((e) => e.toString())
-                    .toList() ??
-                [];
+      return recommendations.take(5).map((item) {
+        final data = item as Map<String, dynamic>;
+        final outfitIds = (data['outfit_item_ids'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
 
-            return OutfitRecommendation(
-              id: data['id'] as String? ?? DateTime.now().millisecondsSinceEpoch.toString(),
-              name: data['name'] as String? ?? 'Recommended Outfit',
-              reasoning: data['reasoning'] as String? ?? 'AI recommended outfit',
-              weatherMatch: data['weather_match'] as String?,
-              eventMatch: data['event_match'] as String?,
-              outfitItemIds: outfitIds,
-              confidence: (data['confidence'] as num?)?.toDouble() ?? 0.8,
-              recommendedFor: targetDate,
-              metadata: data['metadata'] as Map<String, dynamic>?,
-            );
-          })
-          .toList();
+        return OutfitRecommendation(
+          id: data['id'] as String? ??
+              DateTime.now().millisecondsSinceEpoch.toString(),
+          name: data['name'] as String? ?? 'Recommended Outfit',
+          reasoning: data['reasoning'] as String? ?? 'AI recommended outfit',
+          weatherMatch: data['weather_match'] as String?,
+          eventMatch: data['event_match'] as String?,
+          outfitItemIds: outfitIds,
+          confidence: (data['confidence'] as num?)?.toDouble() ?? 0.8,
+          recommendedFor: targetDate,
+          metadata: data['metadata'] as Map<String, dynamic>?,
+        );
+      }).toList();
     } catch (e) {
       print('Error parsing AI response: $e');
       return [];
@@ -279,8 +279,8 @@ class AIRecommendationEngine {
       }
 
       // Use first item as representative (or combine multiple)
-      final clothingImageUrl = outfitItems.first.processedImageUrl ??
-          outfitItems.first.imageUrl;
+      final clothingImageUrl =
+          outfitItems.first.processedImageUrl ?? outfitItems.first.imageUrl;
 
       // Call try-on service
       // TODO: Integrate with actual try-on service
@@ -350,7 +350,7 @@ class AIRecommendationEngine {
     final weatherPart = weather != null
         ? 'Perfect for ${weather.temperature.toStringAsFixed(0)}°C weather'
         : 'Great for today';
-    return '$weatherPart. Ideal for ${eventType} occasions.';
+    return '$weatherPart. Ideal for $eventType occasions.';
   }
 
   String _getWeatherMatch(WeatherData weather) {
@@ -416,7 +416,7 @@ class AIRecommendationEngine {
           .eq('user_id', _userId)
           .maybeSingle();
 
-      return response as Map<String, dynamic>? ?? {};
+      return response ?? {};
     } catch (e) {
       return {};
     }
@@ -440,7 +440,8 @@ class AIRecommendationEngine {
       if (response == null) return null;
 
       final recommendations = (response['recommendations'] as List<dynamic>?)
-              ?.map((r) => OutfitRecommendation.fromJson(r as Map<String, dynamic>))
+              ?.map((r) =>
+                  OutfitRecommendation.fromJson(r as Map<String, dynamic>))
               .toList() ??
           [];
 

@@ -1,5 +1,7 @@
 /// AI Image Understanding Service
 /// Production-ready service for wardrobe intelligence using CLIP, SAM, Detectron2/YOLOv8
+library;
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
@@ -9,7 +11,7 @@ import '../models/wardrobe_item_model.dart';
 class AIImageUnderstandingService {
   final SupabaseClient _supabase;
   final FirebaseAuth _auth;
-  static const String _backendUrl = 'http://localhost:8000';
+  static const String _backendUrl = 'http://localhost:8001';
 
   AIImageUnderstandingService(this._supabase, this._auth);
 
@@ -23,22 +25,24 @@ class AIImageUnderstandingService {
   }) async {
     try {
       // Call backend AI service
-      final response = await http.post(
-        Uri.parse('$_backendUrl/ai/analyze-wardrobe-item'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'image_url': imageUrl,
-          'item_id': itemId,
-          'user_id': _userId,
-        }),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse('$_backendUrl/ai/analyze-wardrobe-item'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'image_url': imageUrl,
+              'item_id': itemId,
+              'user_id': _userId,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw Exception('AI analysis failed: ${response.body}');
       }
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      
+
       // Store embeddings and metadata in Supabase
       await _storeItemMetadata(itemId, data);
 
@@ -59,7 +63,8 @@ class AIImageUnderstandingService {
   }
 
   /// Store item metadata and embeddings in database
-  Future<void> _storeItemMetadata(String itemId, Map<String, dynamic> data) async {
+  Future<void> _storeItemMetadata(
+      String itemId, Map<String, dynamic> data) async {
     try {
       await _supabase.from('wardrobe_items').update({
         'category_tags': data['category_tags'] as List<dynamic>? ?? [],
@@ -78,15 +83,17 @@ class AIImageUnderstandingService {
     int limit = 5,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_backendUrl/ai/find-similar-items'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'item_id': itemId,
-          'user_id': _userId,
-          'limit': limit,
-        }),
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse('$_backendUrl/ai/find-similar-items'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'item_id': itemId,
+              'user_id': _userId,
+              'limit': limit,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode != 200) {
         return [];
@@ -94,8 +101,9 @@ class AIImageUnderstandingService {
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final similarIds = (data['similar_item_ids'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ?? [];
+              ?.map((e) => e as String)
+              .toList() ??
+          [];
 
       // Fetch items from wardrobe
       final items = <WardrobeItemModel>[];
@@ -116,15 +124,17 @@ class AIImageUnderstandingService {
     required List<String> itemIds,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_backendUrl/ai/batch-analyze-wardrobe'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'image_urls': imageUrls,
-          'item_ids': itemIds,
-          'user_id': _userId,
-        }),
-      ).timeout(const Duration(seconds: 60));
+      final response = await http
+          .post(
+            Uri.parse('$_backendUrl/ai/batch-analyze-wardrobe'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'image_urls': imageUrls,
+              'item_ids': itemIds,
+              'user_id': _userId,
+            }),
+          )
+          .timeout(const Duration(seconds: 60));
 
       if (response.statusCode != 200) {
         return [];
@@ -132,8 +142,10 @@ class AIImageUnderstandingService {
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final results = (data['results'] as List<dynamic>?)
-          ?.map((e) => WardrobeItemMetadata.fromJson(e as Map<String, dynamic>))
-          .toList() ?? [];
+              ?.map((e) =>
+                  WardrobeItemMetadata.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [];
 
       return results;
     } catch (e) {
@@ -170,7 +182,10 @@ class WardrobeItemMetadata {
     return WardrobeItemMetadata(
       itemId: json['item_id'] as String? ?? '',
       category: json['category'] as String? ?? 'unknown',
-      colors: (json['colors'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      colors: (json['colors'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       texture: json['texture'] as String? ?? 'unknown',
       fabricType: json['fabric_type'] as String? ?? 'unknown',
       season: json['season'] as String? ?? 'all',

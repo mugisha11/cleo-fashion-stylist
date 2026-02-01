@@ -22,7 +22,7 @@ class MediaPipeService {
     try {
       // TODO: Integrate actual MediaPipe face/pose detection
       // For now, return basic checks
-      
+
       // Simulate quality check
       // In production, use MediaPipe to detect:
       // - Face landmarks
@@ -31,43 +31,12 @@ class MediaPipeService {
       // - Lighting assessment
       // - Occlusion detection
 
-      // Basic heuristics (replace with actual MediaPipe)
-      final hasFace = true; // Would use MediaPipe face detection
-      final hasFullBody = true; // Would use MediaPipe pose detection
-      final isBlurry = false; // Would use blur detection
-      final hasGoodLighting = true; // Would analyze image histogram
-
-      if (!hasFace) {
-        return QualityResult(
-          isHighQuality: false,
-          message: 'Please ensure your face is visible in the photo',
-          score: 0.3,
-        );
-      }
-
-      if (!hasFullBody) {
-        return QualityResult(
-          isHighQuality: false,
-          message: 'For best results, use a full-body photo. Move back or adjust your position.',
-          score: 0.5,
-        );
-      }
-
-      if (isBlurry) {
-        return QualityResult(
-          isHighQuality: false,
-          message: 'Photo appears blurry. Please retake with better focus.',
-          score: 0.4,
-        );
-      }
-
-      if (!hasGoodLighting) {
-        return QualityResult(
-          isHighQuality: false,
-          message: 'Photo lighting could be better. Try moving to a well-lit area.',
-          score: 0.6,
-        );
-      }
+      // Basic quality checks - assuming all pass for MVP
+      // TODO: Implement actual MediaPipe detection:
+      // - Face detection (hasFace)
+      // - Pose detection (hasFullBody)
+      // - Blur detection (isBlurry)
+      // - Lighting assessment (hasGoodLighting)
 
       return QualityResult(
         isHighQuality: true,
@@ -96,4 +65,3 @@ class MediaPipeService {
 final mediapipeServiceProvider = Provider<MediaPipeService>((ref) {
   return MediaPipeService();
 });
-

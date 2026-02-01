@@ -7,7 +7,6 @@ import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/theme/app_theme_data.dart';
 import '../../../core/models/calendar_day_model.dart';
 import '../providers/calendar_provider.dart';
-import '../../../routes.dart';
 
 /// Event Detail Drawer - Bottom sheet with full event details
 class EventDetailDrawer extends ConsumerStatefulWidget {
@@ -33,19 +32,19 @@ class _EventDetailDrawerState extends ConsumerState<EventDetailDrawer> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete Event'),
-        content: Text('Are you sure you want to delete this event?'),
+        title: const Text('Delete Event'),
+        content: const Text('Are you sure you want to delete this event?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: context.appTheme.accentError,
             ),
-            child: Text('Delete'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -64,7 +63,7 @@ class _EventDetailDrawerState extends ConsumerState<EventDetailDrawer> {
         widget.onClose();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Event deleted'),
+            content: const Text('Event deleted'),
             backgroundColor: context.appTheme.accentSuccess,
           ),
         );

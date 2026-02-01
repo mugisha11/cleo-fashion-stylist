@@ -1,5 +1,6 @@
 /// Executive Blue Theme
 /// Premium, intelligent, ChatGPT-level design system
+library;
 import 'package:flutter/material.dart';
 
 class ExecutiveBlueTheme {

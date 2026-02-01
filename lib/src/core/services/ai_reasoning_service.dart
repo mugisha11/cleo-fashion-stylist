@@ -1,5 +1,7 @@
 /// AI Reasoning Service
 /// Production-ready LLM + RAG + Vector DB for outfit generation and style reasoning
+library;
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
@@ -12,7 +14,7 @@ class AIReasoningService {
   final SupabaseClient _supabase;
   final FirebaseAuth _auth;
   final WeatherService _weatherService;
-  static const String _backendUrl = 'http://localhost:8000';
+  static const String _backendUrl = 'http://localhost:8001';
 
   AIReasoningService(this._supabase, this._auth, this._weatherService);
 
@@ -59,18 +61,21 @@ class AIReasoningService {
       }
 
       // Call AI reasoning backend
-      final response = await http.post(
-        Uri.parse('$_backendUrl/ai/generate-outfit'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'user_id': _userId,
-          'date': date.toIso8601String(),
-          'event_type': eventType ?? calendarDay?.eventType,
-          'event_name': eventName ?? calendarDay?.eventName,
-          'weather': finalWeatherData,
-          'wardrobe_item_ids': wardrobeItems?.map((e) => e.id).toList() ?? [],
-        }),
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .post(
+            Uri.parse('$_backendUrl/ai/generate-outfit'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'user_id': _userId,
+              'date': date.toIso8601String(),
+              'event_type': eventType ?? calendarDay?.eventType,
+              'event_name': eventName ?? calendarDay?.eventName,
+              'weather': finalWeatherData,
+              'wardrobe_item_ids':
+                  wardrobeItems.map((e) => e.id).toList() ?? [],
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw Exception('AI outfit generation failed: ${response.body}');
@@ -96,15 +101,18 @@ class AIReasoningService {
     List<WardrobeItemModel>? wardrobeItems,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_backendUrl/ai/daily-summary'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'user_id': _userId,
-          'date': date.toIso8601String(),
-          'wardrobe_item_ids': wardrobeItems?.map((e) => e.id).toList() ?? [],
-        }),
-      ).timeout(const Duration(seconds: 20));
+      final response = await http
+          .post(
+            Uri.parse('$_backendUrl/ai/daily-summary'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'user_id': _userId,
+              'date': date.toIso8601String(),
+              'wardrobe_item_ids':
+                  wardrobeItems?.map((e) => e.id).toList() ?? [],
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
 
       if (response.statusCode != 200) {
         throw Exception('AI summary failed: ${response.body}');
@@ -128,14 +136,16 @@ class AIReasoningService {
     required List<WardrobeItemModel> items,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_backendUrl/ai/analyze-wardrobe'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'user_id': _userId,
-          'item_ids': items.map((e) => e.id).toList(),
-        }),
-      ).timeout(const Duration(seconds: 20));
+      final response = await http
+          .post(
+            Uri.parse('$_backendUrl/ai/analyze-wardrobe'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'user_id': _userId,
+              'item_ids': items.map((e) => e.id).toList(),
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
 
       if (response.statusCode != 200) {
         throw Exception('Wardrobe analysis failed: ${response.body}');
@@ -165,7 +175,7 @@ class AIReasoningService {
           .eq('user_id', _userId)
           .eq('date', dateStr)
           .maybeSingle();
-      
+
       if (response == null) return null;
       // Convert to CalendarDay - simplified
       return null;
@@ -196,7 +206,10 @@ class OutfitRecommendation {
   factory OutfitRecommendation.fromJson(Map<String, dynamic> json) {
     return OutfitRecommendation(
       outfitId: json['outfit_id'] as String? ?? '',
-      itemIds: (json['item_ids'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      itemIds: (json['item_ids'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       explanation: json['explanation'] as String? ?? '',
       confidence: (json['confidence'] as num?)?.toDouble() ?? 0.0,
       reasoning: json['reasoning'] as String? ?? '',
@@ -226,8 +239,14 @@ class DailyOutfitSummary {
       date: DateTime.parse(json['date'] as String),
       wardrobeStatus: json['wardrobe_status'] as String? ?? 'unknown',
       eventsCount: (json['events_count'] as num?)?.toInt() ?? 0,
-      recommendations: (json['recommendations'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-      insights: (json['insights'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      recommendations: (json['recommendations'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      insights: (json['insights'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
     );
   }
 }
@@ -252,9 +271,17 @@ class WardrobeAnalysis {
     return WardrobeAnalysis(
       totalItems: (json['total_items'] as num?)?.toInt() ?? 0,
       categories: Map<String, int>.from(json['categories'] as Map? ?? {}),
-      gaps: (json['gaps'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-      strengths: (json['strengths'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-      recommendations: (json['recommendations'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      gaps:
+          (json['gaps'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+              [],
+      strengths: (json['strengths'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      recommendations: (json['recommendations'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
     );
   }
 }

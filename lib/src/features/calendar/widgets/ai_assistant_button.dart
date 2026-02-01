@@ -79,7 +79,7 @@ class _AIAssistantButtonState extends State<AIAssistantButton>
                   ),
                 ],
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.auto_awesome,
                 color: Colors.white,
                 size: 28,

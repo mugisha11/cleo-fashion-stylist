@@ -1,4 +1,3 @@
-import 'dart:io' if (dart.library.html) 'dart:html' as io;
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -98,7 +97,7 @@ class WardrobeService {
         if (imageBytesForAnalysis != null) {
           // MEMORY OPTIMIZATION: Limit image size before analysis
           // Large images can cause out-of-memory errors
-          final maxSizeBytes = 5 * 1024 * 1024; // 5MB limit
+          const maxSizeBytes = 5 * 1024 * 1024; // 5MB limit
           Uint8List? optimizedBytes = imageBytesForAnalysis;
           
           if (imageBytesForAnalysis.length > maxSizeBytes) {
@@ -109,7 +108,7 @@ class WardrobeService {
           }
           
           final analysis = await _aiVisionService.analyzeClothing(
-            imageBytes: optimizedBytes!,
+            imageBytes: optimizedBytes,
             imageUrl: processedImageUrl ?? imageUrl,
           );
 
@@ -131,7 +130,7 @@ class WardrobeService {
           detectedPattern = analysis.pattern;
           aiAttributes = analysis.attributes;
           
-          print('✅ AI analysis complete: pattern=$detectedPattern, attributes=${aiAttributes?.keys.join(", ")}');
+          print('✅ AI analysis complete: pattern=$detectedPattern, attributes=${aiAttributes.keys.join(", ")}');
         } else {
           print('⚠️ Could not get image bytes for AI analysis');
         }
@@ -146,13 +145,13 @@ class WardrobeService {
       final fit = aiAttributes?['fit'] as String?;
       final season = aiAttributes?['season'] != null 
           ? (aiAttributes!['season'] is List 
-              ? List<String>.from(aiAttributes!['season'] as List)
-              : [aiAttributes!['season'].toString()])
+              ? List<String>.from(aiAttributes['season'] as List)
+              : [aiAttributes['season'].toString()])
           : null;
       final occasion = aiAttributes?['occasion'] != null
           ? (aiAttributes!['occasion'] is List
-              ? List<String>.from(aiAttributes!['occasion'] as List)
-              : [aiAttributes!['occasion'].toString()])
+              ? List<String>.from(aiAttributes['occasion'] as List)
+              : [aiAttributes['occasion'].toString()])
           : null;
       final fabric = aiAttributes?['fabric'] as String?;
       final bodyRegion = aiAttributes?['bodyRegion'] as String? ?? aiAttributes?['body_region'] as String?;
@@ -227,7 +226,7 @@ class WardrobeService {
     } catch (e) {
       // Re-throw with more context
       if (e is Exception) {
-        throw e;
+        rethrow;
       }
       throw Exception('Failed to upload item: $e');
     }
@@ -412,22 +411,6 @@ class WardrobeService {
     return items;
   }
 
-  Future<void> _syncWardrobeFromFirestore(String userId) async {
-    try {
-      final snapshot = await _firestore
-          .collection('wardrobe')
-          .where('userId', isEqualTo: userId)
-          .get();
-
-      for (final doc in snapshot.docs) {
-        final item = WardrobeItemModel.fromFirestore(doc);
-        await CacheService.cacheWardrobeItem(item.id, item.toFirestore());
-      }
-    } catch (e) {
-      // Silent fail - cache is still available
-    }
-  }
-
   /// Delete a wardrobe item
   /// Deletes from Firestore, Storage (both original and processed images), and cache
   Future<void> deleteItem(String itemId) async {
@@ -577,7 +560,7 @@ class WardrobeService {
       final doc = await _firestore.collection('wardrobe').doc(itemId).get();
       
       if (doc.exists) {
-        final data = doc.data() as Map<String, dynamic>?;
+        final data = doc.data();
         if (data == null) {
           print('⚠️ Document exists but has no data');
           return null;

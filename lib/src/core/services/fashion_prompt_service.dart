@@ -6,12 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Fashion Prompt Intent Classification
 enum FashionIntent {
-  occasion,      // "What should I wear for a wedding?"
-  style,         // "Show me modern streetwear"
-  mood,          // "I want something casual"
-  wardrobeOnly,  // "Use only my wardrobe"
-  tryOn,         // "Try this outfit on me"
-  general,       // General fashion advice
+  occasion, // "What should I wear for a wedding?"
+  style, // "Show me modern streetwear"
+  mood, // "I want something casual"
+  wardrobeOnly, // "Use only my wardrobe"
+  tryOn, // "Try this outfit on me"
+  general, // General fashion advice
 }
 
 /// Fashion Prompt Handler Service
@@ -19,7 +19,7 @@ enum FashionIntent {
 class FashionPromptService {
   final SupabaseClient _supabase;
   final FirebaseAuth _auth;
-  static const String _apiBaseUrl = 'http://localhost:8000';
+  static const String _apiBaseUrl = 'http://localhost:8001';
 
   FashionPromptService(this._supabase, this._auth);
 
@@ -51,23 +51,24 @@ class FashionPromptService {
     if (lowerPrompt.contains('try on') || lowerPrompt.contains('try this')) {
       return FashionIntent.tryOn;
     }
-    if (lowerPrompt.contains('wardrobe') || lowerPrompt.contains('my clothes')) {
+    if (lowerPrompt.contains('wardrobe') ||
+        lowerPrompt.contains('my clothes')) {
       return FashionIntent.wardrobeOnly;
     }
-    if (lowerPrompt.contains('wedding') || 
-        lowerPrompt.contains('party') || 
+    if (lowerPrompt.contains('wedding') ||
+        lowerPrompt.contains('party') ||
         lowerPrompt.contains('work') ||
         lowerPrompt.contains('event') ||
         lowerPrompt.contains('occasion')) {
       return FashionIntent.occasion;
     }
-    if (lowerPrompt.contains('streetwear') || 
+    if (lowerPrompt.contains('streetwear') ||
         lowerPrompt.contains('vintage') ||
         lowerPrompt.contains('modern') ||
         lowerPrompt.contains('style')) {
       return FashionIntent.style;
     }
-    if (lowerPrompt.contains('casual') || 
+    if (lowerPrompt.contains('casual') ||
         lowerPrompt.contains('formal') ||
         lowerPrompt.contains('mood')) {
       return FashionIntent.mood;
@@ -79,9 +80,22 @@ class FashionPromptService {
   String? extractOccasion(String prompt) {
     final lower = prompt.toLowerCase();
     final occasions = [
-      'wedding', 'party', 'work', 'office', 'date', 'dinner',
-      'casual', 'formal', 'beach', 'gym', 'sport', 'event',
-      'meeting', 'interview', 'graduation', 'birthday'
+      'wedding',
+      'party',
+      'work',
+      'office',
+      'date',
+      'dinner',
+      'casual',
+      'formal',
+      'beach',
+      'gym',
+      'sport',
+      'event',
+      'meeting',
+      'interview',
+      'graduation',
+      'birthday'
     ];
     for (var occasion in occasions) {
       if (lower.contains(occasion)) return occasion;
@@ -93,9 +107,20 @@ class FashionPromptService {
   List<String> extractStyleKeywords(String prompt) {
     final lower = prompt.toLowerCase();
     final styles = [
-      'streetwear', 'vintage', 'modern', 'classic', 'bohemian',
-      'minimalist', 'edgy', 'elegant', 'sporty', 'casual',
-      'formal', 'business', 'chic', 'trendy'
+      'streetwear',
+      'vintage',
+      'modern',
+      'classic',
+      'bohemian',
+      'minimalist',
+      'edgy',
+      'elegant',
+      'sporty',
+      'casual',
+      'formal',
+      'business',
+      'chic',
+      'trendy'
     ];
     return styles.where((s) => lower.contains(s)).toList();
   }
@@ -224,4 +249,3 @@ final fashionPromptServiceProvider = Provider<FashionPromptService>((ref) {
   final auth = FirebaseAuth.instance;
   return FashionPromptService(supabase, auth);
 });
-

@@ -9,8 +9,6 @@ import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/theme/app_theme_data.dart';
 import '../providers/calendar_provider.dart';
 import '../../../routes.dart';
-import '../../wardrobe/providers/wardrobe_provider.dart';
-import '../../tryon/screens/luxury_tryon_screen.dart';
 
 /// Fashion Event Detail Screen
 /// Full-screen detail view for calendar events with outfit preview, try-on, and editing
@@ -75,7 +73,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
                       // Date & Event Info
                       _buildDateSection(theme),
                       
-                      SizedBox(height: AppThemeData.spacingLG),
+                      const SizedBox(height: AppThemeData.spacingLG),
                       
                       // Outfit Preview
                       if (widget.calendarDay.hasOutfit)
@@ -83,19 +81,19 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
                       else
                         _buildNoOutfitState(theme),
                       
-                      SizedBox(height: AppThemeData.spacingLG),
+                      const SizedBox(height: AppThemeData.spacingLG),
                       
                       // Event Details
                       if (widget.calendarDay.eventType != null || widget.calendarDay.eventName != null)
                         _buildEventDetails(theme),
                       
-                      SizedBox(height: AppThemeData.spacingLG),
+                      const SizedBox(height: AppThemeData.spacingLG),
                       
                       // AI Recommendation Badge
                       if (widget.calendarDay.isRecommended)
                         _buildAIRecommendationBadge(theme),
                       
-                      SizedBox(height: AppThemeData.spacingLG),
+                      const SizedBox(height: AppThemeData.spacingLG),
                       
                       // Action Buttons
                       _buildActionButtons(theme, isMobile),
@@ -150,7 +148,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
     final timeFormat = DateFormat('h:mm a');
     
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: theme.surface,
         borderRadius: BorderRadius.circular(16),
@@ -165,7 +163,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: theme.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -176,7 +174,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
                   size: 24,
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +186,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
                       ),
                     ),
                     if (widget.calendarDay.eventName != null) ...[
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         widget.calendarDay.eventName!,
                         style: theme.bodyMedium(color: theme.textSecondary),
@@ -214,7 +212,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
             fontWeight: FontWeight.w600,
           ),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         Container(
           width: double.infinity,
           height: isMobile ? 400 : 500,
@@ -259,7 +257,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
                   top: 12,
                   right: 12,
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: theme.primary.withOpacity(0.9),
                       borderRadius: BorderRadius.circular(20),
@@ -267,8 +265,8 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.checkroom, color: Colors.white, size: 16),
-                        SizedBox(width: 6),
+                        const Icon(Icons.checkroom, color: Colors.white, size: 16),
+                        const SizedBox(width: 6),
                         Text(
                           'Try-On Ready',
                           style: theme.bodySmall(color: Colors.white).copyWith(
@@ -283,7 +281,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
           ),
         ),
         
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         
         // Outfit Name
         if (widget.calendarDay.outfitName != null)
@@ -299,7 +297,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
 
   Widget _buildNoOutfitState(AppThemeData theme) {
     return Container(
-      padding: EdgeInsets.all(40),
+      padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
         color: theme.surface,
         borderRadius: BorderRadius.circular(16),
@@ -315,12 +313,12 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
             size: 64,
             color: theme.textTertiary,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             'No Outfit Planned',
             style: theme.titleMedium(color: theme.textPrimary),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Plan an outfit for this event',
             style: theme.bodyMedium(color: theme.textSecondary),
@@ -333,7 +331,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
 
   Widget _buildEventDetails(AppThemeData theme) {
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: theme.surface,
         borderRadius: BorderRadius.circular(16),
@@ -352,12 +350,12 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
               fontSize: 16,
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           if (widget.calendarDay.eventType != null) ...[
             Row(
               children: [
                 Icon(Icons.label_outline, color: theme.primary, size: 20),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     widget.calendarDay.eventType!,
@@ -366,7 +364,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
           ],
         ],
       ),
@@ -375,7 +373,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
 
   Widget _buildAIRecommendationBadge(AppThemeData theme) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
@@ -387,7 +385,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
       child: Row(
         children: [
           Icon(Icons.auto_awesome, color: theme.primary, size: 24),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,7 +397,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
                   ),
                 ),
                 if (widget.calendarDay.confidenceScore != null) ...[
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     '${(widget.calendarDay.confidenceScore! * 100).toStringAsFixed(0)}% confidence',
                     style: theme.bodySmall(color: theme.textSecondary),
@@ -422,12 +420,12 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: _isLoading ? null : _openTryOn,
-              icon: Icon(Icons.checkroom, size: 20),
-              label: Text('Try This Outfit'),
+              icon: const Icon(Icons.checkroom, size: 20),
+              label: const Text('Try This Outfit'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.primary,
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -435,7 +433,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
             ),
           ),
         
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         
         // Action Row
         Row(
@@ -443,11 +441,11 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: _isLoading ? null : _showChangeOutfitOptions,
-                icon: Icon(Icons.swap_horiz, size: 20),
-                label: Text('Change Outfit'),
+                icon: const Icon(Icons.swap_horiz, size: 20),
+                label: const Text('Change Outfit'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: theme.textPrimary,
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   side: BorderSide(color: theme.borderMedium),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -455,15 +453,15 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
                 ),
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: _isLoading ? null : _askAIForOutfit,
-                icon: Icon(Icons.auto_awesome, size: 20),
-                label: Text('AI Suggest'),
+                icon: const Icon(Icons.auto_awesome, size: 20),
+                label: const Text('AI Suggest'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: theme.primary,
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   side: BorderSide(color: theme.primary),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -475,17 +473,17 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
         ),
         
         if (!widget.calendarDay.hasOutfit) ...[
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: _isLoading ? null : _selectFromWardrobe,
-              icon: Icon(Icons.folder_outlined, size: 20),
-              label: Text('Select from Wardrobe'),
+              icon: const Icon(Icons.folder_outlined, size: 20),
+              label: const Text('Select from Wardrobe'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.primary,
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -510,7 +508,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: context.appTheme.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
           child: Column(
@@ -519,7 +517,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
               Container(
                 width: 40,
                 height: 4,
-                margin: EdgeInsets.symmetric(vertical: 12),
+                margin: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: context.appTheme.borderMedium,
                   borderRadius: BorderRadius.circular(2),
@@ -527,7 +525,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
               ),
               ListTile(
                 leading: Icon(Icons.auto_awesome, color: context.appTheme.primary),
-                title: Text('Get AI Recommendation'),
+                title: const Text('Get AI Recommendation'),
                 onTap: () {
                   Navigator.pop(context);
                   _askAIForOutfit();
@@ -535,7 +533,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
               ),
               ListTile(
                 leading: Icon(Icons.folder_outlined, color: context.appTheme.primary),
-                title: Text('Choose from Wardrobe'),
+                title: const Text('Choose from Wardrobe'),
                 onTap: () {
                   Navigator.pop(context);
                   _selectFromWardrobe();
@@ -543,13 +541,13 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
               ),
               ListTile(
                 leading: Icon(Icons.delete_outline, color: context.appTheme.accentError),
-                title: Text('Remove Outfit'),
+                title: const Text('Remove Outfit'),
                 onTap: () {
                   Navigator.pop(context);
                   _removeOutfit();
                 },
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
             ],
           ),
         ),
@@ -568,7 +566,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('AI recommendation feature coming soon!'),
+            content: const Text('AI recommendation feature coming soon!'),
             backgroundColor: context.appTheme.primary,
           ),
         );
@@ -596,7 +594,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Outfit removed'),
+            content: const Text('Outfit removed'),
             backgroundColor: context.appTheme.accentSuccess,
           ),
         );
@@ -618,7 +616,7 @@ class _FashionEventDetailScreenState extends ConsumerState<FashionEventDetailScr
     // TODO: Show edit event dialog
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Edit event feature coming soon!'),
+        content: const Text('Edit event feature coming soon!'),
         backgroundColor: context.appTheme.primary,
       ),
     );

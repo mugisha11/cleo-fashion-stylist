@@ -259,7 +259,7 @@ class MediaPipeService {
     final personHeight = height * 0.8;
     
     // Convert pixels to cm (rough estimate: 1 pixel = 0.1-0.2 cm for typical phone photos)
-    final pixelToCm = 0.15;
+    const pixelToCm = 0.15;
     final estimatedHeight = personHeight * pixelToCm;
     
     // Clamp to reasonable range
