@@ -211,6 +211,9 @@ class NotificationCenterScreen extends ConsumerWidget {
       case 'post_comment':
         Navigator.of(context).pushNamed(Routes.styleFeed);
         break;
+      case 'tryon_completed':
+        Navigator.of(context).pushNamed(Routes.tryon);
+        break;
       default:
         break;
     }

@@ -162,7 +162,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Your AI Fashion Assistant',
+                    'Your style companion',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -171,7 +171,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             _buildNavItem(
               context: context,
               icon: Icons.home,
-              label: 'Dashboard',
+              label: 'Home',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.dashboard);
@@ -179,17 +179,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.checkroom,
-              label: 'Wardrobe',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.wardrobe);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.image_search,
-              label: 'Virtual Try-On',
+              icon: Icons.auto_awesome_outlined,
+              label: 'Try On',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.tryon);
@@ -197,8 +188,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.lightbulb,
-              label: 'Recommendations',
+              icon: Icons.checkroom,
+              label: 'My Closet',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.wardrobe);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.star_outline,
+              label: 'Picks for You',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.recommendations);
@@ -207,7 +207,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             _buildNavItem(
               context: context,
               icon: Icons.calendar_today,
-              label: 'Calendar & Events',
+              label: 'Calendar',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.calendar);
@@ -220,6 +220,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.styleFeed);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.photo_library_outlined,
+              label: 'My Outfits',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.generatedOutfits);
               },
             ),
             const Divider(),
@@ -268,29 +277,51 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final photoUrl = userModel?.avatarUrl ?? firebaseUser?.photoURL;
 
     return SettingsSectionCard(
-      title: 'Profile',
+      title: 'My Profile',
       children: [
         Padding(
           padding: const EdgeInsets.all(AppThemeData.spacingMD),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent,
-                backgroundImage:
-                    photoUrl != null ? NetworkImage(photoUrl) : null,
-                child: photoUrl == null
-                    ? Text(
-                        displayName?.substring(0, 1).toUpperCase() ??
-                            email.substring(0, 1).toUpperCase() ??
-                            'U',
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: photoUrl != null
+                    ? Image.network(
+                        photoUrl,
+                        fit: BoxFit.cover,
+                        width: 80,
+                        height: 80,
+                        errorBuilder: (_, __, ___) => Center(
+                          child: Text(
+                            displayName?.substring(0, 1).toUpperCase() ??
+                                email.substring(0, 1).toUpperCase() ??
+                                'U',
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       )
-                    : null,
+                    : Center(
+                        child: Text(
+                          displayName?.substring(0, 1).toUpperCase() ??
+                              email.substring(0, 1).toUpperCase() ??
+                              'U',
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
               ),
               const SizedBox(width: AppThemeData.spacingMD),
               Expanded(
@@ -314,7 +345,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
         Divider(height: 1, color: theme.borderLight),
         SettingsActionTile(
-          title: 'Edit Profile',
+          title: 'Edit profile',
           leadingIcon: Icons.edit,
           onTap: () {
             Navigator.push(
@@ -331,17 +362,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final isDark = context.isDarkMode;
     final accent = isDark ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return SettingsSectionCard(
-      title: 'Friends & Messages',
+      title: 'Friends & Chats',
       children: [
         SettingsActionTile(
           title: 'Friend requests',
-          subtitle: 'View pending and sent requests',
+          subtitle: 'See who wants to connect',
           leadingIcon: Icons.person_add_rounded,
           onTap: () => Navigator.of(context).pushNamed(Routes.friendRequests),
         ),
         SettingsActionTile(
-          title: 'Messages',
-          subtitle: 'Chat with friends',
+          title: 'Chats',
+          subtitle: 'DMs with friends',
           leadingIcon: Icons.chat_bubble_outline_rounded,
           onTap: () => Navigator.of(context).pushNamed(Routes.chats),
         ),
@@ -352,7 +383,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget _buildAccountSettingsSection() {
     final theme = context.appTheme;
     return SettingsSectionCard(
-      title: 'Account Settings',
+      title: 'My Account',
       children: [
         SettingsActionTile(
           title: 'Change Email',
@@ -383,13 +414,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   Widget _buildFashionPreferencesSection(SettingsState settings) {
     return SettingsSectionCard(
-      title: 'Fashion Preferences',
+      title: 'My Style',
       children: [
         SettingsActionTile(
-          title: 'Body Measurements & Style',
+          title: 'My fit & style',
           subtitle: settings.height != null
               ? '${settings.height?.toStringAsFixed(0)} cm, ${settings.bodyType ?? "Not set"}'
-              : 'Set your measurements and preferences',
+              : 'Set your measurements and style',
           leadingIcon: Icons.straighten,
           onTap: () {
             Navigator.push(
@@ -407,11 +438,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget _buildAISettingsSection(SettingsState settings) {
     final theme = context.appTheme;
     return SettingsSectionCard(
-      title: 'AI & Try-On Settings',
+      title: 'Style & Try-On',
       children: [
         SettingsToggleTile(
-          title: 'Auto Outfit Recommendations',
-          subtitle: 'Get AI-powered outfit suggestions automatically',
+          title: 'Daily picks',
+          subtitle: 'Get outfit ideas in your feed',
           value: settings.autoRecommendations,
           icon: Icons.auto_awesome,
           onChanged: (value) {
@@ -422,8 +453,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
         Divider(height: 1, color: theme.borderLight),
         SettingsToggleTile(
-          title: 'High-Quality Rendering',
-          subtitle: 'Use enhanced quality for try-on results (slower)',
+          title: 'Best quality',
+          subtitle: 'Sharper try-on results',
           value: settings.highQualityRendering,
           icon: Icons.high_quality,
           onChanged: (value) {
@@ -451,10 +482,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget _buildNotificationsSection(SettingsState settings) {
     final theme = context.appTheme;
     return SettingsSectionCard(
-      title: 'Notifications',
+      title: 'Alerts',
       children: [
         SettingsToggleTile(
-          title: 'Push Notifications',
+          title: 'Push alerts',
           subtitle: 'Receive push notifications',
           value: settings.pushNotifications,
           icon: Icons.notifications_outlined,
@@ -474,8 +505,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
         Divider(height: 1, color: theme.borderLight),
         SettingsToggleTile(
-          title: 'Recommendation Alerts',
-          subtitle: 'Get notified about new outfit recommendations',
+          title: 'Picks alerts',
+          subtitle: 'Get notified about new outfit picks',
           value: settings.recommendationAlerts,
           icon: Icons.star_outline,
           onChanged: (value) {
@@ -486,8 +517,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
         Divider(height: 1, color: theme.borderLight),
         SettingsActionTile(
-          title: 'View all notifications',
-          subtitle: 'Friend requests, messages, likes, comments',
+          title: 'See all alerts',
+          subtitle: 'Requests, chats, likes, comments',
           leadingIcon: Icons.notifications_active_outlined,
           onTap: () => Navigator.of(context).pushNamed(Routes.notificationCenter),
         ),
@@ -549,7 +580,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget _buildPrivacySection() {
     final theme = context.appTheme;
     return SettingsSectionCard(
-      title: 'Privacy & Data',
+      title: 'Privacy',
       children: [
         SettingsActionTile(
           title: 'Data Usage',
@@ -604,7 +635,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget _buildAppInfoSection() {
     final theme = context.appTheme;
     return SettingsSectionCard(
-      title: 'App Information',
+      title: 'About',
       children: [
         // Logo
         const Padding(
@@ -700,7 +731,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         await authService.signOut();
         if (context.mounted) {
           Navigator.of(context)
-              .pushNamedAndRemoveUntil('/login', (route) => false);
+              .pushNamedAndRemoveUntil(Routes.login, (route) => false);
         }
       },
       onCancel: () => Navigator.pop(context),

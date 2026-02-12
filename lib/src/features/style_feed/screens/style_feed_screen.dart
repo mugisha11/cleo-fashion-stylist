@@ -335,7 +335,7 @@ class _ErrorState extends StatelessWidget {
             Icon(Icons.error_outline_rounded, size: 56, color: accent.withValues(alpha: 0.8)),
             const SizedBox(height: 20),
             Text(
-              'Something went wrong',
+              'Couldn\'t load the feed',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: textColor,
@@ -344,7 +344,7 @@ class _ErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Pull down to refresh or tap Retry.',
+              'Check your connection, then pull down to refresh or tap Retry.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: isDark ? DesignTokens.darkTextSecondary : DesignTokens.lightTextSecondary,
               ),

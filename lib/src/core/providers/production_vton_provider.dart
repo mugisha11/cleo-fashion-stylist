@@ -58,17 +58,18 @@ class ProductionVTONNotifier extends StateNotifier<ProductionVTONState> {
       }
     } catch (e) {
       print('[ProductionVTON] executeTryOn error: $e');
-      // Provide user-friendly error messages
       String errorMessage = e.toString();
-      
-      if (errorMessage.contains('Failed to connect') || 
+      if (errorMessage.contains('Failed to connect') ||
           errorMessage.contains('Failed to fetch') ||
           errorMessage.contains('NetworkError')) {
-        errorMessage = 'Cannot connect to backend server. Please ensure the backend is running on localhost:8001 or configure the correct URL in settings.';
+        errorMessage = 'Cannot connect to the server. Check that the backend is running or the URL in Settings.';
       } else if (errorMessage.contains('timeout')) {
-        errorMessage = 'Request timed out. The backend may be processing or unavailable.';
+        errorMessage = 'Request timed out. Please try again.';
+      } else if (errorMessage.contains('Analysis rejected') ||
+          errorMessage.contains('incompatible') ||
+          errorMessage.contains('Confidence too low')) {
+        errorMessage = 'This garment may not be a good match for try-on. Try a single, clear garment that fits your style.';
       }
-      
       state = ProductionVTONState(
         stage: ProductionVTONStage.failed,
         error: errorMessage,

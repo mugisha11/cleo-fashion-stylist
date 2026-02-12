@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/luxury_theme.dart';
 import '../../../core/widgets/theme_wrapper.dart';
+import '../../../core/services/sound_service.dart';
 import '../../../routes.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../social/widgets/friend_request_button.dart';
@@ -44,6 +45,7 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
 
   void _onDoubleTap() {
     HapticFeedback.mediumImpact();
+    SoundService.play(AppSound.like);
     setState(() => _showHeartBurst = true);
     ref.read(styleFeedProvider.notifier).toggleLike(widget.post.id);
     Future.delayed(const Duration(milliseconds: 800), () {
@@ -61,7 +63,10 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
         post: widget.post,
         isLiked: widget.isLiked,
         isSaved: widget.isSaved,
-        onLike: () => ref.read(styleFeedProvider.notifier).toggleLike(widget.post.id),
+        onLike: () {
+          SoundService.play(AppSound.like);
+          ref.read(styleFeedProvider.notifier).toggleLike(widget.post.id);
+        },
         onSave: () => ref.read(styleFeedProvider.notifier).toggleSavePost(widget.post.id),
         onShare: () => ref.read(styleFeedProvider.notifier).incrementShareCount(widget.post.id),
         onTryThisLook: widget.onTryThisLook,
@@ -91,15 +96,23 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
               padding: const EdgeInsets.fromLTRB(12, 12, 4, 8),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: isDark ? DesignTokens.darkBorder : DesignTokens.lightBorder,
-                    backgroundImage: post.userAvatarUrl != null && post.userAvatarUrl!.startsWith('http')
-                        ? NetworkImage(post.userAvatarUrl!)
-                        : null,
-                    child: post.userAvatarUrl == null || !post.userAvatarUrl!.startsWith('http')
-                        ? Icon(Icons.person_rounded, color: textSecondary, size: 20)
-                        : null,
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isDark ? DesignTokens.darkBorder : DesignTokens.lightBorder,
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: post.userAvatarUrl != null && post.userAvatarUrl!.startsWith('http')
+                        ? Image.network(
+                            post.userAvatarUrl!,
+                            fit: BoxFit.cover,
+                            width: 36,
+                            height: 36,
+                            errorBuilder: (_, __, ___) => Icon(Icons.person_rounded, color: textSecondary, size: 20),
+                          )
+                        : Icon(Icons.person_rounded, color: textSecondary, size: 20),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -196,6 +209,7 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                     count: post.likeCount,
                     onTap: () {
                       HapticFeedback.selectionClick();
+                      SoundService.play(AppSound.like);
                       ref.read(styleFeedProvider.notifier).toggleLike(post.id);
                     },
                   ),

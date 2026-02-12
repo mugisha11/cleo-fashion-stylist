@@ -56,6 +56,13 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+  <script>
+    // Post Look uses Supabase for images; feed metadata (likes, comments) still uses Firestore.
+    // Reduce Firestore SDK log noise (transport / WebChannel warnings when network is flaky).
+    if (typeof firebase !== 'undefined' && firebase.firestore && firebase.firestore.setLogLevel) {
+      firebase.firestore.setLogLevel('error');
+    }
+  </script>
   
   <script>
     // The value below is injected by flutter build, do not touch.

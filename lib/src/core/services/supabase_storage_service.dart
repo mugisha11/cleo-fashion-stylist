@@ -22,8 +22,8 @@ class SupabaseStorageService {
     try {
       Uint8List fileBytes;
       
-      // Convert file to bytes
-      if (kIsWeb && file is Uint8List) {
+      // Convert file to bytes (Uint8List on any platform, or File on mobile)
+      if (file is Uint8List) {
         fileBytes = file;
       } else if (!kIsWeb && file is io.File) {
         fileBytes = await (file as dynamic).readAsBytes();
@@ -31,8 +31,34 @@ class SupabaseStorageService {
         throw Exception('Invalid file type for current platform');
       }
 
-      // Upload to Supabase Storage
-      if (kIsWeb) {
+      // Upload to Supabase Storage (on mobile with bytes, write to temp file first)
+      if (!kIsWeb && file is Uint8List) {
+        final tempDir = await getTemporaryDirectory();
+        final fileName = path.split('/').last;
+        final tempFile = io.File('${tempDir.path}/$fileName');
+        await tempFile.writeAsBytes(fileBytes);
+        try {
+          await _supabase.storage.from(bucket).upload(
+            path,
+            tempFile as dynamic,
+            fileOptions: FileOptions(
+              contentType: contentType ?? 'image/jpeg',
+              upsert: true,
+            ),
+          );
+        } catch (e) {
+          if (e.toString().contains('Bucket not found') || e.toString().contains('does not exist')) {
+            throw Exception('Storage bucket "$bucket" does not exist. Please create it in Supabase Dashboard > Storage.');
+          }
+          if (e.toString().contains('permission') || e.toString().contains('unauthorized') ||
+              e.toString().contains('policy') || e.toString().contains('Forbidden')) {
+            throw Exception('Permission denied for bucket "$bucket". Check Supabase Storage bucket policies.');
+          }
+          rethrow;
+        } finally {
+          try { await tempFile.delete(); } catch (_) {}
+        }
+      } else if (kIsWeb) {
         // On web, use uploadBinary with bytes
         try {
         await _supabase.storage.from(bucket).uploadBinary(

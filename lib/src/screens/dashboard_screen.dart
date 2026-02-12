@@ -16,8 +16,10 @@ import '../core/widgets/dashboard_components.dart';
 import 'dart:convert';
 
 import '../core/constants/trusted_retailers.dart';
+import '../core/services/ai_chat_firestore_service.dart';
 import '../core/services/backend_config_service.dart';
 import '../core/services/open_router_service.dart';
+import '../core/services/sound_service.dart';
 import '../core/services/tryon_service.dart';
 import '../core/models/wardrobe_item_model.dart';
 import '../core/providers/user_image_provider.dart';
@@ -25,10 +27,12 @@ import '../features/auth/providers/auth_provider.dart';
 import '../features/settings/models/settings_state.dart';
 import '../features/settings/providers/settings_provider.dart';
 import '../features/wardrobe/providers/wardrobe_provider.dart' show wardrobeItemsProvider;
+import '../features/social/providers/social_provider.dart';
 import '../routes.dart';
 import '../core/models/user_model.dart';
 
-/// 🎨 DASHBOARD SCREEN - Main UI with all zones
+/// 🎨 DASHBOARD SCREEN - Main UI with AI chat (Cleo), feed, and navigation.
+/// Route: /dashboard (Routes.dashboard). Keep this screen for the AI chat.
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -45,8 +49,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   final TryOnService _tryOnService = TryOnService();
   final stt.SpeechToText _speech = stt.SpeechToText();
   final ImagePicker _imagePicker = ImagePicker();
+  final AiChatFirestoreService _aiChatService = AiChatFirestoreService();
 
-  final List<ChatMessage> _messages = [
+  List<ChatMessage> _messages = [
     ChatMessage(
       id: '1',
       text:
@@ -70,6 +75,72 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     _wardrobeSlideController = AnimationController(
       duration: DesignTokens.durationMedium,
       vsync: this,
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadChatFromDb());
+  }
+
+  /// Load persisted AI chat from Firestore so chat is not lost.
+  Future<void> _loadChatFromDb() async {
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null || uid.isEmpty || !mounted) return;
+    try {
+      final dtos = await _aiChatService.getMessages(uid);
+      if (!mounted) return;
+      if (dtos.isNotEmpty) {
+        setState(() {
+          _messages = dtos.map(_chatMessageFromDto).toList();
+        });
+      }
+    } catch (_) {
+      // Keep default welcome message on error
+    }
+  }
+
+  void _persistMessage(ChatMessage m) {
+    final uid = ref.read(authStateProvider).valueOrNull?.uid;
+    if (uid == null || uid.isEmpty) return;
+    _aiChatService.saveMessage(uid, _dtoFromChatMessage(m));
+  }
+
+  AiChatMessageDto _dtoFromChatMessage(ChatMessage m) {
+    return AiChatMessageDto(
+      id: m.id,
+      text: m.text,
+      isUser: m.isUser,
+      timestamp: m.timestamp,
+      imageUrl: m.imageUrl,
+      isError: m.isError,
+      buyLinkUrl: m.buyLinkUrl,
+      externalImageUrl: m.externalImageUrl,
+      externalDisplayImageUrl: m.externalDisplayImageUrl,
+      externalProductPageUrl: m.externalProductPageUrl,
+      searchedProducts: m.searchedProducts?.map((p) => {
+        'title': p.title,
+        'imageUrl': p.imageUrl,
+        'link': p.link,
+        'displayImageUrl': p.displayImageUrl,
+      }).toList(),
+    );
+  }
+
+  ChatMessage _chatMessageFromDto(AiChatMessageDto d) {
+    return ChatMessage(
+      id: d.id,
+      text: d.text,
+      isUser: d.isUser,
+      timestamp: d.timestamp,
+      imageUrl: d.imageUrl,
+      isError: d.isError,
+      buyLinkUrl: d.buyLinkUrl,
+      externalImageUrl: d.externalImageUrl,
+      externalDisplayImageUrl: d.externalDisplayImageUrl,
+      externalProductPageUrl: d.externalProductPageUrl,
+      searchedProducts: d.searchedProducts?.map((map) => SearchedProduct(
+        title: map['title'] ?? '',
+        imageUrl: map['imageUrl'] ?? '',
+        link: map['link'] ?? '',
+        displayImageUrl: map['displayImageUrl'],
+      )).toList(),
     );
   }
 
@@ -376,6 +447,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
     _messageController.clear();
     HapticFeedback.mediumImpact();
+    SoundService.play(AppSound.messageSent);
     final hadImage = _attachedImageBytes != null;
     if (mounted) setState(() => _attachedImageBytes = null);
 
@@ -394,23 +466,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       _messages.add(userMessage);
       _isAITyping = true;
     });
+    _persistMessage(userMessage);
     _scrollToBottom();
 
     try {
       final apiKey = await OpenRouterService.getApiKey();
       if (apiKey == null || apiKey.isEmpty) {
         if (mounted) {
-          setState(() {
-            _messages.add(ChatMessage(
-              id: DateTime.now().millisecondsSinceEpoch.toString(),
-              text:
-                  'Add your OpenRouter API key in Settings → AI & Try-On Settings → Cleo Chat API Key to chat with Cleo. Get a key at openrouter.ai.',
-              isUser: false,
-              timestamp: DateTime.now(),
-              isError: true,
-            ));
+          final errMsg = ChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          text:
+              'Add your OpenRouter API key in Settings → AI & Try-On Settings → Cleo Chat API Key to chat with Cleo. Get a key at openrouter.ai.',
+          isUser: false,
+          timestamp: DateTime.now(),
+          isError: true,
+        );
+        setState(() {
+            _messages.add(errMsg);
             _isAITyping = false;
           });
+        _persistMessage(errMsg);
           _scrollToBottom();
         }
         return;
@@ -474,6 +549,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           _isAITyping = false;
         });
         _scrollToBottom();
+        SoundService.play(AppSound.messageReceived);
 
         if (tryOnId != null) {
           _runTryOnInChat(tryOnId);
@@ -498,17 +574,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       }
     } catch (e) {
       if (mounted) {
-        final errMsg = e is OpenRouterException ? e.message : e.toString();
+        final errStr = e is OpenRouterException ? e.message : e.toString();
+        final errorChatMsg = ChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          text: 'Sorry, something went wrong: $errStr',
+          isUser: false,
+          timestamp: DateTime.now(),
+          isError: true,
+        );
         setState(() {
-          _messages.add(ChatMessage(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            text: 'Sorry, something went wrong: $errMsg',
-            isUser: false,
-            timestamp: DateTime.now(),
-            isError: true,
-          ));
+          _messages.add(errorChatMsg);
           _isAITyping = false;
         });
+        _persistMessage(errorChatMsg);
         _scrollToBottom();
       }
     }
@@ -588,6 +666,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       setState(() {
         _messages.add(previewMsg);
       });
+      _persistMessage(previewMsg);
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
@@ -658,6 +737,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       setState(() {
         _messages.add(searchMsg);
       });
+      _persistMessage(searchMsg);
       _scrollToBottom();
     } catch (e) {
       if (mounted) {
@@ -763,6 +843,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       _messages.add(progressMsg);
       _isAITyping = false;
     });
+    _persistMessage(progressMsg);
     _scrollToBottom();
 
     try {
@@ -794,20 +875,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         setState(() {
           _messages[idx] = doneMsg;
         });
+        _persistMessage(doneMsg);
       }
       _scrollToBottom();
+      SoundService.play(AppSound.messageReceived);
     } catch (e) {
       if (!mounted) return;
       final idx = _messages.indexWhere((m) => m.id == progressId);
       if (idx >= 0) {
-        final errMsg = ChatMessage(
+        final tryOnErrMsg = ChatMessage(
           id: progressId,
           text: 'Try-on failed: ${e is TryOnException ? e.getUserMessage() : e}',
           isUser: false,
           timestamp: DateTime.now(),
           isError: true,
         );
-        setState(() => _messages[idx] = errMsg);
+        setState(() => _messages[idx] = tryOnErrMsg);
+        _persistMessage(tryOnErrMsg);
       }
       _scrollToBottom();
     }
@@ -845,6 +929,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     setState(() {
       _messages.add(progressMsg);
     });
+    _persistMessage(progressMsg);
     _scrollToBottom();
 
     try {
@@ -873,20 +958,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           tryOnResultImageBytes: resultBytes,
         );
         setState(() => _messages[idx] = doneMsg);
+        _persistMessage(doneMsg);
       }
       _scrollToBottom();
+      SoundService.play(AppSound.messageReceived);
     } catch (e) {
       if (!mounted) return;
       final idx = _messages.indexWhere((m) => m.id == progressId);
       if (idx >= 0) {
-        final errMsg = ChatMessage(
+        final tryOnErrMsg = ChatMessage(
           id: progressId,
           text: 'Try-on failed: ${e is TryOnException ? e.getUserMessage() : e}',
           isUser: false,
           timestamp: DateTime.now(),
           isError: true,
         );
-        setState(() => _messages[idx] = errMsg);
+        setState(() => _messages[idx] = tryOnErrMsg);
+        _persistMessage(tryOnErrMsg);
       }
       _scrollToBottom();
     }
@@ -923,6 +1011,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       _messages.add(msg);
       _isAITyping = false;
     });
+    _persistMessage(msg);
     _scrollToBottom();
   }
 
@@ -1009,20 +1098,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final isDark = context.isDarkMode;
     final isMobile = MediaQuery.of(context).size.width < 600;
 
+    ref.listen(socialUnreadCountProvider, (prev, next) {
+      final prevCount = prev;
+      final nextCount = next;
+      if (prevCount != null && nextCount != null && nextCount > prevCount && nextCount > 0) {
+        SoundService.play(AppSound.notification);
+      }
+    });
+
     return Scaffold(
       appBar: DashboardTopBar(
         aiStatus: _isListening
             ? 'Listening...'
             : (_isAITyping ? 'Analyzing...' : 'Ready to assist'),
         isAITyping: _isAITyping || _isListening,
-        notificationCount: 3,
+        notificationCount: ref.watch(socialUnreadCountProvider),
         onProfileTap: () {
           Navigator.of(context).pushNamed(Routes.settings);
         },
         onNotificationsTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Opening Notifications')),
-          );
+          Navigator.of(context).pushNamed(Routes.notificationCenter);
         },
       ),
       drawer: _buildNavigationDrawer(context),
@@ -1118,7 +1213,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Your AI Fashion Assistant',
+                    'Your style companion',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -1126,25 +1221,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.home,
-              label: 'Dashboard',
+              icon: Icons.home_outlined,
+              label: 'Home',
               onTap: () {
                 Navigator.of(context).pop();
               },
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.checkroom,
-              label: 'Wardrobe',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.wardrobe);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.image_search,
-              label: 'Virtual Try-On',
+              icon: Icons.auto_awesome_outlined,
+              label: 'Try On',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.tryon);
@@ -1152,8 +1238,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.lightbulb,
-              label: 'Recommendations',
+              icon: Icons.checkroom_outlined,
+              label: 'My Closet',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.wardrobe);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.star_outline,
+              label: 'Picks for You',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.recommendations);
@@ -1161,8 +1256,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.calendar_today,
-              label: 'Calendar & Events',
+              icon: Icons.calendar_today_outlined,
+              label: 'Calendar',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.calendar);
@@ -1177,10 +1272,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 Navigator.of(context).pushNamed(Routes.styleFeed);
               },
             ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.photo_library_outlined,
+              label: 'My Outfits',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.generatedOutfits);
+              },
+            ),
             const Divider(),
             _buildNavItem(
               context: context,
-              icon: Icons.settings,
+              icon: Icons.settings_outlined,
               label: 'Settings',
               onTap: () {
                 Navigator.of(context).pop();
@@ -1190,7 +1294,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             _buildNavItem(
               context: context,
               icon: Icons.help_outline,
-              label: 'Help & Support',
+              label: 'Help',
               onTap: () {
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(

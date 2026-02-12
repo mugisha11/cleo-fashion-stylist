@@ -99,23 +99,24 @@ class SocialService {
 
   Future<void> acceptFriendRequest(String requestId) async {
     final doc = await _firestore.collection(_friendRequests).doc(requestId).get();
-    if (!doc.exists) return;
+    if (!doc.exists) throw Exception('Friend request not found');
     final d = doc.data()!;
-    final from = d['from'] as String;
-    final to = d['to'] as String;
-    await _firestore.runTransaction((tx) async {
-      tx.update(_firestore.collection(_friendRequests).doc(requestId), {'status': 'accepted'});
-      final fromRef = _firestore.collection(_users).doc(from);
-      final toRef = _firestore.collection(_users).doc(to);
-      final fromSnap = await tx.get(fromRef);
-      final toSnap = await tx.get(toRef);
-      final fromFriends = List<String>.from(fromSnap.data()?['friends'] as List<dynamic>? ?? []);
-      final toFriends = List<String>.from(toSnap.data()?['friends'] as List<dynamic>? ?? []);
-      if (!fromFriends.contains(to)) fromFriends.add(to);
-      if (!toFriends.contains(from)) toFriends.add(from);
-      tx.update(fromRef, {'friends': fromFriends});
-      tx.update(toRef, {'friends': toFriends});
-    });
+    final from = d['from'] as String? ?? '';
+    final to = d['to'] as String? ?? '';
+    if (from.isEmpty || to.isEmpty) throw Exception('Invalid friend request data');
+
+    final fromRef = _firestore.collection(_users).doc(from);
+    final toRef = _firestore.collection(_users).doc(to);
+    final fromSnap = await fromRef.get();
+    final toSnap = await toRef.get();
+    final fromFriends = List<String>.from(fromSnap.data()?['friends'] as List<dynamic>? ?? []);
+    final toFriends = List<String>.from(toSnap.data()?['friends'] as List<dynamic>? ?? []);
+    if (!fromFriends.contains(to)) fromFriends.add(to);
+    if (!toFriends.contains(from)) toFriends.add(from);
+
+    await _firestore.collection(_friendRequests).doc(requestId).update({'status': 'accepted'});
+    await toRef.set({'friends': toFriends}, SetOptions(merge: true));
+    await fromRef.set({'friends': fromFriends}, SetOptions(merge: true));
     await _createNotification(type: 'request_accepted', fromUserId: from, toUserId: to, requestId: requestId);
   }
 
@@ -331,6 +332,22 @@ class SocialService {
       postId: postId,
       messagePreview: commentPreview,
       imageUrl: postImageUrl,
+    );
+  }
+
+  /// Create a notification when the user's virtual try-on completes (self-notification).
+  Future<void> createTryOnCompletedNotification({
+    required String userId,
+    String? messagePreview,
+    String? imageUrl,
+  }) async {
+    await _createNotification(
+      type: 'tryon_completed',
+      fromUserId: userId,
+      toUserId: userId,
+      fromUserName: 'Cleo',
+      messagePreview: messagePreview ?? 'Your try-on is ready!',
+      imageUrl: imageUrl,
     );
   }
 

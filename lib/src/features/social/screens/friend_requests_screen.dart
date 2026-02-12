@@ -95,20 +95,23 @@ class _RequestToMeTile extends ConsumerWidget {
         final avatar = profile?.avatarUrl;
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
-          leading: CircleAvatar(
-            radius: 28,
-            backgroundColor: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
-            backgroundImage: avatar != null && avatar.startsWith('http') ? NetworkImage(avatar) : null,
-            child: avatar == null || !avatar.startsWith('http') ? Icon(Icons.person, color: accent) : null,
+          leading: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: isDark ? DesignTokens.darkCard : DesignTokens.lightCard),
+            clipBehavior: Clip.antiAlias,
+            child: avatar != null && avatar.startsWith('http')
+                ? Image.network(avatar, fit: BoxFit.cover, width: 56, height: 56, errorBuilder: (_, __, ___) => Icon(Icons.person, color: accent))
+                : Icon(Icons.person, color: accent),
           ),
           title: Text(name, style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? DesignTokens.darkText : DesignTokens.lightText)),
           subtitle: Text('Wants to be friends', style: TextStyle(fontSize: 12, color: isDark ? DesignTokens.darkTextSecondary : DesignTokens.lightTextSecondary)),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _smallButton(context, ref, label: 'Accept', isPrimary: true, onTap: () => _accept(context, ref)),
+              _smallButton(context, ref, label: 'Accept', isPrimary: true, onTap: () => _acceptAsync(context, ref)),
               const SizedBox(width: 8),
-              _smallButton(context, ref, label: 'Reject', isPrimary: false, onTap: () => _reject(context, ref)),
+              _smallButton(context, ref, label: 'Reject', isPrimary: false, onTap: () => _rejectAsync(context, ref)),
             ],
           ),
         ).animate().fadeIn(duration: 200.ms).slideX(begin: 0.05, end: 0, curve: Curves.easeOut);
@@ -134,22 +137,50 @@ class _RequestToMeTile extends ConsumerWidget {
     );
   }
 
-  Future<void> _accept(BuildContext context, WidgetRef ref) async {
-    await ref.read(socialServiceProvider).acceptFriendRequest(request.id);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('Request accepted'), behavior: SnackBarBehavior.floating, backgroundColor: DesignTokens.lightSuccess),
-      );
-    }
+  void _acceptAsync(BuildContext context, WidgetRef ref) {
+    ref.read(socialServiceProvider).acceptFriendRequest(request.id).then((_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: const Text('Request accepted'), behavior: SnackBarBehavior.floating, backgroundColor: DesignTokens.lightSuccess),
+        );
+      }
+    }).catchError((Object e, StackTrace _) {
+      if (context.mounted) {
+        String msg = 'Failed to accept request';
+        if (e is Exception) msg = e.toString().replaceFirst('Exception: ', '');
+        if (e.toString().contains('PERMISSION_DENIED') || e.toString().contains('permission-denied')) {
+          msg = 'Permission denied. Deploy Firestore rules (firebase deploy --only firestore:rules) and try again.';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade700,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    });
   }
 
-  Future<void> _reject(BuildContext context, WidgetRef ref) async {
-    await ref.read(socialServiceProvider).rejectFriendRequest(request.id);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('Request declined'), behavior: SnackBarBehavior.floating),
-      );
-    }
+  void _rejectAsync(BuildContext context, WidgetRef ref) {
+    ref.read(socialServiceProvider).rejectFriendRequest(request.id).then((_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: const Text('Request declined'), behavior: SnackBarBehavior.floating),
+        );
+      }
+    }).catchError((Object e, StackTrace _) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e is Exception ? e.toString().replaceFirst('Exception: ', '') : 'Failed to decline'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    });
   }
 }
 
@@ -172,11 +203,14 @@ class _RequestFromMeTile extends ConsumerWidget {
         final pending = request.isPending;
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
-          leading: CircleAvatar(
-            radius: 28,
-            backgroundColor: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
-            backgroundImage: avatar != null && avatar.startsWith('http') ? NetworkImage(avatar) : null,
-            child: avatar == null || !avatar.startsWith('http') ? Icon(Icons.person, color: accent) : null,
+          leading: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: isDark ? DesignTokens.darkCard : DesignTokens.lightCard),
+            clipBehavior: Clip.antiAlias,
+            child: avatar != null && avatar.startsWith('http')
+                ? Image.network(avatar, fit: BoxFit.cover, width: 56, height: 56, errorBuilder: (_, __, ___) => Icon(Icons.person, color: accent))
+                : Icon(Icons.person, color: accent),
           ),
           title: Text(name, style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? DesignTokens.darkText : DesignTokens.lightText)),
           subtitle: Text(pending ? 'Pending' : request.status, style: TextStyle(fontSize: 12, color: isDark ? DesignTokens.darkTextSecondary : DesignTokens.lightTextSecondary)),

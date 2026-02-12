@@ -107,11 +107,14 @@ class _ChatTile extends ConsumerWidget {
             );
           },
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          leading: CircleAvatar(
-            radius: 28,
-            backgroundColor: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
-            backgroundImage: avatar != null && avatar.startsWith('http') ? NetworkImage(avatar) : null,
-            child: avatar == null || !avatar.startsWith('http') ? Icon(Icons.person, color: accent) : null,
+          leading: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: isDark ? DesignTokens.darkCard : DesignTokens.lightCard),
+            clipBehavior: Clip.antiAlias,
+            child: avatar != null && avatar.startsWith('http')
+                ? Image.network(avatar, fit: BoxFit.cover, width: 56, height: 56, errorBuilder: (_, __, ___) => Icon(Icons.person, color: accent))
+                : Icon(Icons.person, color: accent),
           ),
           title: Text(name, style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? DesignTokens.darkText : DesignTokens.lightText)),
           subtitle: Text(

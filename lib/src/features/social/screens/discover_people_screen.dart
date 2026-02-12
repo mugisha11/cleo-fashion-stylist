@@ -200,22 +200,33 @@ class _PersonTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: accent.withValues(alpha: isDark ? 0.25 : 0.15),
-            backgroundImage: profile.avatarUrl != null && profile.avatarUrl!.startsWith('http')
-                ? NetworkImage(profile.avatarUrl!)
-                : null,
-            child: profile.avatarUrl == null || !profile.avatarUrl!.startsWith('http')
-                ? Text(
-                    profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
-                    style: TextStyle(
-                      color: accent,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 20,
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: accent.withValues(alpha: isDark ? 0.25 : 0.15),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: profile.avatarUrl != null && profile.avatarUrl!.startsWith('http')
+                ? Image.network(
+                    profile.avatarUrl!,
+                    fit: BoxFit.cover,
+                    width: 52,
+                    height: 52,
+                    errorBuilder: (_, __, ___) => Center(
+                      child: Text(
+                        profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
+                        style: TextStyle(color: accent, fontWeight: FontWeight.w700, fontSize: 20),
+                      ),
                     ),
                   )
-                : null,
+                : Center(
+                    child: Text(
+                      profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
+                      style: TextStyle(color: accent, fontWeight: FontWeight.w700, fontSize: 20),
+                    ),
+                  ),
           ),
           const SizedBox(width: 14),
           Expanded(

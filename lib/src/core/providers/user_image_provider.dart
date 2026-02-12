@@ -164,7 +164,8 @@ class UserImageNotifier extends StateNotifier<UserImageState> {
     }
   }
 
-  /// Upload and save user image as compressed Base64 to Supabase + local storage
+  /// Upload and save user image at original quality to Supabase + local storage.
+  /// Dimensions and quality are preserved for try-on and AI chat.
   /// Input: imageBytes (raw image data), mimeType (e.g., 'image/jpeg')
   /// Output: Full Base64 string with data URI prefix
   Future<bool> uploadUserImage(Uint8List imageBytes, String mimeType) async {
@@ -175,13 +176,11 @@ class UserImageNotifier extends StateNotifier<UserImageState> {
 
     state = state.copyWith(isLoading: true, error: null);
     try {
-      // Compress image before converting to Base64
-      final compressedBytes = await _compressImage(imageBytes);
-      debugPrint(
-          '📦 Image compressed: ${imageBytes.length} → ${compressedBytes.length} bytes');
+      // Keep original quality and dimensions (no resize/compress)
+      debugPrint('📦 Saving user image at original quality: ${imageBytes.length} bytes');
 
       // Convert to Base64 with data URI prefix
-      final base64String = base64Encode(compressedBytes);
+      final base64String = base64Encode(imageBytes);
       final dataUri = 'data:$mimeType;base64,$base64String';
 
       // Get current preferences
@@ -281,27 +280,18 @@ class UserImageNotifier extends StateNotifier<UserImageState> {
     }
   }
 
-  /// Compress image to optimize Base64 size and API transmission
+  /// Optional: encode to JPEG at high quality only when needed (e.g. PNG input).
+  /// Prefer keeping original bytes for full quality; this is unused by default.
   Future<Uint8List> _compressImage(Uint8List imageBytes) async {
     try {
-      // Decode image
       final img.Image? image = img.decodeImage(imageBytes);
       if (image == null) return imageBytes;
-
-      // Resize if too large (max 1024x1024)
-      final resized = image.width > 1024 || image.height > 1024
-          ? img.copyResize(image,
-              width: 1024,
-              height: 1024,
-              interpolation: img.Interpolation.linear)
-          : image;
-
-      // Encode with compression (quality 80)
-      final compressed = img.encodeJpg(resized, quality: 80);
-      return Uint8List.fromList(compressed);
+      // Preserve dimensions; encode at high quality (95) only for size cap
+      final encoded = img.encodeJpg(image, quality: 95);
+      return Uint8List.fromList(encoded);
     } catch (e) {
-      debugPrint('⚠️ Compression failed, using original: $e');
-      return imageBytes; // Fallback to original
+      debugPrint('⚠️ Encode failed, using original: $e');
+      return imageBytes;
     }
   }
 

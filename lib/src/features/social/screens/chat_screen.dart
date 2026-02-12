@@ -5,7 +5,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/luxury_theme.dart';
+import '../../../core/services/sound_service.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/models/generated_outfit_model.dart';
+import '../../../core/models/wardrobe_item_model.dart';
+import '../../wardrobe/providers/wardrobe_provider.dart';
 import '../models/chat_message_model.dart';
 import '../providers/social_provider.dart';
 import '../services/social_service.dart';
@@ -92,20 +96,36 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       );
     }
 
+    ref.listen<AsyncValue<List<ChatMessageModel>>>(chatMessagesProvider(chatId), (prev, next) {
+      next.whenData((messages) {
+        if (messages.isEmpty) return;
+        final last = messages.last;
+        if (last.senderId != user.uid) {
+          final prevCount = prev?.valueOrNull?.length ?? 0;
+          if (messages.length > prevCount) SoundService.play(AppSound.messageReceived);
+        }
+      });
+    });
+
     return Scaffold(
       backgroundColor: isDark ? DesignTokens.darkBackground : DesignTokens.lightBackground,
       appBar: AppBar(
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: surface,
-              backgroundImage: widget.otherUserAvatar != null && widget.otherUserAvatar!.startsWith('http')
-                  ? NetworkImage(widget.otherUserAvatar!)
-                  : null,
-              child: widget.otherUserAvatar == null || !widget.otherUserAvatar!.startsWith('http')
-                  ? Icon(Icons.person, size: 22, color: accent)
-                  : null,
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: surface),
+              clipBehavior: Clip.antiAlias,
+              child: widget.otherUserAvatar != null && widget.otherUserAvatar!.startsWith('http')
+                  ? Image.network(
+                      widget.otherUserAvatar!,
+                      fit: BoxFit.cover,
+                      width: 40,
+                      height: 40,
+                      errorBuilder: (_, __, ___) => Icon(Icons.person, size: 22, color: accent),
+                    )
+                  : Icon(Icons.person, size: 22, color: accent),
             ),
             const SizedBox(width: 12),
             Expanded(child: Text(widget.otherUserName, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600))),
@@ -161,7 +181,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             accent: accent,
             isDark: isDark,
             onSend: () => _send(ref, user.uid),
-            onAttachImage: () => _attachImage(ref, user.uid),
+            onAttachImage: () => _showAttachMenu(context, ref, user.uid),
           ),
         ],
       ),
@@ -179,6 +199,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (chatId == null) return;
     _controller.clear();
     HapticFeedback.mediumImpact();
+    SoundService.play(AppSound.messageSent);
     final senderName = ref.read(currentUserProvider).valueOrNull?.displayName ?? 'Someone';
     await ref.read(socialServiceProvider).sendMessage(
       chatId,
@@ -188,10 +209,167 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  void _attachImage(WidgetRef ref, String uid) {
+  void _showAttachMenu(BuildContext context, WidgetRef ref, String uid) {
     HapticFeedback.selectionClick();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Image picker: use gallery to share try-on'), behavior: SnackBarBehavior.floating),
+    final chatId = _effectiveChatId;
+    if (chatId == null) return;
+    final isDark = context.isDarkMode;
+    final accent = isDark ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Share to chat', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: isDark ? DesignTokens.darkText : DesignTokens.lightText)),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: Icon(Icons.photo_library_rounded, color: accent),
+                title: const Text('From My Outfits'),
+                subtitle: const Text('Generated try-on looks'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _showOutfitPicker(context, ref, chatId, uid);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.checkroom_rounded, color: accent),
+                title: const Text('From My Closet'),
+                subtitle: const Text('Wardrobe items'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _showWardrobePicker(context, ref, chatId, uid);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showOutfitPicker(BuildContext context, WidgetRef ref, String chatId, String uid) async {
+    final outfitsAsync = ref.read(generatedOutfitsProvider);
+    final isDark = context.isDarkMode;
+    final accent = isDark ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+    final senderName = ref.read(currentUserProvider).valueOrNull?.displayName ?? 'Someone';
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (_, scrollController) => outfitsAsync.when(
+          data: (outfits) {
+            if (outfits.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('No outfits yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? DesignTokens.darkText : DesignTokens.lightText)),
+                    const SizedBox(height: 8),
+                    Text('Save looks from Try On first.', style: TextStyle(color: isDark ? DesignTokens.darkTextSecondary : DesignTokens.lightTextSecondary)),
+                  ],
+                ),
+              );
+            }
+            return GridView.builder(
+              controller: scrollController,
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8, childAspectRatio: 0.8),
+              itemCount: outfits.length,
+              itemBuilder: (context, index) {
+                final outfit = outfits[index];
+                return GestureDetector(
+                  onTap: () async {
+                    Navigator.of(ctx).pop();
+                    await ref.read(socialServiceProvider).sendMessage(chatId, uid, outfit.caption ?? 'My look', type: 'image', imageUrl: outfit.imageUrl, senderName: senderName);
+                    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sent'), behavior: SnackBarBehavior.floating));
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(outfit.imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.image, color: accent)),
+                  ),
+                );
+              },
+            );
+          },
+          loading: () => const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator())),
+          error: (e, _) => Center(child: Text('Error: $e')),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showWardrobePicker(BuildContext context, WidgetRef ref, String chatId, String uid) async {
+    final wardrobeAsync = ref.read(wardrobeItemsProvider);
+    final isDark = context.isDarkMode;
+    final accent = isDark ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+    final senderName = ref.read(currentUserProvider).valueOrNull?.displayName ?? 'Someone';
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (_, scrollController) => wardrobeAsync.when(
+          data: (items) {
+            if (items.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Closet is empty', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: isDark ? DesignTokens.darkText : DesignTokens.lightText)),
+                    const SizedBox(height: 8),
+                    Text('Add items in My Closet first.', style: TextStyle(color: isDark ? DesignTokens.darkTextSecondary : DesignTokens.lightTextSecondary)),
+                  ],
+                ),
+              );
+            }
+            return GridView.builder(
+              controller: scrollController,
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8, childAspectRatio: 0.8),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                final imageUrl = item.processedImageUrl ?? item.imageUrl;
+                final caption = '${item.category}${item.colorTags.isNotEmpty ? ' · ${item.colorTags.take(2).join(', ')}' : ''}';
+                return GestureDetector(
+                  onTap: () async {
+                    Navigator.of(ctx).pop();
+                    await ref.read(socialServiceProvider).sendMessage(chatId, uid, caption, type: 'image', imageUrl: imageUrl, senderName: senderName);
+                    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sent'), behavior: SnackBarBehavior.floating));
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.checkroom, color: accent)),
+                  ),
+                );
+              },
+            );
+          },
+          loading: () => const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator())),
+          error: (e, _) => Center(child: Text('Error: $e')),
+        ),
+      ),
     );
   }
 }
@@ -262,12 +440,12 @@ class _MessageBubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (message.isImage && message.imageUrl != null)
+            if ((message.isImage || message.isTryon) && message.imageUrl != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.network(message.imageUrl!, width: 200, height: 200, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.image_not_supported, color: isMe ? Colors.white70 : DesignTokens.lightTextSecondary)),
               ),
-            if (message.isImage && message.imageUrl != null && message.text.isNotEmpty) const SizedBox(height: 8),
+            if ((message.isImage || message.isTryon) && message.imageUrl != null && message.text.isNotEmpty) const SizedBox(height: 8),
             if (message.text.isNotEmpty)
               Text(
                 message.text,

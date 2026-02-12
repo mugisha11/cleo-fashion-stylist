@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -7,8 +9,18 @@ import '../models/friend_request_model.dart';
 import '../models/social_notification_model.dart';
 import '../models/social_user_profile.dart';
 import '../services/social_service.dart';
+import '../services/generated_outfits_service.dart';
+import '../../../core/models/generated_outfit_model.dart';
 
 final socialServiceProvider = Provider<SocialService>((ref) => SocialService());
+final generatedOutfitsServiceProvider = Provider<GeneratedOutfitsService>((ref) => GeneratedOutfitsService());
+
+/// Current user's generated outfits (Try-On saves), for My Outfits page and chat sharing.
+final generatedOutfitsProvider = StreamProvider<List<GeneratedOutfitModel>>((ref) {
+  final user = ref.watch(authStateProvider).valueOrNull;
+  if (user == null) return Stream.value([]);
+  return ref.watch(generatedOutfitsServiceProvider).watchGeneratedOutfits(user.uid);
+});
 
 /// Current user's social profile (friends list). Ensures profile exists on first load.
 final currentUserSocialProfileProvider = StreamProvider<SocialUserProfile?>((ref) {
@@ -56,10 +68,20 @@ final chatMessagesProvider = StreamProvider.family<List<ChatMessageModel>, Strin
 });
 
 /// Notifications for current user (all app notifications when logged in)
+/// On Firestore permission-denied or other errors, emits empty list so the app keeps working.
 final socialNotificationsProvider = StreamProvider<List<SocialNotificationModel>>((ref) {
   final user = ref.watch(authStateProvider).valueOrNull;
   if (user == null) return Stream.value([]);
-  return ref.watch(socialServiceProvider).watchNotificationsForUser(user.uid);
+  final stream = ref.watch(socialServiceProvider).watchNotificationsForUser(user.uid);
+  return stream.transform(
+    StreamTransformer<List<SocialNotificationModel>, List<SocialNotificationModel>>.fromHandlers(
+      handleData: (data, sink) => sink.add(data),
+      handleError: (Object e, StackTrace st, sink) {
+        sink.add([]);
+        sink.close();
+      },
+    ),
+  );
 });
 
 /// Unread notification count (for badge)
@@ -97,8 +119,8 @@ final suggestedPeopleProvider = FutureProvider<List<SocialUserProfile>>((ref) as
   return notFriends;
 });
 
-/// Friend request status toward a specific user: none | pending_sent | friends
-enum FriendStatus { none, pendingSent, friends }
+/// Friend request status toward a specific user: none | pendingSent | pendingReceived | friends
+enum FriendStatus { none, pendingSent, pendingReceived, friends }
 
 /// Reactive friend status for [otherUserId] (for Add Friend button).
 final friendStatusProvider = Provider.family<AsyncValue<FriendStatus>, String>((ref, otherUserId) {
@@ -106,13 +128,22 @@ final friendStatusProvider = Provider.family<AsyncValue<FriendStatus>, String>((
   if (user == null || user.uid == otherUserId) return const AsyncValue.data(FriendStatus.none);
   final profile = ref.watch(currentUserSocialProfileProvider);
   final fromMe = ref.watch(friendRequestsFromMeProvider);
+  final toMe = ref.watch(friendRequestsToMeProvider);
   return profile.when(
     data: (p) {
       if (p?.friends.contains(otherUserId) == true) return const AsyncValue.data(FriendStatus.friends);
-      return fromMe.when(
-        data: (list) {
-          final pending = list.any((r) => r.to == otherUserId && r.isPending);
-          return AsyncValue.data(pending ? FriendStatus.pendingSent : FriendStatus.none);
+      return toMe.when(
+        data: (toMeList) {
+          final theyRequestedMe = toMeList.any((r) => r.from == otherUserId && r.isPending);
+          if (theyRequestedMe) return const AsyncValue.data(FriendStatus.pendingReceived);
+          return fromMe.when(
+            data: (list) {
+              final pending = list.any((r) => r.to == otherUserId && r.isPending);
+              return AsyncValue.data(pending ? FriendStatus.pendingSent : FriendStatus.none);
+            },
+            loading: () => const AsyncValue.data(FriendStatus.none),
+            error: (_, __) => const AsyncValue.data(FriendStatus.none),
+          );
         },
         loading: () => const AsyncValue.data(FriendStatus.none),
         error: (_, __) => const AsyncValue.data(FriendStatus.none),

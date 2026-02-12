@@ -16,9 +16,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/models/production_vton_state.dart';
 import '../../../core/theme/design_tokens.dart';
-import '../../../core/utils/image_resizer.dart';
 import '../../../core/providers/production_vton_provider.dart';
+import '../../../core/providers/user_image_provider.dart';
 import '../../../core/models/wardrobe_item_model.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../social/providers/social_provider.dart';
 import '../widgets/production_wardrobe_picker.dart';
 import '../widgets/production_stage_indicator.dart';
 import '../widgets/production_chat_interface.dart';
@@ -27,6 +29,7 @@ import '../../../routes.dart';
 import '../../style_feed/providers/style_feed_provider.dart';
 import '../../style_feed/screens/post_look_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/save_tryon_result_io.dart' if (dart.library.io) '../utils/save_tryon_result_stub.dart' as save_tryon_result;
 
 /// Fashion-forward color palette
 class TryOnColors {
@@ -97,6 +100,7 @@ class _ProductionTryOnScreenState extends ConsumerState<ProductionTryOnScreen>
     'Perfecting details...',
   ];
   int _currentLoadingTextIndex = 0;
+  bool _preferenceImageLoaded = false;
 
   @override
   void initState() {
@@ -119,7 +123,8 @@ class _ProductionTryOnScreenState extends ConsumerState<ProductionTryOnScreen>
     );
     
     _pageEnterController.forward();
-    _loadDefaultImage();
+    // Load preference image first (Settings → Fashion Preferences); fallback to asset only if none set.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadPreferenceImageFirst());
     
     // Animate loading text changes
     _loadingTextController.addListener(() {
@@ -142,15 +147,48 @@ class _ProductionTryOnScreenState extends ConsumerState<ProductionTryOnScreen>
     super.dispose();
   }
 
-  Future<void> _loadDefaultImage() async {
+  /// Load preference image first (Settings → Fashion Preferences). Fallback to asset only if none set.
+  Future<void> _loadPreferenceImageFirst() async {
+    if (_preferenceImageLoaded) return;
+    _preferenceImageLoaded = true;
     try {
-      final byteData = await rootBundle.load('assets/icons/dftryon.jpg');
-      setState(() {
-        _userImageBytes = byteData.buffer.asUint8List();
-      });
+      final bytes = await ref.read(userImageBytesProvider.future);
+      if (mounted) {
+        if (bytes != null && bytes.isNotEmpty) {
+          setState(() {
+            _userImageBytes = bytes;
+            _userImageUrl = null;
+          });
+          return;
+        }
+        // No preference image: use asset as fallback
+        final byteData = await rootBundle.load('assets/icons/dftryon.jpg');
+        if (mounted) {
+          setState(() {
+            _userImageBytes = byteData.buffer.asUint8List();
+            _userImageUrl = null;
+          });
+        }
+      }
     } catch (e) {
-      debugPrint('Failed to load default image: $e');
+      debugPrint('Try-on: load preference/fallback image: $e');
+      if (mounted) {
+        try {
+          final byteData = await rootBundle.load('assets/icons/dftryon.jpg');
+          if (mounted) {
+            setState(() {
+              _userImageBytes = byteData.buffer.asUint8List();
+              _userImageUrl = null;
+            });
+          }
+        } catch (_) {}
+      }
     }
+  }
+
+  void _loadPreferenceImage(WidgetRef ref) {
+    if (_preferenceImageLoaded) return;
+    _loadPreferenceImageFirst();
   }
 
   @override
@@ -161,6 +199,23 @@ class _ProductionTryOnScreenState extends ConsumerState<ProductionTryOnScreen>
     final screenSize = MediaQuery.of(context).size;
     final isMobile = screenSize.width < 768;
     final isTablet = screenSize.width >= 768 && screenSize.width < 1200;
+
+    _loadPreferenceImage(ref);
+
+    // When try-on completes, create a notification so it appears in the notification list.
+    ref.listen<ProductionVTONState>(productionVTONProvider, (prev, next) {
+      if (next.stage == ProductionVTONStage.success &&
+          next.resultImageUrl != null &&
+          (prev?.stage != ProductionVTONStage.success)) {
+        final uid = ref.read(authStateProvider).valueOrNull?.uid;
+        if (uid != null) {
+          ref.read(socialServiceProvider).createTryOnCompletedNotification(
+                userId: uid,
+                messagePreview: 'Your try-on is ready!',
+              );
+        }
+      }
+    });
 
     return Scaffold(
       backgroundColor: TryOnColors.getBackgroundColor(context),
@@ -948,13 +1003,11 @@ class _ProductionTryOnScreenState extends ConsumerState<ProductionTryOnScreen>
     try {
       final image = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 95,
+        imageQuality: 100,
       );
       
       if (image != null) {
-        var bytes = await image.readAsBytes();
-        bytes = await ImageResizer.resizeIfNeeded(bytes);
-        
+        final bytes = await image.readAsBytes();
         setState(() {
           _userImageBytes = bytes;
           _userImageUrl = null;
@@ -1015,7 +1068,7 @@ class _ProductionTryOnScreenState extends ConsumerState<ProductionTryOnScreen>
     }
 
     final garmentUrls = _selectedGarments
-        .map((g) => g.imageUrl)
+        .map((g) => g.processedImageUrl ?? g.imageUrl)
         .where((u) => u.isNotEmpty && (u.startsWith('http://') || u.startsWith('https://')))
         .toList();
 
@@ -1031,11 +1084,26 @@ class _ProductionTryOnScreenState extends ConsumerState<ProductionTryOnScreen>
       return;
     }
 
+    List<String>? garmentBase64s;
+    try {
+      final firstUrl = garmentUrls.first;
+      final response = await http.get(Uri.parse(firstUrl)).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw Exception('Garment image load timed out'),
+      );
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+        garmentBase64s = [base64Encode(response.bodyBytes)];
+      }
+    } catch (e) {
+      debugPrint('Garment image fetch failed (will send URL): $e');
+    }
+
     final notifier = ref.read(productionVTONProvider.notifier);
     await notifier.executeTryOn(
       userImageUrl: _userImageUrl ?? '',
       garmentImageUrls: garmentUrls,
       userImageBase64: userImageBase64,
+      garmentImageBase64s: garmentBase64s,
     );
 
     final newState = ref.read(productionVTONProvider);
@@ -1107,32 +1175,35 @@ class _ProductionTryOnScreenState extends ConsumerState<ProductionTryOnScreen>
         return;
       }
 
-      // Web-specific download functionality disabled for mobile builds
-      // if (kIsWeb) {
-      //   final blob = html.Blob([imageBytes], 'image/jpeg');
-      //   final url = html.Url.createObjectUrlFromBlob(blob);
-      //   final anchor = html.AnchorElement(href: url)
-      //     ..setAttribute('download', 'tryon-result-${DateTime.now().millisecondsSinceEpoch}.jpg')
-      //     ..click();
-      //   html.Url.revokeObjectUrl(url);
-      //   
-      //   if (mounted) {
-      //     ScaffoldMessenger.of(context).showSnackBar(
-      //       const SnackBar(content: Text('Image downloaded successfully! 📥')),
-      //     );
-      //   }
-      // } else {
+      final uid = ref.read(authStateProvider).valueOrNull?.uid;
+      bool savedToOutfits = false;
+      if (uid != null) {
+        final service = ref.read(generatedOutfitsServiceProvider);
+        await service.saveGeneratedOutfit(
+          userId: uid,
+          imageBytes: imageBytes,
+          caption: 'My try-on look',
+        );
+        ref.invalidate(generatedOutfitsProvider);
+        savedToOutfits = true;
+      }
+
+      final devicePath = await save_tryon_result.saveTryOnResultToDevice(imageBytes);
+      final savedToDevice = devicePath != null && devicePath.isNotEmpty;
+
       if (mounted) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Result saved to gallery ✨')),
-          );
-        }
+        String msg = savedToOutfits
+            ? 'Saved to My Outfits'
+            : (savedToDevice ? 'Saved to device' : 'No save destination available. Sign in to save to My Outfits.');
+        if (savedToOutfits && savedToDevice) msg = 'Saved to My Outfits and device';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save image: $e')),
+          SnackBar(content: Text('Failed to save: $e'), behavior: SnackBarBehavior.floating),
         );
       }
     }

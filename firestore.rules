@@ -1,3 +1,5 @@
+// Firestore Security Rules
+// Deploy after changes: firebase deploy --only firestore:rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -16,17 +18,20 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated();
       
-      // Allow create if user is authenticated and creating their own document
-      allow create: if isAuthenticated() && request.auth.uid == userId;
+      // Allow create: owner; or another user only setting 'friends' with themselves (accept friend request when doc missing)
+      allow create: if isAuthenticated() && (
+        request.auth.uid == userId
+        || (request.auth.uid != userId
+            && request.resource.data.keys().hasOnly(['friends'])
+            && request.resource.data.friends.hasAny([request.auth.uid]))
+      );
       
-      // Allow update: owner always; or add-self-to-friends (for accept friend request)
+      // Allow update: owner always; or add-self-to-friends only (accept friend request)
       allow update: if isAuthenticated() && (
         request.auth.uid == userId
         || (request.auth.uid != userId
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friends'])
-            && request.resource.data.keys().hasAll(['friends'])
-            && request.resource.data.friends.hasAny([request.auth.uid])
-            && (resource.data.get('friends', []) == null || request.resource.data.friends.size() == resource.data.get('friends', []).size() + 1))
+            && request.resource.data.friends.hasAny([request.auth.uid]))
       );
       
       // Allow delete if user is authenticated and owns the document
@@ -79,6 +84,16 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && 
         resource.data.userId == request.auth.uid;
     }
+
+    // Generated outfits (Try-On results) - users can only access their own
+    match /generated_outfits/{outfitId} {
+      allow read: if isAuthenticated() && 
+        (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
     
     // Avatars collection - users can only access their own avatar
     match /avatars/{userId} {
@@ -127,11 +142,25 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && resource.data.toUserId == request.auth.uid;
     }
 
-    // Style Feed posts - all authenticated users can read; author creates/deletes; anyone can update (likes, comments, etc.)
+    // ——— Posts (Style Feed) ———
+    // Managed rules: read feed (any auth user), create (author only), update (author full; others only likes/saves/comments/counts), delete (author only).
     match /style_feed_posts/{postId} {
+      // Any authenticated user can read the feed (list) and individual posts (get).
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAuthenticated();
+
+      // Only the author can create a post; document must have userId matching the requester.
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(['userId', 'createdAt']);
+
+      // Author can update anything; other users can only update engagement fields (likes, saves, comments, counts).
+      allow update: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid
+        || request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['likedByUserIds', 'savedByUserIds', 'comments', 'likeCount', 'commentCount', 'viewCount', 'shareCount'])
+      );
+
+      // Only the post author can delete.
       allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
 

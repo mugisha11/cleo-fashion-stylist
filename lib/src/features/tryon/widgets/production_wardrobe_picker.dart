@@ -9,6 +9,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/models/wardrobe_item_model.dart';
 import '../../../core/theme/design_tokens.dart';
+import '../../../routes.dart';
 import '../../wardrobe/providers/wardrobe_provider.dart';
 
 class ProductionWardrobePicker extends ConsumerWidget {
@@ -143,33 +144,28 @@ class ProductionWardrobePicker extends ConsumerWidget {
         height: isVertical ? 110 : 110,
         margin: isVertical ? EdgeInsets.zero : const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? accent
-                : colorScheme.outline.withOpacity(0.15),
+                : colorScheme.outline.withOpacity(0.2),
             width: isSelected ? 3 : 1.5,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: accent.withOpacity(0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                    spreadRadius: 0,
-                  ),
-                  BoxShadow(
-                    color: accent.withOpacity(0.2),
-                    blurRadius: 8,
+                    color: accent.withOpacity(0.3),
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                     spreadRadius: 0,
                   ),
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                     spreadRadius: 0,
                   ),
                 ],
@@ -178,29 +174,14 @@ class ProductionWardrobePicker extends ConsumerWidget {
           borderRadius: BorderRadius.circular(20),
           child: Stack(
             children: [
-              // Gradient overlay when not selected
-              if (!isSelected)
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withOpacity(0.3),
-                        Colors.white.withOpacity(0.1),
-                      ],
-                    ),
-                  ),
-                ),
-              
-              // Transparent background image
+              // Garment image (processed = no background, like in wardrobe)
               CachedNetworkImage(
                 imageUrl: imageUrl,
-                fit: BoxFit.cover,
+                fit: BoxFit.contain,
                 width: double.infinity,
                 height: double.infinity,
                 placeholder: (context, url) => Container(
-                  color: colorScheme.surface,
+                  color: Colors.transparent,
                   child: Center(
                     child: SizedBox(
                       width: 24,
@@ -213,7 +194,7 @@ class ProductionWardrobePicker extends ConsumerWidget {
                   ),
                 ),
                 errorWidget: (context, url, error) => Container(
-                  color: colorScheme.surface,
+                  color: Colors.transparent,
                   child: Icon(
                     Icons.image_not_supported,
                     color: colorScheme.onSurface.withOpacity(0.3),
@@ -320,7 +301,7 @@ class ProductionWardrobePicker extends ConsumerWidget {
             const SizedBox(height: 8),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pushNamed('/wardrobe');
+                Navigator.of(context).pushNamed(Routes.wardrobe);
               },
               child: const Text('Add Items'),
             ),

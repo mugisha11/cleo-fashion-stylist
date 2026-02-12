@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/luxury_theme.dart';
+import '../../../routes.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/social_provider.dart';
 import '../services/social_service.dart';
@@ -135,10 +136,40 @@ class _Button extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: accent)),
+              Icon(Icons.schedule, size: 18, color: isDark ? DesignTokens.darkTextSecondary : DesignTokens.lightTextSecondary),
               SizedBox(width: 8),
-              Text('Pending', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isDark ? DesignTokens.darkTextSecondary : DesignTokens.lightTextSecondary)),
+              Text('Requested', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isDark ? DesignTokens.darkTextSecondary : DesignTokens.lightTextSecondary)),
             ],
+          ),
+        );
+      case FriendStatus.pendingReceived:
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              Navigator.of(context).pushNamed(Routes.friendRequests);
+            },
+            borderRadius: BorderRadius.circular(h / 2),
+            child: Container(
+              height: h,
+              constraints: BoxConstraints(minWidth: minW),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: h * 0.22),
+              decoration: BoxDecoration(
+                color: DesignTokens.lightSuccess.withValues(alpha: isDark ? 0.2 : 0.12),
+                borderRadius: BorderRadius.circular(h / 2),
+                border: Border.all(color: DesignTokens.lightSuccess.withValues(alpha: 0.5)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person_add_alt_1_rounded, size: 18, color: DesignTokens.lightSuccess),
+                  SizedBox(width: 6),
+                  Text('Accept request', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: DesignTokens.lightSuccess)),
+                ],
+              ),
+            ),
           ),
         );
       case FriendStatus.none:

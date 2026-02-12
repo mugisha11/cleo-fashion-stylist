@@ -83,7 +83,7 @@ class _FashionPreferencesScreenState
       HapticFeedback.mediumImpact();
       final pickedFile = await _imagePicker.pickImage(
         source: source,
-        imageQuality: 85,
+        imageQuality: 100,
       );
 
       if (pickedFile != null) {

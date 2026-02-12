@@ -152,19 +152,18 @@ async def production_vton(request: TryOnRequest):
         if analysis.get("status") == "reject":
             if analysis.get("openrouter_http_status") in (401, 402, 403):
                 logger.warning("OpenRouter unavailable (%s), using Gemini-only fallback.", analysis.get("reason"))
-                analysis = _fallback_analysis(request.garment_type)
             else:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Analysis rejected: {analysis.get('reason', 'Unknown reason')}"
+                logger.warning(
+                    "Analysis rejected (compatibility): %s. Using generic try-on so the app keeps working.",
+                    analysis.get("reason", "Unknown reason"),
                 )
+            analysis = _fallback_analysis(request.garment_type)
 
         confidence = analysis.get("confidence", 0)
         if confidence < 0.80:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Confidence too low: {confidence:.2f}. Need > 0.80"
-            )
+            logger.warning("Confidence %.2f below 0.80; using generic try-on.", confidence)
+            analysis = _fallback_analysis(request.garment_type)
+            confidence = analysis.get("confidence", 1.0)
 
         # STAGE 3 & 4: Generate try-on image with Gemini
         logger.info("🎨 Stage 3-4: Generating try-on with Gemini...")

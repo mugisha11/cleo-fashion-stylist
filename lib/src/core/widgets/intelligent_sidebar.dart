@@ -183,7 +183,7 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  isExpanded ? 'Locked' : 'Hover to expand',
+                                  isExpanded ? 'Pinned open' : 'Tap to expand',
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: theme.textTertiary,
@@ -196,23 +196,30 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
                       _buildNavItem(
                         icon: Icons.home_outlined,
                         activeIcon: Icons.home,
-                        label: 'Dashboard',
+                        label: 'Home',
                         route: Routes.dashboard,
                         isActive: widget.currentRoute == Routes.dashboard,
                       ),
                       _buildNavItem(
                         icon: Icons.auto_awesome_outlined,
                         activeIcon: Icons.auto_awesome,
-                        label: 'Try-On',
+                        label: 'Try On',
                         route: Routes.tryon,
                         isActive: widget.currentRoute == Routes.tryon,
                       ),
                       _buildNavItem(
                         icon: Icons.checkroom_outlined,
                         activeIcon: Icons.checkroom,
-                        label: 'Wardrobe',
+                        label: 'My Closet',
                         route: Routes.wardrobe,
                         isActive: widget.currentRoute == Routes.wardrobe,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.star_outline,
+                        activeIcon: Icons.star,
+                        label: 'Picks for You',
+                        route: Routes.recommendations,
+                        isActive: widget.currentRoute == Routes.recommendations,
                       ),
                       _buildNavItem(
                         icon: Icons.calendar_today_outlined,
@@ -230,9 +237,16 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
                         isActive: widget.currentRoute == Routes.styleFeed,
                       ),
                       _buildNavItem(
+                        icon: Icons.photo_library_outlined,
+                        activeIcon: Icons.photo_library,
+                        label: 'My Outfits',
+                        route: Routes.generatedOutfits,
+                        isActive: widget.currentRoute == Routes.generatedOutfits,
+                      ),
+                      _buildNavItem(
                         icon: Icons.notifications_outlined,
                         activeIcon: Icons.notifications,
-                        label: 'Notifications',
+                        label: 'Alerts',
                         route: null, // Opens panel instead
                         isActive: false,
                         onTap: () => _showNotificationPanel(),
@@ -256,7 +270,7 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
                     _buildNavItem(
                       icon: Icons.person_outline,
                       activeIcon: Icons.person,
-                      label: 'Profile',
+                      label: 'My Profile',
                       route: Routes.settings,
                       isActive: widget.currentRoute == Routes.settings,
                       onTap: widget.onProfileTap,
@@ -279,7 +293,7 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
                       _buildNavItem(
                         icon: Icons.logout,
                         activeIcon: Icons.logout,
-                        label: 'Logout',
+                        label: 'Sign out',
                         route: null,
                         isActive: false,
                         onTap: widget.onLogout,

@@ -29,25 +29,25 @@ class FashionDrawer extends StatelessWidget {
     const DrawerItem(
       icon: Icons.home_outlined,
       activeIcon: Icons.home,
-      label: 'Dashboard',
+      label: 'Home',
       route: Routes.dashboard,
     ),
     const DrawerItem(
       icon: Icons.auto_awesome_outlined,
       activeIcon: Icons.auto_awesome,
-      label: 'Virtual Try-On',
+      label: 'Try On',
       route: Routes.tryon,
     ),
     const DrawerItem(
       icon: Icons.checkroom_outlined,
       activeIcon: Icons.checkroom,
-      label: 'Digital Wardrobe',
+      label: 'My Closet',
       route: Routes.wardrobe,
     ),
     const DrawerItem(
       icon: Icons.star_outline,
       activeIcon: Icons.star,
-      label: 'AI Recommendations',
+      label: 'Picks for You',
       route: Routes.recommendations,
     ),
     const DrawerItem(
@@ -61,6 +61,12 @@ class FashionDrawer extends StatelessWidget {
       activeIcon: Icons.grid_view_rounded,
       label: 'Style Feed',
       route: Routes.styleFeed,
+    ),
+    const DrawerItem(
+      icon: Icons.photo_library_outlined,
+      activeIcon: Icons.photo_library,
+      label: 'My Outfits',
+      route: Routes.generatedOutfits,
     ),
     const DrawerItem(
       icon: Icons.settings_outlined,
@@ -78,14 +84,18 @@ class FashionDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            // User Profile Header
-            _buildUserHeader(context, theme),
-            
+            // Cleo Fashion header (same as all sidebars)
+            _buildCleoHeader(context, theme),
             Divider(
               color: theme.borderLight,
               height: 1,
             ),
-            
+            // User Profile
+            _buildUserHeader(context, theme),
+            Divider(
+              color: theme.borderLight,
+              height: 1,
+            ),
             // Navigation Items
             Expanded(
               child: ListView(
@@ -118,7 +128,7 @@ class FashionDrawer extends StatelessWidget {
                     color: theme.accentError,
                   ),
                   label: Text(
-                    'Logout',
+                    'Sign out',
                     style: theme.bodyMedium(color: theme.accentError),
                   ),
                   style: TextButton.styleFrom(
@@ -136,6 +146,30 @@ class FashionDrawer extends StatelessWidget {
     );
   }
 
+  Widget _buildCleoHeader(BuildContext context, AppThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Cleo Fashion',
+            style: theme.titleLarge().copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.primary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Your style companion',
+            style: theme.bodySmall(),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildUserHeader(BuildContext context, AppThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(AppThemeData.spacingXXL),
@@ -143,7 +177,7 @@ class FashionDrawer extends StatelessWidget {
         onTap: onProfileTap,
         child: Row(
           children: [
-            // Profile Avatar
+            // Profile Avatar (with fallback for failed URLs e.g. expired ReadyPlayerMe)
             Container(
               width: 56,
               height: 56,
@@ -153,20 +187,25 @@ class FashionDrawer extends StatelessWidget {
                   color: theme.borderLight,
                   width: 2,
                 ),
-                image: profileImageUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(profileImageUrl!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
               ),
-              child: profileImageUrl == null
-                  ? Icon(
+              clipBehavior: Clip.antiAlias,
+              child: profileImageUrl != null
+                  ? Image.network(
+                      profileImageUrl!,
+                      fit: BoxFit.cover,
+                      width: 56,
+                      height: 56,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.person,
+                        size: 24,
+                        color: theme.textSecondary,
+                      ),
+                    )
+                  : Icon(
                       Icons.person,
                       size: 24,
                       color: theme.textSecondary,
-                    )
-                  : null,
+                    ),
             ),
             
             const SizedBox(width: AppThemeData.spacingLG),
@@ -177,7 +216,7 @@ class FashionDrawer extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    userName ?? 'Fashion Enthusiast',
+                    userName ?? 'Style Lover',
                     style: theme.titleLarge(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

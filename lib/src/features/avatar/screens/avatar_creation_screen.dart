@@ -68,7 +68,7 @@ class _AvatarCreationScreenState extends ConsumerState<AvatarCreationScreen> {
   }
 
   void _continueToHome() {
-    Navigator.of(context).pushReplacementNamed(Routes.home);
+    Navigator.of(context).pushReplacementNamed(Routes.dashboard);
   }
 
   @override

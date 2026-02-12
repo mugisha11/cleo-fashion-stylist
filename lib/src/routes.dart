@@ -26,6 +26,7 @@ import 'features/social/screens/chats_list_screen.dart';
 import 'features/social/screens/chat_screen.dart';
 import 'features/social/screens/friend_requests_screen.dart';
 import 'features/social/screens/discover_people_screen.dart';
+import 'features/social/screens/generated_outfits_screen.dart';
 import 'features/notifications/screens/notification_center_screen.dart';
 import 'core/widgets/splash_screen.dart';
 
@@ -61,6 +62,7 @@ class Routes {
   static const String friendRequests = '/friend-requests';
   static const String discoverPeople = '/discover-people';
   static const String notificationCenter = '/notifications';
+  static const String generatedOutfits = '/my-outfits';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -95,6 +97,7 @@ class Routes {
       case virtualwearon:
         return _buildRoute(const VirtualWearOnScreen(), settings);
       case dashboard:
+        // Main screen with AI chat — keep this route; use /dashboard or Routes.dashboard.
         return _buildRoute(const DashboardScreen(), settings);
       case fashionQuiz:
         return _buildRoute(const FashionQuizScreen(), settings);
@@ -153,6 +156,8 @@ class Routes {
         return _buildRoute(const DiscoverPeopleScreen(), settings);
       case Routes.notificationCenter:
         return _buildRoute(const NotificationCenterScreen(), settings);
+      case Routes.generatedOutfits:
+        return _buildRoute(const GeneratedOutfitsScreen(), settings);
       default:
         return _buildRoute(
           const Scaffold(

@@ -1,25 +1,43 @@
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/services/supabase_storage_service.dart';
 import '../models/look_post_model.dart';
 
-/// Style feed posts stored in Firestore; images in Firebase Storage.
+/// Style feed: post images → Supabase Storage; post metadata (feed, likes, comments) → Firestore.
+/// Console "undefined" / WebChannel warnings come from Firestore when the network drops, not from Supabase.
 class StyleFeedFirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
-
   static const String _posts = 'style_feed_posts';
-  static const String _storagePath = 'style_feed';
+  static const String _styleFeedBucket = 'style_feed';
 
-  /// Upload post image to Storage and return download URL.
+  /// Upload post image to Supabase Storage and return public URL.
+  /// On 400: bucket may be missing — create "style_feed" in Supabase Dashboard → Storage and add INSERT policy for anon.
   Future<String> uploadPostImage({
     required String userId,
     required String postId,
     required Uint8List bytes,
   }) async {
-    final ref = _storage.ref().child(_storagePath).child(userId).child('$postId.jpg');
-    await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
-    return ref.getDownloadURL();
+    try {
+      final client = Supabase.instance.client;
+      final storage = SupabaseStorageService(client);
+      final path = '$userId/$postId.jpg';
+      return await storage.uploadFile(
+        bucket: _styleFeedBucket,
+        path: path,
+        file: bytes,
+        contentType: 'image/jpeg',
+      );
+    } catch (e) {
+      final msg = e.toString();
+      if (msg.contains('400') || msg.contains('Bad Request') || msg.contains('Bucket not found')) {
+        throw Exception(
+          'Post image upload failed. Create the "style_feed" bucket in Supabase Dashboard → Storage (New bucket), '
+          'then add an INSERT policy for the anon role. See docs/setup/SUPABASE_STORAGE_STYLE_FEED.md',
+        );
+      }
+      rethrow;
+    }
   }
 
   /// Add a new post. If [imageBytes] is provided, upload to Storage and use URL; else [imageUrl] must be set (e.g. data URL for web).
@@ -65,15 +83,21 @@ class StyleFeedFirestoreService {
   }
 
   /// Stream all posts ordered by createdAt descending.
+  /// Skips any document that fails to parse so one bad doc doesn't break the feed.
   Stream<List<LookPost>> watchPosts() {
     return _firestore
         .collection(_posts)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snap) {
-      final list = snap.docs
-          .map((d) => LookPost.fromFirestore(d.id, d.data()))
-          .toList();
+      final list = <LookPost>[];
+      for (final d in snap.docs) {
+        try {
+          list.add(LookPost.fromFirestore(d.id, d.data()));
+        } catch (_) {
+          // Skip malformed documents
+        }
+      }
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return list;
     });

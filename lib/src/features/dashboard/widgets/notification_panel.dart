@@ -1,14 +1,16 @@
 /// Premium Notification Panel
-/// Bottom sheet with glassmorphism, smooth animations, swipe gestures
+/// Bottom sheet with glassmorphism, smooth animations. Uses Firestore social notifications.
 library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/grok_design_system.dart';
-import '../../../core/models/notification_model.dart';
-import '../../../core/services/deep_link_service.dart';
-import '../providers/notification_provider.dart';
-import 'notification_card.dart';
+import '../../../core/services/sound_service.dart';
+import '../../../routes.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../social/models/social_notification_model.dart';
+import '../../social/providers/social_provider.dart';
+import '../../social/widgets/social_notification_card.dart';
 
 class NotificationPanel extends ConsumerStatefulWidget {
   const NotificationPanel({super.key});
@@ -45,7 +47,6 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
       ),
     );
 
-    // Start animation
     _controller.forward();
   }
 
@@ -64,46 +65,68 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
     });
   }
 
-  void _handleNotificationTap(FashionNotification notification) {
-    final actions = ref.read(notificationActionsProvider);
-    if (actions == null) return; // Service not ready
-    
-    // Mark as read
-    if (notification.state == NotificationState.unread) {
-      actions.markAsRead(notification.id);
+  void _handleNotificationTap(SocialNotificationModel n) {
+    SoundService.play(AppSound.tap);
+    final user = ref.read(authStateProvider).valueOrNull;
+    if (user != null && !n.read) {
+      ref.read(socialServiceProvider).markNotificationRead(n.id);
+      ref.invalidate(socialNotificationsProvider);
+      ref.invalidate(socialUnreadCountProvider);
     }
 
-    // Navigate if action URL exists
-    if (notification.actionUrl != null) {
-      final deepLink = DeepLinkService(context);
-      deepLink.handleDeepLink(notification.actionUrl);
+    switch (n.type) {
+      case 'friend_request':
+      case 'request_accepted':
+        Navigator.of(context).pushNamed(Routes.friendRequests);
+        break;
+      case 'new_message':
+        if (n.chatId != null) {
+          Navigator.of(context).pushNamed(
+            Routes.chat,
+            arguments: <String, dynamic>{
+              'chatId': n.chatId,
+              'otherUserId': n.fromUserId,
+              'otherUserName': n.fromUserName ?? 'User',
+              'otherUserAvatar': null,
+            },
+          );
+        } else {
+          Navigator.of(context).pushNamed(
+            Routes.chat,
+            arguments: <String, dynamic>{
+              'otherUserId': n.fromUserId,
+              'otherUserName': n.fromUserName ?? 'User',
+            },
+          );
+        }
+        break;
+      case 'post_liked':
+      case 'post_comment':
+        Navigator.of(context).pushNamed(Routes.styleFeed);
+        break;
+      case 'tryon_completed':
+        Navigator.of(context).pushNamed(Routes.tryon);
+        break;
+      default:
+        break;
     }
-
     _close();
   }
 
-  void _handleDismiss(FashionNotification notification) {
-    HapticFeedback.mediumImpact();
-    final actions = ref.read(notificationActionsProvider);
-    if (actions != null) {
-      actions.dismiss(notification.id);
-    }
-  }
-
-  void _handleSave(FashionNotification notification) {
-    HapticFeedback.selectionClick();
-    final actions = ref.read(notificationActionsProvider);
-    if (actions != null) {
-      actions.markAsSaved(notification.id);
-    }
+  Future<void> _markAllAsRead() async {
+    final user = ref.read(authStateProvider).valueOrNull;
+    if (user == null) return;
+    await ref.read(socialServiceProvider).markAllNotificationsRead(user.uid);
+    ref.invalidate(socialNotificationsProvider);
+    ref.invalidate(socialUnreadCountProvider);
   }
 
   @override
   Widget build(BuildContext context) {
-    final notificationsAsync = ref.watch(notificationsProvider);
-    final unreadCountAsync = ref.watch(unreadCountProvider);
+    final notificationsAsync = ref.watch(socialNotificationsProvider);
+    final unreadCount = ref.watch(socialUnreadCountProvider);
     final screenHeight = MediaQuery.of(context).size.height;
-    final panelHeight = screenHeight * 0.75; // 75% of screen height
+    final panelHeight = screenHeight * 0.75;
     final isMobile = MediaQuery.of(context).size.width < 768;
 
     return AnimatedBuilder(
@@ -113,10 +136,10 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
           onTap: _close,
           child: Container(
             color: Colors.black.withValues(
-              alpha: _fadeAnimation.value * 0.4, // Dim background
+              alpha: _fadeAnimation.value * 0.4,
             ),
             child: GestureDetector(
-              onTap: () {}, // Prevent tap from closing when tapping panel
+              onTap: () {},
               child: SlideTransition(
                 position: Tween<Offset>(
                   begin: const Offset(0, 1),
@@ -145,7 +168,6 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                     ),
                     child: Column(
                       children: [
-                        // Handle bar
                         Container(
                           margin: const EdgeInsets.only(top: 12),
                           width: 40,
@@ -155,8 +177,6 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
-
-                        // Header
                         Padding(
                           padding: const EdgeInsets.all(GrokDesignSystem.spacingMD),
                           child: Row(
@@ -168,45 +188,29 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                                 ),
                               ),
                               const Spacer(),
-                              // Unread count badge
-                              unreadCountAsync.when(
-                                data: (count) {
-                                  if (count > 0) {
-                                    return Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: GrokDesignSystem.accentBlue,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        count.toString(),
-                                        style: GrokDesignSystem.caption(
-                                          isMobile: isMobile,
-                                        ).copyWith(
-                                          color: GrokDesignSystem.textInverse,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  return const SizedBox.shrink();
-                                },
-                                loading: () => const SizedBox.shrink(),
-                                error: (_, __) => const SizedBox.shrink(),
-                              ),
+                              if (unreadCount > 0)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: GrokDesignSystem.accentBlue,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    unreadCount.toString(),
+                                    style: GrokDesignSystem.caption(
+                                      isMobile: isMobile,
+                                    ).copyWith(
+                                      color: GrokDesignSystem.textInverse,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
                               const SizedBox(width: GrokDesignSystem.spacingMD),
-                              // Mark all as read button
                               TextButton(
-                                onPressed: () {
-                                  final actions =
-                                      ref.read(notificationActionsProvider);
-                                  if (actions != null) {
-                                    actions.markAllAsRead();
-                                  }
-                                },
+                                onPressed: unreadCount > 0 ? _markAllAsRead : null,
                                 child: Text(
                                   'Mark all read',
                                   style: GrokDesignSystem.linkText(
@@ -217,14 +221,10 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                             ],
                           ),
                         ),
-
-                        // Divider
                         const Divider(
                           height: 1,
                           color: GrokDesignSystem.borderLight,
                         ),
-
-                        // Notifications list
                         Expanded(
                           child: notificationsAsync.when(
                             data: (notifications) {
@@ -253,7 +253,6 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                                   ),
                                 );
                               }
-
                               return ListView.builder(
                                 padding: const EdgeInsets.only(
                                   top: GrokDesignSystem.spacingSM,
@@ -261,64 +260,15 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                                 ),
                                 itemCount: notifications.length,
                                 itemBuilder: (context, index) {
-                                  final notification = notifications[index];
-                                  return Dismissible(
-                                    key: Key(notification.id),
-                                    direction: DismissDirection.horizontal,
-                                    background: Container(
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: GrokDesignSystem.spacingMD,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: GrokDesignSystem.error,
-                                        borderRadius: BorderRadius.circular(
-                                          GrokDesignSystem.radiusMD,
-                                        ),
-                                      ),
-                                      alignment: Alignment.centerLeft,
-                                      padding: const EdgeInsets.only(
-                                        left: GrokDesignSystem.spacingMD,
-                                      ),
-                                      child: const Icon(
-                                        Icons.delete_outline,
-                                        color: Colors.white,
-                                      ),
+                                  final n = notifications[index];
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: GrokDesignSystem.spacingMD,
+                                      vertical: 6,
                                     ),
-                                    secondaryBackground: Container(
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: GrokDesignSystem.spacingMD,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: GrokDesignSystem.success,
-                                        borderRadius: BorderRadius.circular(
-                                          GrokDesignSystem.radiusMD,
-                                        ),
-                                      ),
-                                      alignment: Alignment.centerRight,
-                                      padding: const EdgeInsets.only(
-                                        right: GrokDesignSystem.spacingMD,
-                                      ),
-                                      child: const Icon(
-                                        Icons.bookmark_outline,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    onDismissed: (direction) {
-                                      if (direction ==
-                                          DismissDirection.startToEnd) {
-                                        _handleDismiss(notification);
-                                      } else {
-                                        _handleSave(notification);
-                                      }
-                                    },
-                                    child: NotificationCard(
-                                      notification: notification,
-                                      index: index,
-                                      onTap: () =>
-                                          _handleNotificationTap(notification),
-                                      onDismiss: () =>
-                                          _handleDismiss(notification),
-                                      onSave: () => _handleSave(notification),
+                                    child: SocialNotificationCard(
+                                      notification: n,
+                                      onTap: () => _handleNotificationTap(n),
                                     ),
                                   );
                                 },
@@ -329,7 +279,7 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                                 color: GrokDesignSystem.accentBlue,
                               ),
                             ),
-                            error: (error, stack) => Center(
+                            error: (_, __) => Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -342,7 +292,7 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
                                     height: GrokDesignSystem.spacingMD,
                                   ),
                                   Text(
-                                    'Failed to load notifications',
+                                    'Couldn\'t load notifications',
                                     style: GrokDesignSystem.bodyMedium(
                                       isMobile: isMobile,
                                     ),
@@ -364,4 +314,3 @@ class _NotificationPanelState extends ConsumerState<NotificationPanel>
     );
   }
 }
-

@@ -110,6 +110,8 @@ class _FashionScaffoldState extends State<FashionScaffold> {
         Navigator.of(context).pushReplacementNamed(Routes.calendar);
       } else if (route == Routes.styleFeed) {
         Navigator.of(context).pushReplacementNamed(Routes.styleFeed);
+      } else if (route == Routes.generatedOutfits) {
+        Navigator.of(context).pushReplacementNamed(Routes.generatedOutfits);
       } else if (route == Routes.settings || route == '/profile') {
         Navigator.of(context).pushNamed(Routes.settings);
       } else {
@@ -132,6 +134,9 @@ class _FashionScaffoldState extends State<FashionScaffold> {
             break;
           case '/style-feed':
             Navigator.of(context).pushReplacementNamed(Routes.styleFeed);
+            break;
+          case '/my-outfits':
+            Navigator.of(context).pushReplacementNamed(Routes.generatedOutfits);
             break;
           case '/settings':
             Navigator.of(context).pushNamed(Routes.settings);

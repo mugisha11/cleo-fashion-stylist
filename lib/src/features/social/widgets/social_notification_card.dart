@@ -33,6 +33,8 @@ class SocialNotificationCard extends StatelessWidget {
         return '$name commented on your look';
       case 'tryon_shared':
         return '$name shared a try-on with you';
+      case 'tryon_completed':
+        return 'Try-on complete';
       default:
         return name;
     }
@@ -52,6 +54,8 @@ class SocialNotificationCard extends StatelessWidget {
         return notification.messagePreview ?? 'New comment';
       case 'tryon_shared':
         return notification.messagePreview ?? 'Try-on shared';
+      case 'tryon_completed':
+        return notification.messagePreview ?? 'Your try-on is ready!';
       default:
         return notification.messagePreview ?? '';
     }
@@ -71,6 +75,8 @@ class SocialNotificationCard extends StatelessWidget {
         return Icons.comment_rounded;
       case 'tryon_shared':
         return Icons.photo_camera_rounded;
+      case 'tryon_completed':
+        return Icons.check_circle_rounded;
       default:
         return Icons.notifications_rounded;
     }

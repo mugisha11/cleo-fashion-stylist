@@ -152,20 +152,25 @@ class FashionHeader extends StatelessWidget {
                   color: theme.borderLight,
                   width: 2,
                 ),
-                image: profileImageUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(profileImageUrl!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
               ),
-              child: profileImageUrl == null
-                  ? Icon(
+              clipBehavior: Clip.antiAlias,
+              child: profileImageUrl != null
+                  ? Image.network(
+                      profileImageUrl!,
+                      fit: BoxFit.cover,
+                      width: 40,
+                      height: 40,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.person,
+                        size: 20,
+                        color: theme.textSecondary,
+                      ),
+                    )
+                  : Icon(
                       Icons.person,
                       size: 20,
                       color: theme.textSecondary,
-                    )
-                  : null,
+                    ),
             ),
           ),
         ],

@@ -18,17 +18,17 @@ class QuoraBottomNavigation extends StatelessWidget {
     BottomNavItem(
       icon: Icons.home_outlined,
       activeIcon: Icons.home,
-      label: 'Feed',
+      label: 'Home',
     ),
     BottomNavItem(
       icon: Icons.checkroom_outlined,
       activeIcon: Icons.checkroom,
-      label: 'Wardrobe',
+      label: 'My Closet',
     ),
     BottomNavItem(
       icon: Icons.auto_awesome_outlined,
       activeIcon: Icons.auto_awesome,
-      label: 'Try-On',
+      label: 'Try On',
     ),
     BottomNavItem(
       icon: Icons.notifications_outlined,

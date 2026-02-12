@@ -10,6 +10,7 @@ import '../../../core/theme/luxury_theme.dart';
 import '../../../core/widgets/dashboard_components.dart';
 import '../../../core/widgets/theme_wrapper.dart';
 import '../../../routes.dart';
+import '../../social/providers/social_provider.dart';
 import '../providers/style_feed_provider.dart';
 import '../widgets/style_feed_image.dart';
 
@@ -195,12 +196,10 @@ class _PostLookScreenState extends ConsumerState<PostLookScreen> {
       appBar: DashboardTopBar(
         aiStatus: 'Post a look',
         isAITyping: false,
-        notificationCount: 0,
+        notificationCount: ref.watch(socialUnreadCountProvider),
         onProfileTap: () => Navigator.of(context).pushNamed(Routes.settings),
         onNotificationsTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No new notifications')),
-          );
+          Navigator.of(context).pushNamed(Routes.notificationCenter);
         },
       ),
       drawer: _buildNavigationDrawer(context),
@@ -389,7 +388,7 @@ class _PostLookScreenState extends ConsumerState<PostLookScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Your AI Fashion Assistant',
+                    'Your style companion',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -397,8 +396,8 @@ class _PostLookScreenState extends ConsumerState<PostLookScreen> {
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.home,
-              label: 'Dashboard',
+              icon: Icons.home_outlined,
+              label: 'Home',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.dashboard);
@@ -406,17 +405,8 @@ class _PostLookScreenState extends ConsumerState<PostLookScreen> {
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.checkroom,
-              label: 'Wardrobe',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.wardrobe);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.image_search,
-              label: 'Virtual Try-On',
+              icon: Icons.auto_awesome_outlined,
+              label: 'Try On',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.tryon);
@@ -424,8 +414,17 @@ class _PostLookScreenState extends ConsumerState<PostLookScreen> {
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.lightbulb,
-              label: 'Recommendations',
+              icon: Icons.checkroom_outlined,
+              label: 'My Closet',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.wardrobe);
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.star_outline,
+              label: 'Picks for You',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.recommendations);
@@ -433,8 +432,8 @@ class _PostLookScreenState extends ConsumerState<PostLookScreen> {
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.calendar_today,
-              label: 'Calendar & Events',
+              icon: Icons.calendar_today_outlined,
+              label: 'Calendar',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.calendar);
@@ -449,10 +448,19 @@ class _PostLookScreenState extends ConsumerState<PostLookScreen> {
                 Navigator.of(context).pushNamed(Routes.styleFeed);
               },
             ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.photo_library_outlined,
+              label: 'My Outfits',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.generatedOutfits);
+              },
+            ),
             const Divider(),
             _buildNavItem(
               context: context,
-              icon: Icons.settings,
+              icon: Icons.settings_outlined,
               label: 'Settings',
               onTap: () {
                 Navigator.of(context).pop();

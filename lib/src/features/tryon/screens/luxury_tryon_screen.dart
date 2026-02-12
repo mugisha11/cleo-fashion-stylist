@@ -1,64 +1,31 @@
-/// 🎨 Luxury Virtual Try-On Screen
-/// Premium, fashion-forward redesign
-/// - Minimal & elegant UI
-/// - Instagram-level smoothness
-/// - App Store ready production code
+/// Luxury Virtual Try-On Screen
+/// Full-screen user image; mobile: small garments + actions floating on the right.
+/// UI/UX only - backend logic unchanged (same as ProductionTryOnScreen).
 library;
-
 import 'dart:convert';
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:riverpod/riverpod.dart' show AsyncValue;
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:http/http.dart' as http;
 import '../../../core/models/production_vton_state.dart';
-import '../../../core/models/wardrobe_item_model.dart';
 import '../../../core/theme/design_tokens.dart';
-import '../../../core/theme/luxury_theme.dart';
 import '../../../core/providers/production_vton_provider.dart';
 import '../../../core/providers/user_image_provider.dart';
-import '../../wardrobe/providers/wardrobe_provider.dart'
-    show wardrobeItemsProvider;
-import '../../settings/screens/fashion_preferences_screen.dart';
-import '../utils/save_tryon_result_io.dart'
-    if (dart.library.html) '../utils/save_tryon_result_web.dart' as save_tryon_result;
+import '../../../core/models/wardrobe_item_model.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../social/providers/social_provider.dart';
+import '../../wardrobe/providers/wardrobe_provider.dart';
+import '../widgets/production_wardrobe_picker.dart';
+import '../../../core/services/supabase_storage_service.dart';
+import '../../../routes.dart';
+import '../../style_feed/providers/style_feed_provider.dart';
+import '../../style_feed/screens/post_look_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../utils/save_tryon_result_io.dart' if (dart.library.io) '../utils/save_tryon_result_stub.dart' as save_tryon_result;
 
-/// Soft, fashion-forward tokens for this screen only.
-/// Keeps styling consistent across light/dark without changing app-wide theme.
-/// Design: soft neutral #F8F6F2 / #FAFAFA, feminine but professional.
-class _TryOnTokens {
-  static const ivory = Color(0xFFF8F6F2);
-  static const blush = Color(0xFFFFE8EF);
-  static const rose = Color(0xFFFF6B9D);
-  static const lavender = Color(0xFFB794F6);
-
-  static Color bg(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF141414)
-          : ivory;
-
-  static Color surface(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF1E1E1E)
-          : Colors.white;
-
-  static Color accent(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? DesignTokens.darkAccent
-          : DesignTokens.lightAccent;
-
-  static TextStyle? headlineSerif(BuildContext context) =>
-      Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontFamily: 'Playfair Display',
-            fontWeight: FontWeight.w400,
-            letterSpacing: 0.4,
-          );
-}
-
-/// Luxury Try-On Screen - Premium Virtual Try-On Experience
 class LuxuryTryOnScreen extends ConsumerStatefulWidget {
   const LuxuryTryOnScreen({super.key});
 
@@ -67,296 +34,106 @@ class LuxuryTryOnScreen extends ConsumerStatefulWidget {
 }
 
 class _LuxuryTryOnScreenState extends ConsumerState<LuxuryTryOnScreen>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
+    with TickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
-  late AnimationController _fadeController;
-  late AnimationController _scaleController;
-  late AnimationController _sheetController;
-  late AnimationController _loadingController;
-
-  // Loading copy that softly cycles (no raw spinner-only state).
-  final List<String> _loadingLines = const [
-    'Styling your look…',
-    'Almost ready…',
-    'Perfecting details…',
-  ];
-  int _loadingLineIndex = 0;
-  PageController? _carouselController;
-  int _carouselIndex = 0;
-
   Uint8List? _userImageBytes;
   String? _userImageUrl;
   final List<WardrobeItemModel> _selectedGarments = [];
   bool _showBeforeAfter = false;
-  int _beforeAfterMode = 0; // 0: before, 1: after, 2: split
-  bool _saveSuccess = false;
+  int _beforeAfterMode = 0;
+
+  late AnimationController _resultFadeController;
+  late AnimationController _loadingTextController;
+  late AnimationController _pageEnterController;
+
+  final List<String> _loadingTexts = [
+    'Styling your look...',
+    'Almost ready...',
+    'Perfecting details...',
+  ];
+  int _currentLoadingTextIndex = 0;
+  bool _preferenceImageLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    _fadeController = AnimationController(
+    _resultFadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 1000),
     );
-    _scaleController = AnimationController(
+    _loadingTextController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _sheetController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _loadingController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2200),
+      duration: const Duration(milliseconds: 2000),
     )..repeat();
-    _carouselController = PageController(viewportFraction: 0.32);
-    WidgetsBinding.instance.addObserver(this);
-
-    _loadingController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        if (!mounted) return;
-        setState(() => _loadingLineIndex = (_loadingLineIndex + 1) % _loadingLines.length);
-        _loadingController.repeat();
+    _pageEnterController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _pageEnterController.forward();
+    // Load preference image first (Settings → Fashion Preferences); fallback to asset only if none set.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadPreferenceImageFirst());
+    _loadingTextController.addListener(() {
+      if (_loadingTextController.value >= 1.0) {
+        setState(() {
+          _currentLoadingTextIndex =
+              (_currentLoadingTextIndex + 1) % _loadingTexts.length;
+        });
+        _loadingTextController.reset();
       }
     });
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
-    _scaleController.dispose();
-    _sheetController.dispose();
-    _loadingController.dispose();
-    _carouselController?.dispose();
-    WidgetsBinding.instance.removeObserver(this);
+    _resultFadeController.dispose();
+    _loadingTextController.dispose();
+    _pageEnterController.dispose();
     super.dispose();
   }
 
-  /// Sync local _userImageBytes from Settings (userImageProvider). Called when provider updates.
-  void _syncUserImageFromSettings(Uint8List? bytes) {
-    if (mounted && _userImageBytes != bytes) {
-      setState(() => _userImageBytes = bytes);
-    }
-  }
-
-  Future<void> _pickUserImage() async {
+  /// Load preference image first (Settings → Fashion Preferences). Fallback to asset only if none set.
+  Future<void> _loadPreferenceImageFirst() async {
+    if (_preferenceImageLoaded) return;
+    _preferenceImageLoaded = true;
     try {
-      HapticFeedback.mediumImpact();
-      final XFile? picked = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 90,
-      );
-
-      if (picked != null && mounted) {
-        final bytes = await picked.readAsBytes();
-        setState(() {
-          _userImageBytes = bytes;
-        });
-
-        // Save to provider
-        ref
-            .read(userImageProvider.notifier)
-            .uploadUserImage(bytes, 'image/jpeg');
-
+      final bytes = await ref.read(userImageBytesProvider.future);
+      if (mounted) {
+        if (bytes != null && bytes.isNotEmpty) {
+          setState(() {
+            _userImageBytes = bytes;
+            _userImageUrl = null;
+          });
+          return;
+        }
+        // No preference image: use asset as fallback so the page isn't empty
+        final byteData = await rootBundle.load('assets/icons/dftryon.jpg');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Photo updated ✨'),
-              duration: const Duration(milliseconds: 1200),
-              behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(16),
-              backgroundColor: context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent,
-            ),
-          );
+          setState(() {
+            _userImageBytes = byteData.buffer.asUint8List();
+            _userImageUrl = null;
+          });
         }
       }
     } catch (e) {
+      debugPrint('Try-on: load preference/fallback image: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        try {
+          final byteData = await rootBundle.load('assets/icons/dftryon.jpg');
+          if (mounted) {
+            setState(() {
+              _userImageBytes = byteData.buffer.asUint8List();
+              _userImageUrl = null;
+            });
+          }
+        } catch (_) {}
       }
     }
   }
 
-  void _selectGarment(WardrobeItemModel item) {
-    HapticFeedback.selectionClick();
-    setState(() {
-      if (_selectedGarments.contains(item)) {
-        _selectedGarments.remove(item);
-      } else {
-        _selectedGarments.add(item);
-      }
-    });
-  }
-
-  Future<void> _performTryOn() async {
-    if (_userImageBytes == null) {
-      _showSheet(
-        title: 'Add your photo',
-        subtitle: 'Save your photo in Settings → Preferences once; it’ll load here every time.',
-        onAction: () {
-          Navigator.pop(context);
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const FashionPreferencesScreen()),
-          );
-        },
-        actionLabel: 'Open Settings',
-      );
-      return;
-    }
-
-    if (_selectedGarments.isEmpty) {
-      _showSheet(
-        title: 'Select Items',
-        subtitle: 'Choose at least one item to try on',
-        onAction: () => Navigator.pop(context),
-        actionLabel: 'Browse Wardrobe',
-      );
-      return;
-    }
-
-    final garmentUrls = _selectedGarments
-        .map((g) => g.imageUrl)
-        .where((u) => u.isNotEmpty && (u.startsWith('http://') || u.startsWith('https://')))
-        .toList();
-    if (garmentUrls.isEmpty) {
-      _showSheet(
-        title: 'Invalid Garment Images',
-        subtitle: 'Selected items need valid http/https image URLs. Check your wardrobe.',
-        onAction: () => Navigator.pop(context),
-        actionLabel: 'Close',
-      );
-      return;
-    }
-
-    HapticFeedback.mediumImpact();
-    _fadeController.forward();
-
-    try {
-      final userImageBase64 = 'data:image/jpeg;base64,${base64Encode(
-        _userImageBytes!,
-      )}';
-
-      await ref.read(productionVTONProvider.notifier).executeTryOn(
-            userImageUrl: _userImageUrl ?? '',
-            garmentImageUrls: garmentUrls,
-            userImageBase64: userImageBase64,
-          );
-
-      if (mounted) {
-        setState(() {
-          _showBeforeAfter = true;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        _fadeController.reverse();
-        final msg = e is Exception ? e.toString().replaceFirst('Exception: ', '') : e.toString();
-        _showSheet(
-          title: 'Try-On Failed',
-          subtitle: msg.length > 120 ? '${msg.substring(0, 117)}...' : msg,
-          onAction: () => Navigator.pop(context),
-          actionLabel: 'Close',
-        );
-      }
-    }
-  }
-
-  void _resetTryOn() {
-    HapticFeedback.lightImpact();
-    setState(() {
-      _selectedGarments.clear();
-      _showBeforeAfter = false;
-      _beforeAfterMode = 0;
-      _saveSuccess = false;
-    });
-    _fadeController.reverse();
-  }
-
-  /// Returns image bytes from [resultImageUrl] (data URL or null if not decodable).
-  Uint8List? _getResultImageBytes(String? resultImageUrl) {
-    if (resultImageUrl == null || resultImageUrl.isEmpty) return null;
-    if (resultImageUrl.startsWith('data:image') && resultImageUrl.contains(',')) {
-      try {
-        return base64Decode(resultImageUrl.split(',').last);
-      } catch (_) {
-        return null;
-      }
-    }
-    return null;
-  }
-
-  /// Saves the current try-on result (download on web, file on device).
-  /// Shows premium success animation and SnackBar.
-  Future<void> _saveLook(ProductionVTONState vtonState) async {
-    final url = vtonState.resultImageUrl;
-    final bytes = _getResultImageBytes(url);
-    if (bytes == null || bytes.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No result image to save'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    }
-    HapticFeedback.mediumImpact();
-    final saveResult = await save_tryon_result.saveTryOnResultToDevice(bytes);
-    if (!mounted) return;
-    if (saveResult == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Couldn’t save image'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-    setState(() => _saveSuccess = true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle_rounded, color: Colors.white, size: 22),
-            const SizedBox(width: 10),
-            const Text('Look saved ✨'),
-          ],
-        ),
-        duration: const Duration(milliseconds: 2200),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        backgroundColor: _TryOnTokens.accent(context),
-      ),
-    );
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted) setState(() => _saveSuccess = false);
-    });
-  }
-
-  void _showSheet({
-    required String title,
-    required String subtitle,
-    required VoidCallback onAction,
-    required String actionLabel,
-  }) {
-    _sheetController.forward();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _LuxuryBottomSheet(
-        title: title,
-        subtitle: subtitle,
-        onAction: onAction,
-        actionLabel: actionLabel,
-      ),
-    ).then((_) => _sheetController.reverse());
+  /// Kept for any late refresh of preference image (e.g. after returning from Settings).
+  void _loadPreferenceImage(WidgetRef ref) {
+    if (_preferenceImageLoaded) return;
+    _loadPreferenceImageFirst();
   }
 
   @override
@@ -364,384 +141,152 @@ class _LuxuryTryOnScreenState extends ConsumerState<LuxuryTryOnScreen>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final vtonState = ref.watch(productionVTONProvider);
-    final wardrobeAsync = ref.watch(wardrobeItemsProvider);
-    final userImageBytesAsync = ref.watch(userImageBytesProvider);
+    final screenSize = MediaQuery.of(context).size;
+    final isWide = screenSize.width >= 768;
 
-    // Sync local _userImageBytes from Settings (persisted try-on photo) when provider updates.
-    ref.listen<AsyncValue<Uint8List?>>(userImageBytesProvider, (prev, next) {
-      next.whenOrNull(data: (bytes) {
-        _syncUserImageFromSettings(bytes);
-      });
+    _loadPreferenceImage(ref);
+
+    ref.listen<ProductionVTONState>(productionVTONProvider, (prev, next) {
+      if (next.stage == ProductionVTONStage.success &&
+          next.resultImageUrl != null &&
+          (prev?.stage != ProductionVTONStage.success)) {
+        final uid = ref.read(authStateProvider).valueOrNull?.uid;
+        if (uid != null) {
+          ref.read(socialServiceProvider).createTryOnCompletedNotification(
+                userId: uid,
+                messagePreview: 'Your try-on is ready!',
+              );
+        }
+      }
     });
 
     return Scaffold(
-      backgroundColor: _TryOnTokens.bg(context),
-      extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(context, colorScheme),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final w = constraints.maxWidth;
-          final isMobile = w < 720;
-          final isWide = w >= 1100;
-
-          // Mobile: stacked, thumb-friendly.
-          // Wide screens: preview left, controls right.
-          return Stack(
-            children: [
-              if (isWide)
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 7,
-                      child: _buildPreviewSection(context, colorScheme, vtonState, userImageBytesAsync),
-                    ),
-                    Expanded(
-                      flex: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 80, right: 20, bottom: 20),
-                        child: _buildSideControls(context, colorScheme, vtonState, wardrobeAsync),
-                      ),
-                    ),
-                  ],
-                )
-              else
-                SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      _buildPreviewSection(context, colorScheme, vtonState, userImageBytesAsync),
-                      SizedBox(height: MediaQuery.of(context).padding.bottom + (isMobile ? 190 : 170)),
-                    ],
-                  ),
-                ),
-
-              // Floating bottom bar (mobile/tablet)
-              if (!isWide)
-                _buildBottomActionBar(
-                  context,
-                  colorScheme,
-                  vtonState,
-                  wardrobeAsync,
-                ),
-            ],
-          );
-        },
+      backgroundColor: colorScheme.surface,
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _pageEnterController,
+          child: isWide ? _buildWideLayout(context, vtonState, colorScheme)
+              : _buildMobileLayout(context, vtonState, colorScheme),
+        ),
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(
+  Widget _buildWideLayout(
     BuildContext context,
+    ProductionVTONState state,
     ColorScheme colorScheme,
   ) {
-    return AppBar(
-      backgroundColor: _TryOnTokens.surface(context).withOpacity(0.70),
-      elevation: 0,
-      surfaceTintColor: Colors.transparent,
-      flexibleSpace: ClipRect(
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            color: _TryOnTokens.surface(context).withOpacity(0.45),
-          ),
+    return Row(
+      children: [
+        Expanded(
+          child: _buildFullScreenPreview(context, state, colorScheme),
         ),
-      ),
-      centerTitle: true,
-      title: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Virtual Try-On',
-            style: _TryOnTokens.headlineSerif(context),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'See how it looks on you',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.6),
-                  fontWeight: FontWeight.w400,
-                ),
-          ),
-        ],
-      ),
-      leading: Container(
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: _TryOnTokens.accent(context).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
+        SizedBox(
+          width: 320,
+          child: _buildRightPanel(context, state, colorScheme),
         ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => Navigator.pop(context),
-            borderRadius: BorderRadius.circular(10),
-            child: Icon(
-              Icons.arrow_back_ios_new,
-              size: 18,
-              color: colorScheme.onSurface,
-            ),
-          ),
-        ),
-      ),
-      actions: [
-        Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: _TryOnTokens.accent(context).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                showDialog(
-                  context: context,
-                  builder: (context) => _buildInfoDialog(context, colorScheme),
-                );
-              },
-              borderRadius: BorderRadius.circular(10),
-              child: Icon(
-                Icons.info_outline_rounded,
-                size: 20,
-                color: colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 4),
       ],
     );
   }
 
-  Widget _buildPreviewSection(
+  Widget _buildMobileLayout(
     BuildContext context,
+    ProductionVTONState state,
     ColorScheme colorScheme,
-    ProductionVTONState vtonState,
-    AsyncValue<Uint8List?> userImageBytesAsync,
   ) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final previewHeight = screenHeight * 0.65;
-
-    return SizedBox(
-      height: previewHeight,
-      child: Stack(
-        children: [
-          // Background gradient
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  _TryOnTokens.bg(context),
-                  _TryOnTokens.bg(context).withOpacity(0.92),
-                ],
-              ),
-            ),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        _buildFullScreenPreview(context, state, colorScheme),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: _buildMinimalTopBar(context, colorScheme),
+        ),
+        Positioned(
+          right: 0,
+          top: 56,
+          bottom: 0,
+          child: SizedBox(
+            width: 72,
+            child: _buildMobileFloatingRightStrip(context, state, colorScheme),
           ),
-
-          // Main image container (or empty state when no saved photo)
-          Center(
-            child: _buildMainImageContainer(
-              context,
-              colorScheme,
-              vtonState,
-              previewHeight,
-              userImageBytesAsync,
-            ),
-          ),
-
-          // Before/After indicator (show when we have a result and not processing)
-          if (!vtonState.isProcessing && vtonState.resultImageUrl != null)
-            Positioned(
-              top: 16,
-              right: 16,
-              child: _buildBeforeAfterToggle(context, colorScheme),
-            ),
-
-          // Loading overlay
-          if (vtonState.isProcessing)
-            _buildLoadingOverlay(context, colorScheme, vtonState),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildMainImageContainer(
-    BuildContext context,
-    ColorScheme colorScheme,
-    ProductionVTONState vtonState,
-    double maxHeight,
-    AsyncValue<Uint8List?> userImageBytesAsync,
-  ) {
-    // Key includes mode so Before/After/Split switch correctly.
-    final hasResult = vtonState.resultImageUrl != null && !vtonState.isProcessing;
-    final resultKey = ValueKey<String>('${vtonState.resultImageUrl}_$_beforeAfterMode');
-    final showUserInMain = !hasResult || _beforeAfterMode == 0;
-    final hasNoSavedPhoto = userImageBytesAsync.hasValue && userImageBytesAsync.value == null && _userImageBytes == null;
-    return Container(
-      margin: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: _TryOnTokens.accent(context).withOpacity(0.12),
-            blurRadius: 30,
-            spreadRadius: 5,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Stack(
+  Widget _buildMinimalTopBar(BuildContext context, ColorScheme colorScheme) {
+    return Material(
+      color: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Row(
           children: [
-            // Light gradient behind image to feel “editorial”.
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      _TryOnTokens.surface(context),
-                      _TryOnTokens.surface(context).withOpacity(0.85),
-                      _TryOnTokens.blush.withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.05 : 0.20),
-                    ],
-                  ),
-                ),
-              ),
+            IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: Icon(Icons.arrow_back_ios_new, color: colorScheme.onSurface),
             ),
-
-            // Main image: Before (0) = user only, After (1) = result only, Split (2) = overlay shows both.
-            Positioned.fill(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 550),
-                switchInCurve: Curves.easeInOutCubic,
-                switchOutCurve: Curves.easeInOutCubic,
-                transitionBuilder: (child, anim) {
-                  return FadeTransition(
-                    opacity: anim,
-                    child: ScaleTransition(
-                      scale: Tween<double>(begin: 0.985, end: 1.0).animate(anim),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Container(
-                  key: resultKey,
-                  alignment: Alignment.center,
-                  child: showUserInMain
-                      ? (hasNoSavedPhoto
-                          ? _buildEmptyPhotoState(context, colorScheme, maxHeight)
-                          : (userImageBytesAsync.isLoading && _userImageBytes == null
-                              ? _buildLoadingPlaceholder(maxHeight)
-                              : _buildUserImageDisplay(maxHeight)))
-                      : _buildResultImageDisplay(vtonState, maxHeight),
-                ),
+            const Spacer(),
+            if (_userImageBytes != null || _userImageUrl != null)
+              IconButton(
+                onPressed: _pickPhoto,
+                icon: Icon(Icons.camera_alt_outlined, color: colorScheme.onSurface),
               ),
-            ),
-
-            // Split view overlay only when mode is 2
-            if (hasResult && _beforeAfterMode == 2) _buildSplitViewIfNeeded(vtonState, maxHeight),
           ],
         ),
       ),
-    ).animate().fadeIn(duration: 400.ms, curve: Curves.easeOut);
+    );
   }
 
-  /// Empty state when no try-on photo is saved in Settings. CTA → Fashion Preferences.
-  Widget _buildEmptyPhotoState(
+  Widget _buildFullScreenPreview(
+    BuildContext context,
+    ProductionVTONState state,
+    ColorScheme colorScheme,
+  ) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        _buildPreviewContent(context, colorScheme, state),
+        if (state.isProcessing) _buildMinimalLoadingOverlay(context, colorScheme),
+      ],
+    );
+  }
+
+  Widget _buildPreviewContent(
     BuildContext context,
     ColorScheme colorScheme,
-    double maxHeight,
+    ProductionVTONState state,
   ) {
-    final accent = _TryOnTokens.accent(context);
-    return Container(
-      margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      decoration: BoxDecoration(
-        color: _TryOnTokens.surface(context),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withOpacity(0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    if (_userImageBytes == null && _userImageUrl == null) {
+      return _buildDefaultPlaceholder(context, colorScheme);
+    }
+    if (state.isSuccess && state.resultImageUrl != null) {
+      return _buildResultDisplay(context, colorScheme, state.resultImageUrl!);
+    }
+    if (state.isFailed || state.isRejected) {
+      return _buildErrorDisplay(context, colorScheme, state);
+    }
+    return _buildOriginalDisplay(context, colorScheme, state);
+  }
+
+  Widget _buildDefaultPlaceholder(BuildContext context, ColorScheme colorScheme) {
+    return Center(
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.person_outline_rounded,
-            size: 56,
-            color: colorScheme.onSurface.withOpacity(0.4),
+            Icons.add_photo_alternate_outlined,
+            size: 64,
+            color: colorScheme.primary.withOpacity(0.6),
           ),
           const SizedBox(height: 16),
           Text(
-            'Add your photo to try on outfits',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.2,
-                  color: colorScheme.onSurface.withOpacity(0.9),
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Save your photo in Settings once — it’ll load here every time.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.6),
-                ),
-          ),
-          const SizedBox(height: 24),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                HapticFeedback.mediumImpact();
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const FashionPreferencesScreen(),
-                  ),
-                );
-              },
-              borderRadius: BorderRadius.circular(14),
-              child: Ink(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                decoration: BoxDecoration(
-                  color: accent.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: accent.withOpacity(0.4)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add_photo_alternate_outlined, size: 22, color: accent),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Add your photo',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: accent,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
+            'Upload your photo',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
         ],
@@ -749,1169 +294,687 @@ class _LuxuryTryOnScreenState extends ConsumerState<LuxuryTryOnScreen>
     );
   }
 
-  Widget _buildLoadingPlaceholder(double maxHeight) {
-    return Container(
-      height: maxHeight - 40,
-      margin: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _TryOnTokens.surface(context).withOpacity(0.6),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Center(
-        child: SizedBox(
-          width: 32,
-          height: 32,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation(_TryOnTokens.accent(context)),
-          ),
-        ),
-      ),
-    );
+  Widget _buildOriginalDisplay(
+    BuildContext context,
+    ColorScheme colorScheme,
+    ProductionVTONState state,
+  ) {
+    return _userImageBytes != null
+        ? Image.memory(
+            _userImageBytes!,
+            fit: BoxFit.cover,
+            filterQuality: FilterQuality.high,
+          )
+        : _userImageUrl != null
+            ? CachedNetworkImage(
+                imageUrl: _userImageUrl!,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => const Center(child: CircularProgressIndicator()),
+                errorWidget: (_, __, ___) => Icon(Icons.error_outline, color: colorScheme.error, size: 48),
+              )
+            : const SizedBox();
   }
 
-  Widget _buildUserImageDisplay(double maxHeight) {
-    if (_userImageBytes == null) {
-      return Container(
-        height: maxHeight - 40,
-        color: Colors.grey.shade100,
-        child: const Center(
-          child: Icon(Icons.image_not_supported_outlined, size: 48),
-        ),
+  Widget _buildResultDisplay(
+    BuildContext context,
+    ColorScheme colorScheme,
+    String imageUrl,
+  ) {
+    Widget imageWidget;
+    if (imageUrl.startsWith('data:image') && imageUrl.contains(',')) {
+      try {
+        final bytes = base64Decode(imageUrl.split(',').last);
+        imageWidget = Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.high,
+        );
+      } catch (_) {
+        imageWidget = Icon(Icons.error_outline, size: 64, color: colorScheme.error);
+      }
+    } else {
+      imageWidget = CachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: BoxFit.cover,
+        filterQuality: FilterQuality.high,
+        placeholder: (_, __) => const Center(child: CircularProgressIndicator()),
       );
     }
 
-    return Image.memory(
-      _userImageBytes!,
-      height: maxHeight - 40,
-      fit: BoxFit.cover,
-    );
-  }
-
-  Widget _buildResultImageWidget(String url, double? height) {
-    // data:image/jpeg;base64,... from backend – use Image.memory
-    if (url.startsWith('data:image') && url.contains(',')) {
-      try {
-        final b64 = url.split(',').last;
-        final bytes = base64Decode(b64);
-        return Image.memory(
-          bytes,
-          height: height,
-          fit: BoxFit.cover,
-        );
-      } catch (_) {
-        return Container(
-          height: height,
-          color: Colors.grey.shade200,
-          child: const Center(child: Icon(Icons.error_outline, size: 48)),
-        );
-      }
-    }
-    return CachedNetworkImage(
-      imageUrl: url,
-      height: height,
-      fit: BoxFit.cover,
-      placeholder: (context, u) => _buildShimmerLoading(),
-      errorWidget: (context, u, e) => Container(
-        height: height,
-        color: Colors.grey.shade200,
-        child: const Center(child: Icon(Icons.error_outline, size: 48)),
-      ),
-    );
-  }
-
-  Widget _buildResultImageDisplay(ProductionVTONState state, double maxHeight) {
-    // Show result at full opacity so it's always visible when we have it (no fade controller dependency).
-    return _buildResultImageWidget(state.resultImageUrl!, maxHeight - 40);
-  }
-
-  Widget _buildSplitViewIfNeeded(ProductionVTONState state, double height) {
-    if (_beforeAfterMode != 2) return const SizedBox.shrink();
-
-    return Positioned.fill(
-      child: Row(
+    if (_showBeforeAfter && _beforeAfterMode == 2) {
+      return Row(
         children: [
-          Expanded(child: _buildUserImageDisplay(height)),
           Expanded(
-            child: _buildResultImageWidget(state.resultImageUrl!, height - 40),
+            child: _userImageBytes != null
+                ? Image.memory(_userImageBytes!, fit: BoxFit.cover, filterQuality: FilterQuality.high)
+                : _userImageUrl != null
+                    ? CachedNetworkImage(imageUrl: _userImageUrl!, fit: BoxFit.cover, filterQuality: FilterQuality.high)
+                    : const SizedBox(),
+          ),
+          Container(width: 2, color: colorScheme.outline.withOpacity(0.2)),
+          Expanded(child: imageWidget),
+        ],
+      );
+    }
+
+    return _beforeAfterMode == 0 && _showBeforeAfter
+        ? (_userImageBytes != null
+            ? Image.memory(_userImageBytes!, fit: BoxFit.cover)
+            : _userImageUrl != null
+                ? CachedNetworkImage(imageUrl: _userImageUrl!, fit: BoxFit.cover)
+                : const SizedBox())
+        : imageWidget;
+  }
+
+  Widget _buildErrorDisplay(
+    BuildContext context,
+    ColorScheme colorScheme,
+    ProductionVTONState state,
+  ) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: colorScheme.error),
+          const SizedBox(height: 16),
+          Text(
+            state.error ?? 'Try-on failed',
+            style: theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildBeforeAfterToggle(
+  Widget _buildMinimalLoadingOverlay(
     BuildContext context,
     ColorScheme colorScheme,
   ) {
     return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: colorScheme.surface.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _TryOnTokens.accent(context).withOpacity(0.3),
-          width: 1,
+      color: Colors.black26,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _loadingTexts[_currentLoadingTextIndex],
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildToggleButton(
-            context,
-            colorScheme,
-            'Before',
-            0,
-          ),
-          _buildToggleButton(
-            context,
-            colorScheme,
-            'Split',
-            2,
-          ),
-          _buildToggleButton(
-            context,
-            colorScheme,
-            'After',
-            1,
-          ),
-        ],
       ),
     );
   }
 
-  Widget _buildToggleButton(
+  String _garmentImageUrl(WardrobeItemModel item) =>
+      item.processedImageUrl ?? item.imageUrl;
+
+  Widget _buildMobileFloatingRightStrip(
     BuildContext context,
+    ProductionVTONState state,
     ColorScheme colorScheme,
-    String label,
-    int mode,
   ) {
-    final isActive = _beforeAfterMode == mode;
+    final accent = Theme.of(context).brightness == Brightness.dark
+        ? DesignTokens.darkAccent
+        : DesignTokens.lightAccent;
+    const double garmentSize = 56.0;
+    const int visibleGarmentCount = 3;
+    const double itemExtent = garmentSize + 8;
+    final wardrobeAsync = ref.watch(wardrobeItemsProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(right: 6, top: 6, bottom: 6),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: SafeArea(
+        left: false,
+        top: false,
+        bottom: true,
+        right: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                height: visibleGarmentCount * itemExtent,
+                child: wardrobeAsync.when(
+                  data: (items) {
+                    if (items.isEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Text(
+                            'Add pieces to your closet',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colorScheme.onSurface.withOpacity(0.8),
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 3,
+                          ),
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        final isSelected = _selectedGarments.any((g) => g.id == item.id);
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() {
+                                final i = _selectedGarments.indexWhere((g) => g.id == item.id);
+                                if (i >= 0) _selectedGarments.removeAt(i);
+                                else _selectedGarments.add(item);
+                              });
+                            },
+                            child: Container(
+                              width: garmentSize,
+                              height: garmentSize,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isSelected ? accent : colorScheme.outline.withOpacity(0.4),
+                                  width: isSelected ? 2.5 : 1,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.25),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: _garmentImageUrl(item).isNotEmpty && (_garmentImageUrl(item).startsWith('http://') || _garmentImageUrl(item).startsWith('https://'))
+                                  ? CachedNetworkImage(
+                                      imageUrl: _garmentImageUrl(item),
+                                      fit: BoxFit.contain,
+                                      errorWidget: (_, __, ___) => Icon(Icons.checkroom, color: colorScheme.onSurface.withOpacity(0.5), size: 26),
+                                    )
+                                  : Icon(Icons.checkroom, color: colorScheme.onSurface.withOpacity(0.5), size: 26),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  loading: () => const Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
+                  error: (_, __) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Text(
+                        'Loading your closet',
+                        style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.8)),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              _buildMobileFloatingActions(context, state, colorScheme, accent),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileFloatingActions(
+    BuildContext context,
+    ProductionVTONState state,
+    ColorScheme colorScheme,
+    Color accent,
+  ) {
+    final hasResult = state.isSuccess && state.resultImageUrl != null;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _mobileActionIcon(
+          context,
+          icon: Icons.camera_alt_outlined,
+          onTap: _pickPhoto,
+          colorScheme: colorScheme,
+        ),
+        const SizedBox(height: 12),
+        _mobileActionIcon(
+          context,
+          icon: hasResult ? Icons.download_outlined : Icons.checkroom_outlined,
+          onTap: hasResult ? () => _saveResult(state.resultImageUrl!) : (_selectedGarments.isNotEmpty ? _executeTryOn : null),
+          colorScheme: colorScheme,
+          accent: accent,
+        ),
+        if (hasResult) ...[
+          const SizedBox(height: 12),
+          _mobileActionIcon(
+            context,
+            icon: Icons.grid_view_rounded,
+            onTap: () => _openPostLook(state.resultImageUrl!),
+            colorScheme: colorScheme,
+            accent: accent,
+          ),
+        ],
+        const SizedBox(height: 12),
+        _mobileActionIcon(
+          context,
+          icon: Icons.refresh_outlined,
+          onTap: () {
+            ref.read(productionVTONProvider.notifier).reset();
+            setState(() {
+              _selectedGarments.clear();
+              _showBeforeAfter = false;
+              _beforeAfterMode = 0;
+            });
+          },
+          colorScheme: colorScheme,
+        ),
+      ],
+    );
+  }
+
+  Widget _mobileActionIcon(
+    BuildContext context, {
+    required IconData icon,
+    required VoidCallback? onTap,
+    required ColorScheme colorScheme,
+    Color? accent,
+  }) {
+    final enabled = onTap != null;
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          setState(() {
-            _beforeAfterMode = mode;
-          });
-        },
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                  color: isActive
-                      ? _TryOnTokens.accent(context)
-                      : colorScheme.onSurface.withOpacity(0.6),
-                ),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          child: Icon(
+            icon,
+            size: 24,
+            color: enabled ? (accent ?? colorScheme.onSurface) : colorScheme.onSurface.withOpacity(0.4),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLoadingOverlay(
+  Widget _buildRightPanel(
     BuildContext context,
+    ProductionVTONState state,
     ColorScheme colorScheme,
-    ProductionVTONState vtonState,
   ) {
-    return Positioned.fill(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            color: Colors.black.withOpacity(0.28),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
-                decoration: BoxDecoration(
-                  color: _TryOnTokens.surface(context).withOpacity(0.85),
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: _TryOnTokens.accent(context).withOpacity(0.22)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.18),
-                      blurRadius: 30,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _LuxuryRing(
-                      progress: _loadingController,
-                      color: _TryOnTokens.accent(context),
-                      glow: _TryOnTokens.accent(context).withOpacity(0.25),
-                    ),
-                    const SizedBox(width: 14),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 320),
-                          transitionBuilder: (child, anim) => FadeTransition(
-                            opacity: anim,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0, 0.12),
-                                end: Offset.zero,
-                              ).animate(anim),
-                              child: child,
-                            ),
-                          ),
-                          child: Text(
-                            _loadingLines[_loadingLineIndex],
-                            key: ValueKey(_loadingLineIndex),
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.2,
-                                  color: colorScheme.onSurface.withOpacity(0.92),
-                                ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          vtonState.stage.displayName,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurface.withOpacity(0.55),
-                                letterSpacing: 0.2,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ).animate().fadeIn(duration: 260.ms).scale(begin: const Offset(0.98, 0.98), end: const Offset(1, 1)),
+    final isMobile = MediaQuery.of(context).size.width < 768;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (!isMobile) _buildMinimalTopBar(context, colorScheme),
+          if (state.isSuccess && state.resultImageUrl != null)
+            _buildBeforeAfterChips(context, colorScheme),
+          const SizedBox(height: 12),
+          Text(
+            'Pick pieces',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface.withOpacity(0.8),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  /// Side controls for wide layouts (preview left, controls right).
-  Widget _buildSideControls(
-    BuildContext context,
-    ColorScheme colorScheme,
-    ProductionVTONState vtonState,
-    AsyncValue<List<WardrobeItemModel>> wardrobeAsync,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _TryOnTokens.surface(context).withOpacity(0.78),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.10)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 30,
-            offset: const Offset(0, 12),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 3 * (110 + 12),
+            child: ProductionWardrobePicker(
+              selectedGarments: _selectedGarments,
+              onGarmentSelected: (garment) {
+                setState(() {
+                  final i = _selectedGarments.indexWhere((g) => g.id == garment.id);
+                  if (i >= 0) _selectedGarments.removeAt(i);
+                  else _selectedGarments.add(garment);
+                });
+                HapticFeedback.selectionClick();
+              },
+              onTryOn: null,
+              colorScheme: colorScheme,
+              isVertical: true,
+            ),
           ),
+          const SizedBox(height: 16),
+          _buildActionButtons(context, state, colorScheme),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Choose pieces',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
-                      ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Tap to select. Then try your look.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                ),
-                const SizedBox(height: 14),
-                Expanded(
-                  child: wardrobeAsync.when(
-                    data: (items) => _buildClothingCarousel(context, colorScheme, items, isWide: true),
-                    loading: () => const Center(child: SizedBox.shrink()),
-                    error: (_, __) => Center(
-                      child: Text('Couldn’t load wardrobe', style: Theme.of(context).textTheme.bodySmall),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _buildActionButtons(context, colorScheme, vtonState.isProcessing, vtonState),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 
-  Widget _buildBottomActionBar(
-    BuildContext context,
-    ColorScheme colorScheme,
-    ProductionVTONState vtonState,
-    AsyncValue<List<WardrobeItemModel>> wardrobeAsync,
-  ) {
-    final isProcessing = vtonState.isProcessing;
-
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: SafeArea(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _TryOnTokens.surface(context).withOpacity(0.84),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: _TryOnTokens.accent(context).withOpacity(0.22),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Clothing carousel
-                  wardrobeAsync.when(
-                    data: (items) => _buildClothingCarousel(
-                      context,
-                      colorScheme,
-                      items,
-                    ),
-                    loading: () => const SizedBox(height: 110, child: Center(child: SizedBox.shrink())),
-                    error: (err, stack) => SizedBox(
-                      height: 100,
-                      child: Center(
-                        child: Text(
-                          'Error loading wardrobe',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Action buttons
-                  _buildActionButtons(
-                    context,
-                    colorScheme,
-                    isProcessing,
-                    vtonState,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+  Widget _buildBeforeAfterChips(BuildContext context, ColorScheme colorScheme) {
+    return Wrap(
+      spacing: 8,
+      children: [
+        _chip('Before', 0),
+        _chip('Split', 2),
+        _chip('After', 1),
+      ],
     );
   }
 
-  Widget _buildClothingCarousel(
-    BuildContext context,
-    ColorScheme colorScheme,
-    List<WardrobeItemModel> items,
-    {bool isWide = false}
-  ) {
-    final cardH = isWide ? 120.0 : 110.0;
-    final cardW = isWide ? 140.0 : 110.0;
-    final accent = _TryOnTokens.accent(context);
-
-    return SizedBox(
-      height: cardH,
-      child: PageView.builder(
-        controller: _carouselController,
-        itemCount: items.length,
-        onPageChanged: (i) => setState(() => _carouselIndex = i),
-        itemBuilder: (context, index) {
-          final item = items[index];
-          final selected = _selectedGarments.contains(item);
-          final centered = index == _carouselIndex;
-          final scale = centered ? 1.0 : 0.94;
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: GestureDetector(
-              onTap: () => _selectGarment(item),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                transform: Matrix4.identity()..scale(scale),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: selected ? accent.withOpacity(0.85) : colorScheme.outline.withOpacity(0.18),
-                    width: selected ? 1.6 : 1.0,
-                  ),
-                  boxShadow: [
-                    if (selected)
-                      BoxShadow(
-                        color: accent.withOpacity(0.18),
-                        blurRadius: 18,
-                        offset: const Offset(0, 10),
-                      ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(17),
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: CachedNetworkImage(
-                          imageUrl: item.imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) =>
-                              Container(color: colorScheme.surfaceContainerHighest.withOpacity(0.6)),
-                          errorWidget: (context, url, error) => Container(
-                            color: colorScheme.surfaceContainerHighest.withOpacity(0.6),
-                            child: const Center(child: Icon(Icons.broken_image_outlined)),
-                          ),
-                        ),
-                      ),
-
-                      // Semi-transparent gradient overlay when unselected (keeps carousel calm).
-                      if (!selected)
-                        Positioned.fill(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withOpacity(0.18),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                      // Category tag + underline
-                      Positioned(
-                        left: 10,
-                        bottom: 10,
-                        right: 10,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.category,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                          color: Colors.white.withOpacity(0.92),
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 0.2,
-                                        ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Container(
-                                    height: 2,
-                                    width: selected ? 28 : 16,
-                                    decoration: BoxDecoration(
-                                      color: selected ? accent : Colors.white.withOpacity(0.55),
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              width: 28,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: selected ? accent : Colors.black.withOpacity(0.25),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white.withOpacity(selected ? 0.0 : 0.22)),
-                              ),
-                              child: Icon(
-                                selected ? Icons.check : Icons.add,
-                                size: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ).animate().fadeIn(duration: 280.ms, delay: (60 * index).ms);
-        },
+  Widget _chip(String label, int mode) {
+    final isActive = _beforeAfterMode == mode;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _beforeAfterMode = mode;
+          _showBeforeAfter = mode != 0;
+        });
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(right: 8, bottom: 8),
+        child: Text(
+          label,
+          style: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+            color: isActive
+                ? DesignTokens.lightAccent
+                : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildActionButtons(
     BuildContext context,
+    ProductionVTONState state,
     ColorScheme colorScheme,
-    bool isProcessing,
-    ProductionVTONState vtonState,
   ) {
-    final hasResult = vtonState.resultImageUrl != null && !vtonState.isProcessing;
+    final hasResult = state.isSuccess && state.resultImageUrl != null;
+    final accent = Theme.of(context).brightness == Brightness.dark
+        ? DesignTokens.darkAccent
+        : DesignTokens.lightAccent;
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Secondary actions (left side)
-        Expanded(
-          child: Row(
-            children: [
-              if (!hasResult)
-                Expanded(
-                  child: _buildSecondaryButton(
-                    context,
-                    colorScheme,
-                    'Change Photo',
-                    Icons.photo_library_outlined,
-                    _pickUserImage,
-                  ),
-                )
-              else
-                Expanded(
-                  child: _buildSecondaryButton(
-                    context,
-                    colorScheme,
-                    'Reset',
-                    Icons.refresh_outlined,
-                    _resetTryOn,
-                  ),
-                ),
-              if (hasResult) ...[
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildSaveButton(context, colorScheme, vtonState),
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Primary action (right side)
-        Expanded(
-          child: _buildPrimaryButton(
-            context,
-            colorScheme,
-            hasResult ? 'Try Another' : 'Try On',
-            isProcessing,
-            hasResult ? _resetTryOn : _performTryOn,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPrimaryButton(
-    BuildContext context,
-    ColorScheme colorScheme,
-    String label,
-    bool isLoading,
-    VoidCallback onPressed,
-  ) {
-    return Material(
-      child: Ink(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              _TryOnTokens.accent(context),
-              _TryOnTokens.accent(context).withOpacity(0.8),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: _TryOnTokens.accent(context).withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: InkWell(
-          onTap: isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            child: isLoading
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(
-                        colorScheme.onPrimary,
-                      ),
-                    ),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (!isLoading)
-                        Icon(
-                          Icons.auto_awesome,
-                          size: 18,
-                          color: colorScheme.onPrimary,
-                        ),
-                      const SizedBox(width: 8),
-                      Text(
-                        label,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: colorScheme.onPrimary,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
-                      ),
-                    ],
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Save button with premium success animation (checkmark + scale).
-  Widget _buildSaveButton(
-    BuildContext context,
-    ColorScheme colorScheme,
-    ProductionVTONState vtonState,
-  ) {
-    final accent = _TryOnTokens.accent(context);
-    return Material(
-      child: Ink(
-        decoration: BoxDecoration(
-          color: _saveSuccess
-              ? accent.withOpacity(0.15)
-              : _TryOnTokens.accent(context).withOpacity(0.08),
-          border: Border.all(
-            color: _saveSuccess ? accent.withOpacity(0.6) : _TryOnTokens.accent(context).withOpacity(0.2),
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: InkWell(
-          onTap: _saveSuccess ? null : () => _saveLook(vtonState),
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 320),
-              switchInCurve: Curves.easeOutBack,
-              switchOutCurve: Curves.easeIn,
-              transitionBuilder: (child, anim) {
-                return ScaleTransition(
-                  scale: anim,
-                  child: FadeTransition(opacity: anim, child: child),
-                );
-              },
-              child: _saveSuccess
-                  ? Column(
-                      key: const ValueKey<bool>(true),
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.check_circle_rounded, size: 22, color: accent),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Saved',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: accent,
-                                fontWeight: FontWeight.w600,
-                              ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    )
-                  : Column(
-                      key: const ValueKey<bool>(false),
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.bookmark_outline, size: 18, color: _TryOnTokens.accent(context)),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Save',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: _TryOnTokens.accent(context),
-                                fontWeight: FontWeight.w500,
-                              ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSecondaryButton(
-    BuildContext context,
-    ColorScheme colorScheme,
-    String label,
-    IconData icon,
-    VoidCallback onPressed,
-  ) {
-    return Material(
-      child: Ink(
-        decoration: BoxDecoration(
-          color: _TryOnTokens.accent(context).withOpacity(0.08),
-          border: Border.all(
-            color: _TryOnTokens.accent(context).withOpacity(0.2),
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 18,
-                  color: _TryOnTokens.accent(context),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: _TryOnTokens.accent(context),
-                        fontWeight: FontWeight.w500,
-                      ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoDialog(BuildContext context, ColorScheme colorScheme) {
-    return Dialog(
-      backgroundColor: colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Row(
           children: [
-            Text(
-              'How Virtual Try-On Works',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _pickPhoto,
+                icon: const Icon(Icons.camera_alt_outlined, size: 20),
+                label: const Text('New photo'),
+              ),
             ),
-            const SizedBox(height: 16),
-            _buildInfoItem(
-              context,
-              '📸',
-              'Upload Photo',
-              'Choose a full-body photo with clear lighting',
-            ),
-            const SizedBox(height: 12),
-            _buildInfoItem(
-              context,
-              '👗',
-              'Select Items',
-              'Browse and select items from your wardrobe',
-            ),
-            const SizedBox(height: 12),
-            _buildInfoItem(
-              context,
-              '✨',
-              'AI Magic',
-              'Our AI generates a photorealistic preview',
-            ),
-            const SizedBox(height: 12),
-            _buildInfoItem(
-              context,
-              '🎯',
-              'Compare',
-              'See before & after with our split view',
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: Material(
-                child: Ink(
-                  decoration: BoxDecoration(
-                    color: _TryOnTokens.accent(context).withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: InkWell(
-                    onTap: () => Navigator.pop(context),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Center(
-                        child: Text(
-                          'Got it',
-                          style:
-                              Theme.of(context).textTheme.labelLarge?.copyWith(
-                                    color: _TryOnTokens.accent(context),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                      ),
-                    ),
-                  ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: FilledButton.icon(
+                onPressed: hasResult
+                    ? () => _saveResult(state.resultImageUrl!)
+                    : _selectedGarments.isNotEmpty
+                        ? _executeTryOn
+                        : null,
+                icon: Icon(
+                  hasResult ? Icons.download_outlined : Icons.checkroom_outlined,
+                  size: 20,
                 ),
+                label: Text(hasResult ? 'Save' : 'Try it on'),
+                style: FilledButton.styleFrom(backgroundColor: accent),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildInfoItem(
-    BuildContext context,
-    String emoji,
-    String title,
-    String description,
-  ) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 24)),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              Text(
-                description,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.6),
-                    ),
-              ),
-            ],
+        if (hasResult) ...[
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            onPressed: () => _openPostLook(state.resultImageUrl!),
+            icon: const Icon(Icons.grid_view_rounded, size: 20),
+            label: const Text('Share look'),
+            style: FilledButton.styleFrom(backgroundColor: accent),
           ),
+        ],
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: () {
+            ref.read(productionVTONProvider.notifier).reset();
+            setState(() {
+              _selectedGarments.clear();
+              _showBeforeAfter = false;
+              _beforeAfterMode = 0;
+            });
+          },
+          icon: const Icon(Icons.refresh_outlined, size: 20),
+          label: const Text('Start over'),
         ),
       ],
     );
   }
-}
 
-/// Luxury Bottom Sheet Component
-class _LuxuryBottomSheet extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final VoidCallback onAction;
-  final String actionLabel;
-
-  const _LuxuryBottomSheet({
-    required this.title,
-    required this.subtitle,
-    required this.onAction,
-    required this.actionLabel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          color: colorScheme.surface.withOpacity(0.95),
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colorScheme.outline.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.6),
-                    ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: Material(
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          _TryOnTokens.accent(context),
-                          _TryOnTokens.accent(context).withOpacity(0.8),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: InkWell(
-                      onTap: onAction,
-                      borderRadius: BorderRadius.circular(14),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        child: Center(
-                          child: Text(
-                            actionLabel,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelLarge
-                                ?.copyWith(
-                                  color: colorScheme.onPrimary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: Material(
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      color: _TryOnTokens.accent(context).withOpacity(0.08),
-                      border: Border.all(
-                        color: _TryOnTokens.accent(context).withOpacity(0.2),
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: InkWell(
-                      onTap: () => Navigator.pop(context),
-                      borderRadius: BorderRadius.circular(14),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        child: Center(
-                          child: Text(
-                            'Later',
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelLarge
-                                ?.copyWith(
-                                  color: _TryOnTokens.accent(context),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Simple neutral placeholder (no default spinner) to keep loading calm.
-Widget _buildShimmerLoading() {
-  return Container(
-    decoration: BoxDecoration(
-      color: Colors.grey.shade300,
-      borderRadius: BorderRadius.circular(12),
-    ),
-  );
-}
-
-/// Luxury fashion ring loader (no default spinner).
-class _LuxuryRing extends StatelessWidget {
-  final Animation<double> progress;
-  final Color color;
-  final Color glow;
-
-  const _LuxuryRing({
-    required this.progress,
-    required this.color,
-    required this.glow,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 34,
-      height: 34,
-      child: AnimatedBuilder(
-        animation: progress,
-        builder: (context, _) {
-          return CustomPaint(
-            painter: _LuxuryRingPainter(
-              t: progress.value,
-              color: color,
-              glow: glow,
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _LuxuryRingPainter extends CustomPainter {
-  final double t;
-  final Color color;
-  final Color glow;
-
-  _LuxuryRingPainter({
-    required this.t,
-    required this.color,
-    required this.glow,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final c = Offset(size.width / 2, size.height / 2);
-    final r = size.shortestSide / 2;
-
-    // Soft glow.
-    final glowPaint = Paint()
-      ..color = glow
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    canvas.drawCircle(c, r - 2, glowPaint);
-
-    // Background ring.
-    final bg = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
-      ..strokeCap = StrokeCap.round
-      ..color = color.withOpacity(0.18);
-    canvas.drawCircle(c, r - 2, bg);
-
-    // Moving highlight arc.
-    final start = (t * 2 * 3.141592653589793);
-    final sweep = 1.15 + 0.55 * (1 - (t - 0.5).abs() * 2).clamp(0.0, 1.0);
-    final fg = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
-      ..strokeCap = StrokeCap.round
-      ..shader = SweepGradient(
-        startAngle: start,
-        endAngle: start + sweep,
-        colors: [
-          color.withOpacity(0.0),
-          color.withOpacity(0.95),
-          color.withOpacity(0.25),
-        ],
-        stops: const [0.0, 0.6, 1.0],
-        transform: GradientRotation(start),
-      ).createShader(Rect.fromCircle(center: c, radius: r));
-    canvas.drawArc(
-      Rect.fromCircle(center: c, radius: r - 2),
-      start,
-      sweep,
-      false,
-      fg,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _LuxuryRingPainter oldDelegate) {
-    return oldDelegate.t != t || oldDelegate.color != color || oldDelegate.glow != glow;
-  }
-}
-
-/// Extension on ProductionVTONStage for display names
-extension ProductionVTONStageDisplay on ProductionVTONStage {
-  String get displayName {
-    switch (this) {
-      case ProductionVTONStage.idle:
-        return 'Ready…';
-      case ProductionVTONStage.stage0_validation:
-        return 'Validating photo…';
-      case ProductionVTONStage.stage1_reasoning:
-        return 'Processing image…';
-      case ProductionVTONStage.stage2_body_understanding:
-        return 'Analyzing body…';
-      case ProductionVTONStage.stage3_garment_segmentation:
-        return 'Encoding clothing…';
-      case ProductionVTONStage.stage4_constraint:
-        return 'Applying outfit…';
-      case ProductionVTONStage.stage5_prompt_synthesis:
-        return 'Generating preview…';
-      case ProductionVTONStage.stage6_gemini_generation:
-        return 'Refining…';
-      case ProductionVTONStage.stage7_quality:
-        return 'Finalizing…';
-      case ProductionVTONStage.success:
-        return 'Complete!';
-      case ProductionVTONStage.failed:
-        return 'Try-on failed';
-      case ProductionVTONStage.rejected:
-        return 'Try-on rejected';
+  Future<void> _pickPhoto() async {
+    try {
+      final image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 100,
+      );
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _userImageBytes = bytes;
+          _userImageUrl = null;
+        });
+        await _uploadPhoto(bytes);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to pick image: $e')),
+        );
+      }
     }
   }
+
+  Future<void> _uploadPhoto(Uint8List bytes) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final storageService = SupabaseStorageService(supabase);
+      final userId = supabase.auth.currentUser?.id ?? 'temp';
+      final url = await storageService.uploadFile(
+        bucket: 'uploads',
+        path: 'tryon/$userId/${DateTime.now().millisecondsSinceEpoch}.jpg',
+        file: bytes,
+        contentType: 'image/jpeg',
+      );
+      setState(() => _userImageUrl = url);
+    } catch (e) {
+      debugPrint('Failed to upload photo: $e');
+    }
+  }
+
+  Future<void> _executeTryOn() async {
+    if (_userImageUrl == null && _userImageBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload a photo first')),
+      );
+      return;
+    }
+    if (_selectedGarments.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one garment')),
+      );
+      return;
+    }
+
+    String? userImageBase64;
+    if (_userImageBytes != null) {
+      userImageBase64 = base64Encode(_userImageBytes!);
+    }
+    if (_userImageUrl == null && _userImageBytes != null) {
+      _uploadPhoto(_userImageBytes!);
+    }
+
+    final garmentUrls = _selectedGarments
+        .map((g) => g.processedImageUrl ?? g.imageUrl)
+        .where((u) => u.isNotEmpty && (u.startsWith('http://') || u.startsWith('https://')))
+        .toList();
+
+    if (garmentUrls.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Selected garments need valid image URLs. Add wardrobe items with accessible links.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    List<String>? garmentBase64s;
+    try {
+      final firstUrl = garmentUrls.first;
+      final response = await http.get(Uri.parse(firstUrl)).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw Exception('Garment image load timed out'),
+      );
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+        garmentBase64s = [base64Encode(response.bodyBytes)];
+      }
+    } catch (e) {
+      debugPrint('Garment image fetch failed (will send URL): $e');
+    }
+
+    final notifier = ref.read(productionVTONProvider.notifier);
+    await notifier.executeTryOn(
+      userImageUrl: _userImageUrl ?? '',
+      garmentImageUrls: garmentUrls,
+      userImageBase64: userImageBase64,
+      garmentImageBase64s: garmentBase64s,
+    );
+
+    final newState = ref.read(productionVTONProvider);
+    if (newState.isSuccess) {
+      _resultFadeController.forward();
+    }
+  }
+
+  void _openPostLook(String resultImageUrl) {
+    ref.read(lastTryOnImageForPostProvider.notifier).state = resultImageUrl;
+    Uint8List? bytes;
+    if (resultImageUrl.startsWith('data:image') && resultImageUrl.contains(',')) {
+      try {
+        bytes = base64Decode(resultImageUrl.split(',').last);
+      } catch (_) {}
+    }
+    if (bytes != null) {
+      ref.read(lastTryOnImageBytesProvider.notifier).state = bytes;
+    }
+    PostLookScreen.navigate(
+      context,
+      imagePath: resultImageUrl,
+      imageBytes: bytes,
+      suggestedCaption: 'My try-on look',
+    );
+  }
+
+  Future<void> _saveResult(String imageUrl) async {
+    try {
+      Uint8List? imageBytes;
+      if (imageUrl.startsWith('data:image') && imageUrl.contains(',')) {
+        try {
+          imageBytes = base64Decode(imageUrl.split(',').last);
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to decode image: $e')),
+            );
+          }
+          return;
+        }
+      } else {
+        try {
+          final response = await http.get(Uri.parse(imageUrl));
+          if (response.statusCode == 200) {
+            imageBytes = response.bodyBytes;
+          } else {
+            throw Exception('Failed to fetch image: ${response.statusCode}');
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to download image: $e')),
+            );
+          }
+          return;
+        }
+      }
+
+      if (imageBytes == null || imageBytes.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No image data to save')),
+          );
+        }
+        return;
+      }
+
+      final uid = ref.read(authStateProvider).valueOrNull?.uid;
+      bool savedToOutfits = false;
+      if (uid != null) {
+        final service = ref.read(generatedOutfitsServiceProvider);
+        await service.saveGeneratedOutfit(
+          userId: uid,
+          imageBytes: imageBytes,
+          caption: 'My try-on look',
+        );
+        ref.invalidate(generatedOutfitsProvider);
+        savedToOutfits = true;
+      }
+
+      final devicePath = await save_tryon_result.saveTryOnResultToDevice(imageBytes);
+      final savedToDevice = devicePath != null && devicePath.isNotEmpty;
+
+      if (mounted) {
+        String msg = savedToOutfits
+            ? 'Saved to My Outfits'
+            : (savedToDevice ? 'Saved to device' : 'Sign in to save to My Outfits.');
+        if (savedToOutfits && savedToDevice) msg = 'Saved to My Outfits and device';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = e.toString();
+        final friendly = msg.contains('Bucket not found') || msg.contains('does not exist') || msg.contains('Permission denied')
+            ? 'Storage not set up. Create the "generated_outfits" bucket in Supabase (see docs).'
+            : 'Failed to save: $e';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(friendly), behavior: SnackBarBehavior.floating),
+        );
+      }
+    }
+  }
+
+  ThemeData get theme => Theme.of(context);
 }

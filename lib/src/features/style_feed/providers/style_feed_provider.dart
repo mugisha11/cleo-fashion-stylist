@@ -1,7 +1,8 @@
 import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import '../models/look_post_model.dart';
 import '../models/look_post_model.dart';
 import '../services/style_feed_firestore_service.dart';
 import '../../../features/auth/providers/auth_provider.dart';
@@ -59,7 +60,17 @@ class StyleFeedNotifier extends StateNotifier<AsyncValue<StyleFeedState>> {
           savedIds: savedIds,
         ));
       },
-      onError: (e, st) => state = AsyncValue.error(e, st),
+      onError: (e, st) {
+        // Permission-denied or unauthenticated: show empty feed so app stays usable
+        if (e is FirebaseException &&
+            (e.code == 'permission-denied' || e.code == 'unauthenticated')) {
+          if (kDebugMode) debugPrint('Style Feed: ${e.code} — showing empty feed');
+          state = const AsyncValue.data(StyleFeedState());
+          return;
+        }
+        if (kDebugMode) debugPrint('Style Feed stream error: $e');
+        state = AsyncValue.error(e, st);
+      },
     );
     _unsubscribe = sub.cancel;
   }

@@ -146,43 +146,62 @@ class _PersonChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: accent.withValues(alpha: isDark ? 0.25 : 0.15),
-            backgroundImage: profile.avatarUrl != null && profile.avatarUrl!.startsWith('http')
-                ? NetworkImage(profile.avatarUrl!)
-                : null,
-            child: profile.avatarUrl == null || !profile.avatarUrl!.startsWith('http')
-                ? Text(
-                    profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
-                    style: TextStyle(color: accent, fontWeight: FontWeight.w700, fontSize: 18),
-                  )
-                : null,
-          ),
-          const SizedBox(height: 6),
-          SizedBox(
-            width: 80,
-            child: Text(
-              profile.name.length > 10 ? '${profile.name.substring(0, 8)}…' : profile.name,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: textColor,
+      child: SizedBox(
+        height: 112,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: accent.withValues(alpha: isDark ? 0.25 : 0.15),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
+              clipBehavior: Clip.antiAlias,
+              child: profile.avatarUrl != null && profile.avatarUrl!.startsWith('http')
+                  ? Image.network(
+                      profile.avatarUrl!,
+                      fit: BoxFit.cover,
+                      width: 52,
+                      height: 52,
+                      errorBuilder: (_, __, ___) => Center(
+                        child: Text(
+                          profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
+                          style: TextStyle(color: accent, fontWeight: FontWeight.w700, fontSize: 16),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Text(
+                        profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
+                        style: TextStyle(color: accent, fontWeight: FontWeight.w700, fontSize: 16),
+                      ),
+                    ),
             ),
-          ),
-          const SizedBox(height: 6),
-          FriendRequestButton(
-            otherUserId: profile.id,
-            otherUserName: profile.name,
-            size: const Size(80, 28),
-          ),
-        ],
+            const SizedBox(height: 4),
+            SizedBox(
+              width: 80,
+              child: Text(
+                profile.name.length > 10 ? '${profile.name.substring(0, 8)}…' : profile.name,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 4),
+            FriendRequestButton(
+              otherUserId: profile.id,
+              otherUserName: profile.name,
+              size: const Size(80, 26),
+            ),
+          ],
+        ),
       ),
     );
   }

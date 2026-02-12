@@ -13,6 +13,7 @@ import '../../../core/theme/luxury_theme.dart';
 import '../../../core/providers/user_image_provider.dart';
 import '../../wardrobe/providers/wardrobe_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../social/providers/social_provider.dart';
 import '../../settings/screens/fashion_preferences_screen.dart';
 import '../providers/tryon_provider.dart';
 import '../../../routes.dart';
@@ -209,14 +210,12 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
       appBar: DashboardTopBar(
         aiStatus: 'Virtual Try-On',
         isAITyping: false,
-        notificationCount: 0,
+        notificationCount: ref.watch(socialUnreadCountProvider),
         onProfileTap: () {
           Navigator.of(context).pushNamed(Routes.settings);
         },
         onNotificationsTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No new notifications')),
-          );
+          Navigator.of(context).pushNamed(Routes.notificationCenter);
         },
       ),
       drawer: _buildNavigationDrawer(context),
@@ -468,7 +467,7 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Your AI Fashion Assistant',
+                    'Your style companion',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -476,8 +475,8 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.home,
-              label: 'Dashboard',
+              icon: Icons.home_outlined,
+              label: 'Home',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.dashboard);
@@ -485,8 +484,16 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.checkroom,
-              label: 'Wardrobe',
+              icon: Icons.auto_awesome_outlined,
+              label: 'Try On',
+              onTap: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.checkroom_outlined,
+              label: 'My Closet',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.wardrobe);
@@ -494,16 +501,8 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.image_search,
-              label: 'Virtual Try-On',
-              onTap: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.lightbulb,
-              label: 'Recommendations',
+              icon: Icons.star_outline,
+              label: 'Picks for You',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.recommendations);
@@ -511,8 +510,8 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
             ),
             _buildNavItem(
               context: context,
-              icon: Icons.calendar_today,
-              label: 'Calendar & Events',
+              icon: Icons.calendar_today_outlined,
+              label: 'Calendar',
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamed(Routes.calendar);
@@ -527,10 +526,19 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
                 Navigator.of(context).pushNamed(Routes.styleFeed);
               },
             ),
+            _buildNavItem(
+              context: context,
+              icon: Icons.photo_library_outlined,
+              label: 'My Outfits',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.generatedOutfits);
+              },
+            ),
             const Divider(),
             _buildNavItem(
               context: context,
-              icon: Icons.settings,
+              icon: Icons.settings_outlined,
               label: 'Settings',
               onTap: () {
                 Navigator.of(context).pop();

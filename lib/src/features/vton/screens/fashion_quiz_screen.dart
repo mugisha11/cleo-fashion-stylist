@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/models/quiz_model.dart';
+import '../../../routes.dart';
 import '../providers/quiz_provider.dart';
 
 /// 10-question fashion style preference quiz
@@ -47,7 +48,7 @@ class _FashionQuizScreenState extends ConsumerState<FashionQuizScreen> {
           // Quiz complete - compute style profile
           await ref.read(quizProvider.notifier).completeQuiz();
           if (mounted) {
-            Navigator.of(context).pushReplacementNamed('/photo-capture');
+            Navigator.of(context).pushReplacementNamed(Routes.photoCapture);
           }
         }
       }
