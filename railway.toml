@@ -1,0 +1,4 @@
+# Root railway.toml - forces Docker build (avoids Node.js detection from package.json)
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
