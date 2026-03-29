@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// ChatGPT-like Dark Theme
 /// Dark-first, minimal, calm, premium, modern, confident
@@ -48,66 +47,76 @@ class ChatGPTDarkTheme {
   // ============================================
   // TYPOGRAPHY
   // ============================================
-  static TextTheme get textTheme => TextTheme(
-        displayLarge: GoogleFonts.inter(
+  static TextTheme get textTheme => const TextTheme(
+        displayLarge: TextStyle(
+          fontFamily: 'system-ui',
           fontSize: 32,
           fontWeight: FontWeight.w600,
           color: textPrimary,
           height: 1.2,
           letterSpacing: -0.5,
         ),
-        displayMedium: GoogleFonts.inter(
+        displayMedium: TextStyle(
+          fontFamily: 'system-ui',
           fontSize: 28,
           fontWeight: FontWeight.w600,
           color: textPrimary,
           height: 1.25,
           letterSpacing: -0.4,
         ),
-        headlineLarge: GoogleFonts.inter(
+        headlineLarge: TextStyle(
+          fontFamily: 'system-ui',
           fontSize: 24,
           fontWeight: FontWeight.w600,
           color: textPrimary,
           height: 1.3,
           letterSpacing: -0.3,
         ),
-        headlineMedium: GoogleFonts.inter(
+        headlineMedium: TextStyle(
+          fontFamily: 'system-ui',
           fontSize: 20,
           fontWeight: FontWeight.w500,
           color: textPrimary,
           height: 1.4,
           letterSpacing: -0.2,
         ),
-        titleLarge: GoogleFonts.inter(
+        titleLarge: TextStyle(
+          fontFamily: 'system-ui',
           fontSize: 18,
           fontWeight: FontWeight.w500,
           color: textPrimary,
           height: 1.4,
         ),
-        titleMedium: GoogleFonts.inter(
+        titleMedium: TextStyle(
+          fontFamily: 'system-ui',
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: textPrimary,
           height: 1.5,
         ),
-        bodyLarge: GoogleFonts.inter(
+        bodyLarge: TextStyle(
+          fontFamily: 'system-ui',
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: textPrimary,
           height: 1.6,
         ),
-        bodyMedium: GoogleFonts.inter(
+        bodyMedium: TextStyle(
+          fontFamily: 'system-ui',
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: textSecondary,
           height: 1.5,
         ),
-        bodySmall: GoogleFonts.inter(
+        bodySmall: TextStyle(
+          fontFamily: 'system-ui',
           fontSize: 12,
           fontWeight: FontWeight.w400,
           color: textTertiary,
           height: 1.4,
         ),
-        labelLarge: GoogleFonts.inter(
+        labelLarge: TextStyle(
+          fontFamily: 'system-ui',
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: textPrimary,

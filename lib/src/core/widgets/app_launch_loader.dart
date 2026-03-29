@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'cleo_logo.dart';
+import 'nikonyx_logo.dart';
 
 /// App Launch Loader
 /// 
@@ -99,7 +99,7 @@ class _AppLaunchLoaderState extends State<AppLaunchLoader>
                 opacity: opacity,
                 child: Transform.scale(
                   scale: scale,
-                  child: const CleoLogo.large(
+                  child: const NikonyxLogo.large(
                     borderRadius: BorderRadius.all(Radius.circular(20)),
                   ),
                 ),

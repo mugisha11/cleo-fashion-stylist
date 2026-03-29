@@ -2,7 +2,150 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import '../theme/design_tokens.dart';
+import '../theme/dashboard_ui_colors.dart';
 import '../theme/luxury_theme.dart';
+import '../../routes.dart';
+
+/// Returns a time-based greeting (e.g. Good Morning, Good Afternoon, Good Evening).
+String getTimeBasedGreeting() {
+  final hour = DateTime.now().hour;
+  if (hour < 12) return 'Good Morning,';
+  if (hour < 17) return 'Good Afternoon,';
+  return 'Good Evening,';
+}
+
+/// Shared dashboard-style header: avatar, greeting + name, optional weather, notification bell.
+/// Use on dashboard home, style feed, calendar, wardrobe for consistency.
+class DashboardHomeHeader extends StatelessWidget {
+  final String displayName;
+  final String? photoUrl;
+  final int unreadCount;
+  final VoidCallback? onOpenDrawer;
+  final String? subtitleOverride;
+  final String? titleOverride;
+  /// Optional: show temperature e.g. "22°C". When null, no weather is shown.
+  final double? temperatureCelsius;
+
+  const DashboardHomeHeader({
+    super.key,
+    required this.displayName,
+    this.photoUrl,
+    this.unreadCount = 0,
+    this.onOpenDrawer,
+    this.subtitleOverride,
+    this.titleOverride,
+    this.temperatureCelsius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final firstName = displayName.split(' ').first;
+    final subtitle = subtitleOverride ?? getTimeBasedGreeting();
+    final title = titleOverride ?? (firstName.isNotEmpty ? firstName : 'User');
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: onOpenDrawer ?? () => Scaffold.of(context).openDrawer(),
+            child: CircleAvatar(
+              radius: 24,
+              backgroundColor: DashboardUIColors.homeInputBg,
+              backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
+                  ? NetworkImage(photoUrl!)
+                  : null,
+              child: photoUrl == null || photoUrl!.isEmpty
+                  ? Text(
+                      (displayName.isNotEmpty ? displayName.substring(0, 1).toUpperCase() : 'U'),
+                      style: const TextStyle(fontFamily: 'system-ui', 
+                        fontWeight: FontWeight.bold,
+                        color: DashboardUIColors.homePrimaryText,
+                      ),
+                    )
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontFamily: 'system-ui', 
+                    fontSize: 14,
+                    color: DashboardUIColors.homePrimaryText,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: const TextStyle(fontFamily: 'system-ui', 
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: DashboardUIColors.homePrimaryText,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (temperatureCelsius != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: DashboardUIColors.homeInputBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: DashboardUIColors.homeInputBorder),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.thermostat, size: 18, color: DashboardUIColors.homePrimaryText),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${temperatureCelsius!.round()}°',
+                    style: const TextStyle(fontFamily: 'system-ui', 
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: DashboardUIColors.homePrimaryText,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+          ],
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Material(
+                color: DashboardUIColors.homeInputBg,
+                shape: const CircleBorder(),
+                child: IconButton(
+                  onPressed: () => Navigator.of(context).pushNamed(Routes.notificationCenter),
+                  icon: const Icon(Icons.notifications_none, color: DashboardUIColors.homePrimaryText, size: 24),
+                ),
+              ),
+              if (unreadCount > 0)
+                Positioned(
+                  right: 4,
+                  top: 4,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// 🎯 TOP BAR - Navigation, status, and profile
 class DashboardTopBar extends StatelessWidget implements PreferredSizeWidget {
@@ -10,6 +153,7 @@ class DashboardTopBar extends StatelessWidget implements PreferredSizeWidget {
   final bool isAITyping;
   final VoidCallback? onProfileTap;
   final VoidCallback? onNotificationsTap;
+  final VoidCallback? onMenuTap;
   final Widget? profileImage;
   final int notificationCount;
 
@@ -19,6 +163,7 @@ class DashboardTopBar extends StatelessWidget implements PreferredSizeWidget {
     this.isAITyping = false,
     this.onProfileTap,
     this.onNotificationsTap,
+    this.onMenuTap,
     this.profileImage,
     this.notificationCount = 0,
   });
@@ -49,9 +194,7 @@ class DashboardTopBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             // Menu Button
             IconButton(
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
+              onPressed: onMenuTap ?? () => Scaffold.of(context).openDrawer(),
               icon: const Icon(Icons.menu),
               color: context.textColor,
               tooltip: 'Open menu',
@@ -59,7 +202,7 @@ class DashboardTopBar extends StatelessWidget implements PreferredSizeWidget {
 
             // Logo/Branding
             Text(
-              'Cleo',
+              'Nikonyx',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: isDark
                         ? DesignTokens.darkAccent
@@ -272,7 +415,7 @@ class _MessageInputBarState extends State<MessageInputBar>
     final hasContent = hasText || hasAttachment;
     final isListening = widget.isListening;
     // ChatGPT-style: when listening, show recording accent (coral/red)
-    final recordingColor = const Color(0xFFE57373); // Soft red/coral
+    const recordingColor = Color(0xFFE57373); // Soft red/coral
     final inputBorderColor = isListening
         ? recordingColor
         : (_isFocused
@@ -444,7 +587,7 @@ class _MessageInputBarState extends State<MessageInputBar>
                       decoration: InputDecoration(
                         hintText: isListening
                             ? 'Listening... Speak now.'
-                            : 'Ask Cleo anything...',
+                            : 'Ask Nikonyx anything...',
                         hintStyle: TextStyle(
                           color: isListening
                               ? recordingColor.withOpacity(0.9)

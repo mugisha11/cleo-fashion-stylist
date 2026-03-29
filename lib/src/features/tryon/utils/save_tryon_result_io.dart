@@ -9,7 +9,7 @@ import 'package:path_provider/path_provider.dart';
 /// - Also writes to app documents directory as fallback.
 /// Returns a non-null path string on success (documents path; gallery path not exposed by gal), or null on failure.
 Future<String?> saveTryOnResultToDevice(Uint8List bytes) async {
-  final name = 'cleo-tryon-${DateTime.now().millisecondsSinceEpoch}.jpg';
+  final name = 'nikonyx-tryon-${DateTime.now().millisecondsSinceEpoch}.jpg';
   String? savedPath;
 
   // 1) Try to save to device gallery (Photos app) on mobile

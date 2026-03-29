@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'dart:convert';
 import '../utils/io_stub.dart' if (dart.library.io) 'dart:io' as io;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -14,7 +14,6 @@ import '../../features/virtualwearon/services/ready_player_me_service.dart';
 class AvatarService {
   // Ready Player Me API endpoint (mock for MVP - replace with actual API)
   static const String _readyPlayerMeApiUrl = 'https://models.readyplayer.me/api/v1/avatar';
-  static const _logPath = 'd:\\styleapp\\.cursor\\debug.log';
   void _log(String location, String message,
       {Map<String, dynamic>? data,
       String runId = 'run1',
@@ -28,11 +27,11 @@ class AvatarService {
       'runId': runId,
       'hypothesisId': hypothesisId,
     });
-    if (!kIsWeb) {
-      io.File(_logPath).writeAsStringSync('$payload\n', flush: true);
-    } else {
+    if (kIsWeb) {
       // ignore: avoid_print
       print(payload);
+    } else {
+      debugPrint(payload);
     }
   }
 

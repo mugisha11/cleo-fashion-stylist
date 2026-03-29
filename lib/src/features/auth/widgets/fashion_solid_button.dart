@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 /// Solid color button (no gradients) with smooth animations
 class FashionSolidButton extends StatefulWidget {
   final String text;
@@ -119,7 +117,7 @@ class _FashionSolidButtonState extends State<FashionSolidButton>
                           ],
                           Text(
                             widget.text,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: 'system-ui', 
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: txtColor,

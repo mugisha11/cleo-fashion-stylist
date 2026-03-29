@@ -3,28 +3,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/theme/app_theme_mode.dart';
-import '../../../core/theme/design_tokens.dart';
-import '../../../core/theme/luxury_theme.dart';
 import '../../../core/providers/theme_provider.dart';
-import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/widgets/theme_helpers.dart';
 import '../../../core/widgets/language_selector.dart';
-import '../../../core/widgets/cleo_logo.dart';
-import '../../../core/widgets/dashboard_components.dart';
-import '../../../core/theme/app_theme_data.dart';
 import '../../../core/models/user_model.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../social/providers/social_provider.dart';
 import '../providers/settings_provider.dart';
 import '../models/settings_state.dart';
-import '../widgets/settings_section_card.dart';
-import '../widgets/settings_toggle_tile.dart';
-import '../widgets/settings_action_tile.dart';
 import '../../../routes.dart';
+import '../../../core/widgets/fashion_drawer.dart';
 import 'edit_profile_screen.dart';
 import 'fashion_preferences_screen.dart';
 import 'change_email_screen.dart';
 import 'change_password_screen.dart';
+
+// Design tokens matching the Profile reference image (design only)
+class _ProfilePageColors {
+  static const Color background = Color(0xFFF8F8F8);
+  static const Color primaryText = Color(0xFF333333);
+  static const Color secondaryText = Color(0xFF888888);
+  static const Color logoutRed = Color(0xFFE74C3C);
+  static const Color editIconPurple = Color(0xFF6C5CE7);
+  static const Color backButtonBg = Color(0xFFEEEEEE);
+  static const Color toggleTrack = Color(0xFFE0E0E0);
+  static const Color cardSurface = Color(0xFFFFFFFF);
+  static const Color divider = Color(0xFFEEEEEE);
+}
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -45,637 +49,581 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Future<void> _loadAppVersion() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
-      setState(() {
-        _appVersion = packageInfo.version;
-      });
-    } catch (e) {
-      setState(() {
-        _appVersion = '1.0.0';
-      });
+      setState(() => _appVersion = packageInfo.version);
+    } catch (_) {
+      setState(() => _appVersion = '1.0.0');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.appTheme;
-    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     final settings = ref.watch(settingsProvider);
     final userAsync = ref.watch(currentUserProvider);
     final firebaseUser = ref.watch(authStateProvider).value;
+    final currentTheme = ref.watch(themeModeProvider);
 
-    final unreadCount = ref.watch(socialUnreadCountProvider);
     return Scaffold(
-      backgroundColor: theme.backgroundPrimary,
-      appBar: DashboardTopBar(
-        aiStatus: 'Settings',
-        isAITyping: false,
-        notificationCount: unreadCount,
-        onProfileTap: () {
-          Scaffold.of(context).closeDrawer();
-        },
-        onNotificationsTap: () {
-          Navigator.of(context).pushNamed(Routes.notificationCenter);
-        },
-      ),
-      drawer: _buildNavigationDrawer(context),
+      backgroundColor: _ProfilePageColors.background,
+      appBar: _buildAppBar(currentTheme),
+      drawer: const AppDrawer(currentRoute: Routes.settings),
       body: RefreshIndicator(
         onRefresh: () async {
-          // Refresh both settings and user data
           ref.invalidate(currentUserProvider);
           ref.invalidate(authStateProvider);
           await ref.read(settingsProvider.notifier).loadSettings();
         },
-        color: accentPink,
+        color: _ProfilePageColors.editIconPurple,
         child: ListView(
+          padding: const EdgeInsets.only(bottom: 32),
           children: [
-            const SizedBox(height: AppThemeData.spacingMD),
-
-            // Profile Section
-            _buildProfileSection(userAsync, firebaseUser),
-
-            // Friends & Messages
-            _buildSocialSection(),
-
-            // Account Settings
-            _buildAccountSettingsSection(),
-
-            // Fashion Preferences
-            _buildFashionPreferencesSection(settings),
-
-            // AI & Try-On Settings
-            _buildAISettingsSection(settings),
-
-            // Theme Settings
-            _buildThemeSection(),
-
-            // Language Settings
-            _buildLanguageSection(),
-
-            // Notifications
-            _buildNotificationsSection(settings),
-
-            // Privacy & Data
-            _buildPrivacySection(),
-
-            // App Information
-            _buildAppInfoSection(),
-
-            const SizedBox(height: AppThemeData.spacingXL),
+            _buildProfileBlock(userAsync, firebaseUser),
+            _buildSectionLabel('Account settings'),
+            _buildSettingRow('Personal information', () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+              );
+            }),
+            _divider(),
+            _buildSettingRow('Privacy & security', () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+              );
+            }),
+            _divider(),
+            _buildSettingRow('Notifications', () {
+              Navigator.of(context).pushNamed(Routes.notificationCenter);
+            }),
+            _divider(),
+            _buildSettingRow('App\'s permission', () {
+              _showAppPermissionSheet();
+            }),
+            const SizedBox(height: 24),
+            _buildSectionLabel('Help & support'),
+            _buildSettingRow('Terms & conditions', () {}),
+            _divider(),
+            _buildSettingRow('FAQ & Help', () {}),
+            _divider(),
+            _buildSettingRow('Privacy policy', () {}),
+            const SizedBox(height: 32),
+            _buildMoreSection(settings),
+            const SizedBox(height: 24),
+            _buildLogOutRow(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavigationDrawer(BuildContext context) {
-    final isDark = context.isDarkMode;
-    return Drawer(
-      child: Container(
-        color:
-            isDark ? DesignTokens.darkBackground : DesignTokens.lightBackground,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
-                border: Border(
-                  bottom: BorderSide(
-                    color: isDark
-                        ? DesignTokens.darkBorder
-                        : DesignTokens.lightBorder,
-                  ),
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Cleo Fashion',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? DesignTokens.darkAccent
-                              : DesignTokens.lightAccent,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your style companion',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
+  PreferredSizeWidget _buildAppBar(AppThemeMode currentTheme) {
+    final isDark = currentTheme == AppThemeMode.darkAI;
+    return AppBar(
+      backgroundColor: _ProfilePageColors.background,
+      elevation: 0,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 8),
+        child: Material(
+          color: _ProfilePageColors.backButtonBg,
+          shape: const CircleBorder(),
+          child: IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: _ProfilePageColors.primaryText,
             ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.home,
-              label: 'Home',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.dashboard);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.auto_awesome_outlined,
-              label: 'Try On',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.tryon);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.checkroom,
-              label: 'My Closet',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.wardrobe);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.star_outline,
-              label: 'Picks for You',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.recommendations);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.calendar_today,
-              label: 'Calendar',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.calendar);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.grid_view_rounded,
-              label: 'Style Feed',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.styleFeed);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.photo_library_outlined,
-              label: 'My Outfits',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.generatedOutfits);
-              },
-            ),
-            const Divider(),
-            _buildNavItem(
-              context: context,
-              icon: Icons.settings,
-              label: 'Settings',
-              onTap: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildNavItem({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    final isDark = context.isDarkMode;
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isDark ? DesignTokens.darkAccent : DesignTokens.lightAccent,
+      title: const Text(
+        'Profile',
+        style: TextStyle(fontFamily: 'system-ui', 
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: _ProfilePageColors.primaryText,
+        ),
       ),
-      title: Text(label),
-      onTap: onTap,
-      hoverColor: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
+      centerTitle: true,
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.dark_mode_outlined,
+                size: 20,
+                color: _ProfilePageColors.secondaryText,
+              ),
+              const SizedBox(width: 8),
+              Switch(
+                value: isDark,
+                onChanged: (value) {
+                  ref.read(themeModeProvider.notifier).setTheme(
+                        value ? AppThemeMode.darkAI : AppThemeMode.giovanni,
+                      );
+                },
+                activeColor: _ProfilePageColors.editIconPurple,
+                activeTrackColor: _ProfilePageColors.toggleTrack,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildProfileSection(
+  static const String _profileBoxBackgroundAsset =
+      'assets/images/image-removebg-preview (11).png';
+
+  Widget _buildProfileBlock(
       AsyncValue<UserModel?> userAsync, User? firebaseUser) {
-    final theme = context.appTheme;
-
-    // Get user data from Firestore first, fallback to Firebase user
     final userModel = userAsync.value;
-    final displayName = userModel?.displayName ?? firebaseUser?.displayName;
+    final displayName = userModel?.displayName ?? firebaseUser?.displayName ?? 'User';
     final email = userModel?.email.isNotEmpty == true
         ? userModel!.email
         : (firebaseUser?.email ?? 'No email');
     final photoUrl = userModel?.avatarUrl ?? firebaseUser?.photoURL;
 
-    return SettingsSectionCard(
-      title: 'My Profile',
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(AppThemeData.spacingMD),
-          child: Row(
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: SizedBox(
+          height: 240,
+          child: Stack(
+          children: [
+            // Background image behind the profile box
+            Positioned.fill(
+              child: Image.asset(
+                _profileBoxBackgroundAsset,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: _ProfilePageColors.cardSurface,
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: photoUrl != null
-                    ? Image.network(
-                        photoUrl,
-                        fit: BoxFit.cover,
-                        width: 80,
-                        height: 80,
-                        errorBuilder: (_, __, ___) => Center(
-                          child: Text(
-                            displayName?.substring(0, 1).toUpperCase() ??
-                                email.substring(0, 1).toUpperCase() ??
-                                'U',
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+              ),
+            ),
+            // Profile content on top, centered in the box
+            Positioned.fill(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _ProfilePageColors.cardSurface.withValues(alpha: 0.95),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: photoUrl != null
+                            ? Image.network(
+                                photoUrl,
+                                fit: BoxFit.cover,
+                                width: 100,
+                                height: 100,
+                                errorBuilder: (_, __, ___) => _avatarInitial(displayName, email),
+                              )
+                            : _avatarInitial(displayName, email),
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                            );
+                          },
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: _ProfilePageColors.cardSurface,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.edit_outlined,
+                              size: 16,
+                              color: _ProfilePageColors.editIconPurple,
                             ),
                           ),
                         ),
-                      )
-                    : Center(
-                        child: Text(
-                          displayName?.substring(0, 1).toUpperCase() ??
-                              email.substring(0, 1).toUpperCase() ??
-                              'U',
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
                       ),
-              ),
-              const SizedBox(width: AppThemeData.spacingMD),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      displayName ?? 'User',
-                      style: theme.titleLarge(),
+                    ],
                     ),
-                    const SizedBox(height: AppThemeData.spacingXS),
-                    Text(
-                      email,
-                      style: theme.bodySmall(color: theme.textSecondary),
+                  const SizedBox(height: 16),
+                  Text(
+                    displayName,
+                    style: const TextStyle(fontFamily: 'system-ui', 
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: _ProfilePageColors.primaryText,
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    email,
+                    style: const TextStyle(fontFamily: 'system-ui', 
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: _ProfilePageColors.secondaryText,
+                    ),
+                  ),
                   ],
                 ),
+              ),
+            ),
+          ],
+        ),
+        ),
+      ),
+    );
+  }
+
+  Widget _avatarInitial(String displayName, String email) {
+    final initial = displayName.isNotEmpty
+        ? displayName.substring(0, 1).toUpperCase()
+        : (email.isNotEmpty ? email.substring(0, 1).toUpperCase() : 'U');
+    return Center(
+      child: Text(
+        initial,
+        style: const TextStyle(fontFamily: 'system-ui', 
+          fontSize: 36,
+          fontWeight: FontWeight.bold,
+          color: _ProfilePageColors.secondaryText,
+        ),
+      ),
+    );
+  }
+
+  Widget _divider() {
+    return Container(
+      height: 1,
+      margin: const EdgeInsets.only(left: 20),
+      color: _ProfilePageColors.divider,
+    );
+  }
+
+  Widget _buildSectionLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 20, bottom: 8, top: 4),
+      child: Text(
+        label,
+        style: const TextStyle(fontFamily: 'system-ui', 
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+          color: _ProfilePageColors.secondaryText,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingRow(String title, VoidCallback? onTap) {
+    return Material(
+      color: _ProfilePageColors.cardSurface,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontFamily: 'system-ui', 
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: _ProfilePageColors.primaryText,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right,
+                size: 22,
+                color: _ProfilePageColors.secondaryText,
               ),
             ],
           ),
         ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsActionTile(
-          title: 'Edit profile',
-          leadingIcon: Icons.edit,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-            );
-          },
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildSocialSection() {
-    final isDark = context.isDarkMode;
-    final accent = isDark ? DesignTokens.darkAccent : DesignTokens.lightAccent;
-    return SettingsSectionCard(
-      title: 'Friends & Chats',
+  Widget _buildLogOutRow() {
+    return Material(
+      color: _ProfilePageColors.cardSurface,
+      child: InkWell(
+        onTap: _showLogoutConfirmation,
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              Text(
+                'Log Out',
+                style: TextStyle(fontFamily: 'system-ui', 
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: _ProfilePageColors.logoutRed,
+                ),
+              ),
+              Spacer(),
+              Icon(
+                Icons.logout,
+                size: 20,
+                color: _ProfilePageColors.logoutRed,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAppPermissionSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _ProfilePageColors.cardSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: _ProfilePageColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            _buildSectionLabel('About'),
+            _buildInfoRow('Version', _appVersion ?? 'Loading...'),
+            _buildSettingRow('Terms & Conditions', () => Navigator.pop(context)),
+            _buildSettingRow('Privacy Policy', () => Navigator.pop(context)),
+            _buildSettingRow('Help & Support', () => Navigator.pop(context)),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontFamily: 'system-ui', 
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: _ProfilePageColors.primaryText,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            subtitle,
+            style: const TextStyle(fontFamily: 'system-ui', 
+              fontSize: 14,
+              color: _ProfilePageColors.secondaryText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMoreSection(SettingsState settings) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SettingsActionTile(
-          title: 'Friend requests',
-          subtitle: 'See who wants to connect',
-          leadingIcon: Icons.person_add_rounded,
+        _buildSectionLabel('More'),
+        _settingTile(
+          'Friends & Chats',
           onTap: () => Navigator.of(context).pushNamed(Routes.friendRequests),
         ),
-        SettingsActionTile(
-          title: 'Chats',
-          subtitle: 'DMs with friends',
-          leadingIcon: Icons.chat_bubble_outline_rounded,
-          onTap: () => Navigator.of(context).pushNamed(Routes.chats),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAccountSettingsSection() {
-    final theme = context.appTheme;
-    return SettingsSectionCard(
-      title: 'My Account',
-      children: [
-        SettingsActionTile(
-          title: 'Change Email',
-          subtitle: 'Update your email address',
-          leadingIcon: Icons.email_outlined,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ChangeEmailScreen()),
-            );
-          },
-        ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsActionTile(
-          title: 'Change Password',
-          subtitle: 'Update your password',
-          leadingIcon: Icons.lock_outline,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFashionPreferencesSection(SettingsState settings) {
-    return SettingsSectionCard(
-      title: 'My Style',
-      children: [
-        SettingsActionTile(
-          title: 'My fit & style',
-          subtitle: settings.height != null
-              ? '${settings.height?.toStringAsFixed(0)} cm, ${settings.bodyType ?? "Not set"}'
-              : 'Set your measurements and style',
-          leadingIcon: Icons.straighten,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const FashionPreferencesScreen(),
+        _settingTile(
+          'Change Email',
+          onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ChangeEmailScreen()),
               ),
-            );
-          },
         ),
-      ],
-    );
-  }
-
-  Widget _buildAISettingsSection(SettingsState settings) {
-    final theme = context.appTheme;
-    return SettingsSectionCard(
-      title: 'Style & Try-On',
-      children: [
-        SettingsToggleTile(
-          title: 'Daily picks',
-          subtitle: 'Get outfit ideas in your feed',
-          value: settings.autoRecommendations,
-          icon: Icons.auto_awesome,
-          onChanged: (value) {
-            ref
-                .read(settingsProvider.notifier)
-                .updateAutoRecommendations(value);
-          },
+        _settingTile(
+          'My fit & style',
+          onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const FashionPreferencesScreen(),
+                ),
+              ),
         ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsToggleTile(
-          title: 'Best quality',
-          subtitle: 'Sharper try-on results',
-          value: settings.highQualityRendering,
-          icon: Icons.high_quality,
-          onChanged: (value) {
-            ref
-                .read(settingsProvider.notifier)
-                .updateHighQualityRendering(value);
-          },
-        ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsToggleTile(
-          title: 'Background Preservation',
-          subtitle: 'Keep original background in try-on results',
-          value: settings.backgroundPreservation,
-          icon: Icons.image_outlined,
-          onChanged: (value) {
-            ref
-                .read(settingsProvider.notifier)
-                .updateBackgroundPreservation(value);
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNotificationsSection(SettingsState settings) {
-    final theme = context.appTheme;
-    return SettingsSectionCard(
-      title: 'Alerts',
-      children: [
-        SettingsToggleTile(
-          title: 'Push alerts',
-          subtitle: 'Receive push notifications',
-          value: settings.pushNotifications,
-          icon: Icons.notifications_outlined,
-          onChanged: (value) {
-            ref.read(settingsProvider.notifier).updatePushNotifications(value);
-          },
-        ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsToggleTile(
-          title: 'Outfit Reminders',
-          subtitle: 'Get reminders for planned outfits',
-          value: settings.outfitReminders,
-          icon: Icons.calendar_today,
-          onChanged: (value) {
-            ref.read(settingsProvider.notifier).updateOutfitReminders(value);
-          },
-        ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsToggleTile(
-          title: 'Picks alerts',
-          subtitle: 'Get notified about new outfit picks',
-          value: settings.recommendationAlerts,
-          icon: Icons.star_outline,
-          onChanged: (value) {
-            ref
-                .read(settingsProvider.notifier)
-                .updateRecommendationAlerts(value);
-          },
-        ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsActionTile(
-          title: 'See all alerts',
-          subtitle: 'Requests, chats, likes, comments',
-          leadingIcon: Icons.notifications_active_outlined,
-          onTap: () => Navigator.of(context).pushNamed(Routes.notificationCenter),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildThemeSection() {
-    final currentTheme = ref.watch(themeModeProvider);
-    final themeData = ref.watch(themeDataProvider);
-
-    return SettingsSectionCard(
-      title: 'Appearance',
-      children: [
-        ...AppThemeMode.values.map((mode) {
-          final isSelected = currentTheme == mode;
-          return RadioListTile<AppThemeMode>(
-            title: Text(
-              mode.displayName,
-              style: TextStyle(color: themeData.textPrimary),
-            ),
-            subtitle: Text(
-              mode.description,
-              style: themeData.bodySmall(color: themeData.textSecondary),
-            ),
-            value: mode,
-            groupValue: currentTheme,
-            onChanged: (value) {
-              if (value != null) {
-                ref.read(themeModeProvider.notifier).setTheme(value);
-              }
-            },
-            activeColor: themeData.primary,
-            selected: isSelected,
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildLanguageSection() {
-    final theme = context.appTheme;
-
-    return SettingsSectionCard(
-      title: 'Language',
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(AppThemeData.spacingMD),
-          child: LanguageSelector(
-            onLanguageChanged: () {
-              // Language changed, UI will update automatically via Riverpod
-            },
+        _settingTile('Language', onTap: () => _showLanguageSheet()),
+        _settingTile(
+          'Daily picks',
+          trailing: Switch(
+            value: settings.autoRecommendations,
+            onChanged: (v) =>
+                ref.read(settingsProvider.notifier).updateAutoRecommendations(v),
+            activeColor: _ProfilePageColors.editIconPurple,
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildPrivacySection() {
-    final theme = context.appTheme;
-    return SettingsSectionCard(
-      title: 'Privacy',
-      children: [
-        SettingsActionTile(
-          title: 'Data Usage',
-          subtitle: 'Learn how we use your data',
-          leadingIcon: Icons.info_outline,
-          onTap: () {
-            _showDataUsageDialog();
-          },
-        ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsActionTile(
-          title: 'AI Image Processing',
-          subtitle: 'Understand how AI processes your images',
-          leadingIcon: Icons.psychology_outlined,
-          onTap: () {
-            _showAIImageProcessingDialog();
-          },
-        ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsActionTile(
-          title: 'Delete My Data',
-          subtitle: 'Permanently delete all your data',
-          leadingIcon: Icons.delete_outline,
-          isDestructive: true,
-          onTap: () {
-            _showDeleteDataConfirmation();
-          },
-        ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsActionTile(
-          title: 'Logout',
-          leadingIcon: Icons.logout,
-          isDestructive: true,
-          onTap: () {
-            _showLogoutConfirmation();
-          },
-        ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsActionTile(
-          title: 'Delete Account',
-          subtitle: 'Permanently delete your account',
-          leadingIcon: Icons.delete_forever,
-          isDestructive: true,
-          onTap: () {
-            _showDeleteAccountConfirmation();
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAppInfoSection() {
-    final theme = context.appTheme;
-    return SettingsSectionCard(
-      title: 'About',
-      children: [
-        // Logo
-        const Padding(
-          padding: EdgeInsets.all(AppThemeData.spacingMD),
-          child: Center(
-            child: CleoLogo.medium(
-              borderRadius: BorderRadius.all(Radius.circular(16)),
-            ),
+        _settingTile(
+          'Push alerts',
+          trailing: Switch(
+            value: settings.pushNotifications,
+            onChanged: (v) =>
+                ref.read(settingsProvider.notifier).updatePushNotifications(v),
+            activeColor: _ProfilePageColors.editIconPurple,
           ),
         ),
-        SettingsActionTile(
-          title: 'Version',
-          subtitle: _appVersion ?? 'Loading...',
-          leadingIcon: Icons.info,
-        ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsActionTile(
-          title: 'Terms & Conditions',
-          leadingIcon: Icons.description_outlined,
-          onTap: () {
-            // Navigate to terms
-          },
-        ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsActionTile(
-          title: 'Privacy Policy',
-          leadingIcon: Icons.privacy_tip_outlined,
-          onTap: () {
-            // Navigate to privacy policy
-          },
-        ),
-        Divider(height: 1, color: theme.borderLight),
-        SettingsActionTile(
-          title: 'Help & Support',
-          leadingIcon: Icons.help_outline,
-          onTap: () {
-            // Navigate to help
-          },
-        ),
+        _settingTile('Appearance', onTap: () => _showThemeSheet()),
+        _settingTile('Data Usage', onTap: _showDataUsageDialog),
+        _settingTile('Delete My Data', onTap: _showDeleteDataConfirmation, isDestructive: true),
+        _settingTile('Delete Account', onTap: _showDeleteAccountConfirmation, isDestructive: true),
       ],
+    );
+  }
+
+  Widget _settingTile(
+    String title, {
+    VoidCallback? onTap,
+    Widget? trailing,
+    bool isDestructive = false,
+  }) {
+    final color = isDestructive
+        ? _ProfilePageColors.logoutRed
+        : _ProfilePageColors.primaryText;
+    return Material(
+      color: _ProfilePageColors.cardSurface,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(fontFamily: 'system-ui', 
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: color,
+                  ),
+                ),
+              ),
+              if (trailing != null) trailing,
+              if (trailing == null && onTap != null)
+                const Icon(
+                  Icons.chevron_right,
+                  size: 22,
+                  color: _ProfilePageColors.secondaryText,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showLanguageSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _ProfilePageColors.cardSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: LanguageSelector(onLanguageChanged: () {}),
+      ),
+    );
+  }
+
+  void _showThemeSheet() {
+    final currentTheme = ref.read(themeModeProvider);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _ProfilePageColors.cardSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Appearance',
+                style: TextStyle(fontFamily: 'system-ui', 
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _ProfilePageColors.primaryText,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...AppThemeMode.values.map((mode) {
+                final isSelected = currentTheme == mode;
+                return ListTile(
+                  title: Text(
+                    mode.displayName,
+                    style: const TextStyle(fontFamily: 'system-ui', 
+                      fontSize: 16,
+                      color: _ProfilePageColors.primaryText,
+                    ),
+                  ),
+                  subtitle: Text(
+                    mode.description,
+                    style: const TextStyle(fontFamily: 'system-ui', 
+                      fontSize: 13,
+                      color: _ProfilePageColors.secondaryText,
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? const Icon(
+                          Icons.check_circle,
+                          color: _ProfilePageColors.editIconPurple,
+                          size: 22,
+                        )
+                      : null,
+                  onTap: () {
+                    ref.read(themeModeProvider.notifier).setTheme(mode);
+                    Navigator.pop(context);
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -685,17 +633,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       title: 'Data Usage',
       content:
           'We use your data to provide personalized fashion recommendations and improve your experience. Your data is encrypted and stored securely.',
-      confirmText: 'OK',
-      onConfirm: () => Navigator.pop(context),
-    );
-  }
-
-  void _showAIImageProcessingDialog() {
-    ThemedDialog.show(
-      context: context,
-      title: 'AI Image Processing',
-      content:
-          'Your images are processed using AI to create virtual try-on results. Images are processed securely and not shared with third parties.',
       confirmText: 'OK',
       onConfirm: () => Navigator.pop(context),
     );
@@ -712,7 +649,22 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       isDestructive: true,
       onConfirm: () {
         Navigator.pop(context);
-        // Implement delete data
+      },
+      onCancel: () => Navigator.pop(context),
+    );
+  }
+
+  void _showDeleteAccountConfirmation() {
+    ThemedDialog.show(
+      context: context,
+      title: 'Delete Account?',
+      content:
+          'This will permanently delete your account and all associated data. This action cannot be undone.',
+      confirmText: 'Delete Account',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      onConfirm: () {
+        Navigator.pop(context);
       },
       onCancel: () => Navigator.pop(context),
     );
@@ -730,29 +682,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         final authService = ref.read(authServiceProvider);
         await authService.signOut();
         if (context.mounted) {
-          Navigator.of(context)
-              .pushNamedAndRemoveUntil(Routes.login, (route) => false);
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            Routes.login,
+            (route) => false,
+          );
         }
       },
       onCancel: () => Navigator.pop(context),
     );
   }
-
-  void _showDeleteAccountConfirmation() {
-    ThemedDialog.show(
-      context: context,
-      title: 'Delete Account?',
-      content:
-          'This will permanently delete your account and all associated data. This action cannot be undone.',
-      confirmText: 'Delete Account',
-      cancelText: 'Cancel',
-      isDestructive: true,
-      onConfirm: () {
-        Navigator.pop(context);
-        // Implement delete account
-      },
-      onCancel: () => Navigator.pop(context),
-    );
-  }
 }
-

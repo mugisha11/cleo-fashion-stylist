@@ -1,6 +1,6 @@
 /// Dark AI Theme
-/// ChatGPT/Grok inspired: Minimal, dark, typography-focused
-/// Optimized for long conversations and AI reasoning
+/// Dark charcoal with gentle dark purple-blue radial gradient from upper-middle.
+/// Professional dark mode: lighter in center, darker at edges.
 library;
 import 'package:flutter/material.dart';
 import 'app_theme_data.dart';
@@ -40,6 +40,19 @@ class DarkAITheme {
   static const Color _warning = Color(0xFFFF9800);
   static const Color _error = Color(0xFFF44336);
 
+  /// Radial gradient: dark purple-blue from upper-middle, darker at edges.
+  /// Applied app-wide when dark mode is selected.
+  static const RadialGradient _darkRadialGradient = RadialGradient(
+    center: Alignment(0.0, -0.35),
+    radius: 1.15,
+    colors: [
+      Color(0xFF1E2438), // Slightly lighter, vibrant center (dark blue-grey)
+      Color(0xFF141824),
+      Color(0xFF0D0E14), // Darker at edges (near-black with blue hint)
+    ],
+    stops: [0.0, 0.5, 1.0],
+  );
+
   static AppThemeData get theme => const AppThemeData(
     mode: AppThemeMode.darkAI,
     primary: _blueMuted,
@@ -63,10 +76,11 @@ class DarkAITheme {
     accentSuccess: _success,
     accentWarning: _warning,
     accentError: _error,
-    backgroundGradient: null, // Solid color, no gradient
-    primaryGlow: null, // No glow in dark AI mode
-    cardGlow: null, // No glow in dark AI mode
-    borderRadius: 12.0, // Slightly smaller radius
+    backgroundGradient: null,
+    radialGradientBackground: _darkRadialGradient,
+    primaryGlow: null,
+    cardGlow: null,
+    borderRadius: 12.0,
     borderRadiusLarge: 16.0,
   );
 }

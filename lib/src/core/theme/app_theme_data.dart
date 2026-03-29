@@ -1,58 +1,62 @@
 /// App Theme Data Model
 /// Centralized theme data structure for all themes
 library;
+
 import 'package:flutter/material.dart';
 import 'app_theme_mode.dart';
 
 class AppThemeData {
   final AppThemeMode mode;
-  
+
   // Primary Colors
   final Color primary;
   final Color primaryLight;
   final Color primaryDark;
-  
+
   // Background Colors
   final Color backgroundPrimary;
   final Color backgroundSecondary;
   final Color backgroundTertiary;
   final LinearGradient? backgroundGradient;
-  
+
+  /// When set (e.g. dark mode), drawn behind the app and scaffold uses transparent background.
+  final Gradient? radialGradientBackground;
+
   // Surface Colors
   final Color surface;
   final Color surfaceElevated;
-  
+
   // Text Colors
   final Color textPrimary;
   final Color textSecondary;
   final Color textTertiary;
   final Color? textInverse;
-  
+
   // Border Colors
   final Color borderLight;
   final Color borderMedium;
-  
+
   // Shadow Color
   final Color shadowColor;
-  
+
   // Chat Colors
   final Color chatUserBubble;
   final Color chatAIBubble;
   final Color chatAIBorder;
-  
+
   // Accent Colors
   final Color accentSuccess;
   final Color accentWarning;
   final Color accentError;
-  
+
   // Effects
   final BoxShadow? primaryGlow;
   final BoxShadow? cardGlow;
-  
+
   // Border Radius
   final double borderRadius;
   final double borderRadiusLarge;
-  
+
   // Spacing (consistent across themes)
   static const double spacingXS = 4.0;
   static const double spacingSM = 8.0;
@@ -60,16 +64,16 @@ class AppThemeData {
   static const double spacingLG = 24.0;
   static const double spacingXL = 32.0;
   static const double spacingXXL = 48.0;
-  
+
   // Animation Durations
   static const Duration animationFast = Duration(milliseconds: 150);
   static const Duration animationMedium = Duration(milliseconds: 300);
   static const Duration animationSlow = Duration(milliseconds: 400);
-  
+
   // Curves
   static const Curve defaultCurve = Curves.easeInOut;
   static const Curve smoothCurve = Curves.easeOutCubic;
-  
+
   const AppThemeData({
     required this.mode,
     required this.primary,
@@ -79,6 +83,7 @@ class AppThemeData {
     required this.backgroundSecondary,
     required this.backgroundTertiary,
     this.backgroundGradient,
+    this.radialGradientBackground,
     required this.surface,
     required this.surfaceElevated,
     required this.textPrimary,
@@ -99,23 +104,38 @@ class AppThemeData {
     required this.borderRadius,
     required this.borderRadiusLarge,
   });
-  
+
   /// Convert to Flutter ThemeData
   ThemeData toThemeData() {
+    final isLight = mode == AppThemeMode.giovanni;
     return ThemeData(
+      fontFamily: 'system-ui',
       useMaterial3: false,
-      brightness: mode == AppThemeMode.darkAI ? Brightness.dark : Brightness.dark,
-      colorScheme: ColorScheme.dark(
-        primary: primary,
-        secondary: primaryLight,
-        surface: surface,
-        error: accentError,
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: textPrimary,
-        onError: Colors.white,
-      ),
-      scaffoldBackgroundColor: backgroundPrimary,
+      brightness: isLight ? Brightness.light : Brightness.dark,
+      colorScheme: isLight
+          ? ColorScheme.light(
+              primary: primary,
+              secondary: primaryLight,
+              surface: surface,
+              error: accentError,
+              onPrimary: Colors.white,
+              onSecondary: Colors.white,
+              onSurface: textPrimary,
+              onError: Colors.white,
+            )
+          : ColorScheme.dark(
+              primary: primary,
+              secondary: primaryLight,
+              surface: surface,
+              error: accentError,
+              onPrimary: Colors.white,
+              onSecondary: Colors.white,
+              onSurface: textPrimary,
+              onError: Colors.white,
+            ),
+      scaffoldBackgroundColor: radialGradientBackground != null
+          ? Colors.transparent
+          : backgroundPrimary,
       cardTheme: CardThemeData(
         color: surface,
         elevation: 0,
@@ -146,7 +166,7 @@ class AppThemeData {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surface,
+        fillColor: isLight ? surfaceElevated : surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: BorderSide(color: borderLight),
@@ -165,7 +185,9 @@ class AppThemeData {
         ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: backgroundPrimary,
+        backgroundColor: radialGradientBackground != null
+            ? Colors.transparent
+            : backgroundPrimary,
         elevation: 0,
         iconTheme: IconThemeData(color: textPrimary),
         titleTextStyle: TextStyle(
@@ -179,9 +201,16 @@ class AppThemeData {
         thickness: 1,
         space: 1,
       ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: surface,
+        selectedItemColor: primary,
+        unselectedItemColor: textTertiary,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+      ),
     );
   }
-  
+
   /// Typography helpers
   TextStyle bodyLarge({Color? color, bool isMobile = true}) {
     return TextStyle(
@@ -192,7 +221,7 @@ class AppThemeData {
       letterSpacing: -0.01,
     );
   }
-  
+
   TextStyle bodyMedium({Color? color, bool isMobile = true}) {
     return TextStyle(
       fontSize: isMobile ? 15 : 17,
@@ -202,7 +231,7 @@ class AppThemeData {
       letterSpacing: -0.01,
     );
   }
-  
+
   TextStyle bodySmall({Color? color, bool isMobile = true}) {
     return TextStyle(
       fontSize: isMobile ? 14 : 16,
@@ -211,7 +240,7 @@ class AppThemeData {
       height: 1.4,
     );
   }
-  
+
   TextStyle titleLarge({Color? color, bool isMobile = true}) {
     return TextStyle(
       fontSize: isMobile ? 20 : 24,
@@ -221,7 +250,7 @@ class AppThemeData {
       letterSpacing: -0.02,
     );
   }
-  
+
   TextStyle titleMedium({Color? color, bool isMobile = true}) {
     return TextStyle(
       fontSize: isMobile ? 18 : 22,
@@ -231,7 +260,7 @@ class AppThemeData {
       letterSpacing: -0.02,
     );
   }
-  
+
   TextStyle headlineLarge({Color? color, bool isMobile = true}) {
     return TextStyle(
       fontSize: isMobile ? 24 : 32,

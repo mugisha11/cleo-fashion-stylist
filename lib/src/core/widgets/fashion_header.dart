@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'theme_wrapper.dart';
-import 'cleo_logo.dart';
+import 'nikonyx_logo.dart';
 import '../theme/app_theme_data.dart';
 import '../../routes.dart';
 
@@ -72,7 +72,7 @@ class FashionHeader extends StatelessWidget {
           if (showMenuIcon) const SizedBox(width: AppThemeData.spacingMD),
           
           // Logo
-          const CleoLogo.small(
+          const NikonyxLogo.small(
             borderRadius: BorderRadius.all(Radius.circular(8)),
           ),
           const SizedBox(width: AppThemeData.spacingSM),

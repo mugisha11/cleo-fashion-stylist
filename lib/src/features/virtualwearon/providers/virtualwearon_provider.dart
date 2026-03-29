@@ -1,6 +1,5 @@
 import 'dart:convert';
-import '../../../core/utils/io_stub.dart' if (dart.library.io) 'dart:io' as io;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/ready_player_me_service.dart';
@@ -29,7 +28,6 @@ final virtualWearOnProvider = StateNotifierProvider<VirtualWearOnNotifier, Virtu
 });
 
 class VirtualWearOnNotifier extends StateNotifier<VirtualWearOnState> {
-  static const _logPath = 'd:\\styleapp\\.cursor\\debug.log';
   void _log(String location, String message,
       {Map<String, dynamic>? data,
       String runId = 'run1',
@@ -43,11 +41,11 @@ class VirtualWearOnNotifier extends StateNotifier<VirtualWearOnState> {
       'runId': runId,
       'hypothesisId': hypothesisId,
     });
-    if (!kIsWeb) {
-      io.File(_logPath).writeAsStringSync('$payload\n', flush: true);
-    } else {
+    if (kIsWeb) {
       // ignore: avoid_print
       print(payload);
+    } else {
+      debugPrint(payload);
     }
   }
 

@@ -11,7 +11,7 @@ Future<String?> saveTryOnResultToDevice(Uint8List bytes) async {
     final url = html.Url.createObjectUrlFromBlob(blob);
     final anchor = html.AnchorElement()
       ..href = url
-      ..download = 'cleo-tryon-${DateTime.now().millisecondsSinceEpoch}.jpg'
+      ..download = 'nikonyx-tryon-${DateTime.now().millisecondsSinceEpoch}.jpg'
       ..style.display = 'none';
     html.document.body?.append(anchor);
     anchor.click();

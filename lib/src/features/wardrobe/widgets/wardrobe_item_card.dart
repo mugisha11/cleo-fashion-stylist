@@ -42,129 +42,129 @@ class WardrobeItemCard extends StatelessWidget {
           aspectRatio: 0.75, // Portrait orientation for clothing items
           child: Stack(
             children: [
-            // Main Image
-            Positioned.fill(
-              child: CachedNetworkImage(
-                imageUrl: item.imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: FashionDesignSystem.backgroundLight,
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: accent,
-                      strokeWidth: 2,
+              // Main Image
+              Positioned.fill(
+                child: CachedNetworkImage(
+                  imageUrl: item.imageUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: FashionDesignSystem.backgroundLight,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: accent,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: FashionDesignSystem.backgroundLight,
+                    child: const Icon(
+                      Icons.image_outlined,
+                      size: 48,
+                      color: FashionDesignSystem.textTertiary,
                     ),
                   ),
                 ),
-                errorWidget: (context, url, error) => Container(
-                  color: FashionDesignSystem.backgroundLight,
-                  child: const Icon(
-                    Icons.image_outlined,
-                    size: 48,
-                    color: FashionDesignSystem.textTertiary,
-                  ),
-                ),
               ),
-            ),
-            
-            // Gradient Overlay (bottom)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 80,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.6),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            
-            // Content Overlay
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(FashionDesignSystem.spacingMD),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Category Tag
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: FashionDesignSystem.spacingMD,
-                        vertical: FashionDesignSystem.spacingXS,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(FashionDesignSystem.radiusSM),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        item.category,
-                        style: FashionDesignSystem.caption().copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    
-                    // Brand (if available)
-                    if (item.brand != null) ...[
-                      const SizedBox(height: FashionDesignSystem.spacingXS),
-                      Text(
-                        item.brand!,
-                        style: FashionDesignSystem.bodySmall().copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            
-            // More Menu Button (top-right)
-            Positioned(
-              top: FashionDesignSystem.spacingMD,
-              right: FashionDesignSystem.spacingMD,
-              child: GestureDetector(
-                onTap: onMoreTap,
+
+              // Gradient Overlay (bottom)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
                 child: Container(
-                  width: 32,
-                  height: 32,
+                  height: 80,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.more_vert,
-                    size: 18,
-                    color: Colors.white,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.6),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+
+              // Content Overlay
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Padding(
+                  padding: const EdgeInsets.all(FashionDesignSystem.spacingMD),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Category Tag
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: FashionDesignSystem.spacingMD,
+                          vertical: FashionDesignSystem.spacingXS,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(
+                              FashionDesignSystem.radiusSM),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          item.category,
+                          style: FashionDesignSystem.caption().copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+
+                      // Brand (if available)
+                      if (item.brand != null) ...[
+                        const SizedBox(height: FashionDesignSystem.spacingXS),
+                        Text(
+                          item.brand!,
+                          style: FashionDesignSystem.bodySmall().copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+
+              // More Menu Button (top-right)
+              Positioned(
+                top: FashionDesignSystem.spacingMD,
+                right: FashionDesignSystem.spacingMD,
+                child: GestureDetector(
+                  onTap: onMoreTap,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.3),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.more_vert,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 }
-

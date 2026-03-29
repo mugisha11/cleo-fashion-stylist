@@ -51,7 +51,7 @@ class ProductionVTONService {
     String? garmentImageBase64;
     String? garmentImageUrlToSend;
     if (garmentImageBase64s != null && garmentImageBase64s.isNotEmpty) {
-      final g = garmentImageBase64s!.first;
+      final g = garmentImageBase64s.first;
       garmentImageBase64 = g.contains(',') ? g.split(',').last : g;
       if (garmentImageBase64.isEmpty) {
         throw Exception('Garment image base64 is empty.');
@@ -121,7 +121,7 @@ class ProductionVTONService {
             final errorBody = jsonDecode(response.body) as Map<String, dynamic>;
             final d = errorBody['error'] ?? errorBody['detail'] ?? response.body;
             if (d is List) {
-              errorDetail = (d as List)
+              errorDetail = (d)
                   .map((e) => e is Map ? (e['msg'] ?? e.toString()) : e.toString())
                   .join('; ');
             } else {

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 /// Fashion-oriented text field with floating label and animations
 class FashionTextField extends StatefulWidget {
   final TextEditingController? controller;
@@ -110,7 +108,7 @@ class _FashionTextFieldState extends State<FashionTextField> {
               inputFormatters: widget.inputFormatters,
               enabled: widget.enabled,
               maxLines: widget.maxLines,
-              style: GoogleFonts.poppins(
+              style: TextStyle(fontFamily: 'system-ui', 
                 fontSize: 16,
                 color: isDark ? Colors.white : Colors.black87,
               ),
@@ -135,7 +133,7 @@ class _FashionTextFieldState extends State<FashionTextField> {
                   horizontal: 20,
                   vertical: 18,
                 ),
-                labelStyle: GoogleFonts.poppins(
+                labelStyle: TextStyle(fontFamily: 'system-ui', 
                   fontSize: _isFocused || hasValue ? 12 : 16,
                   color: _hasError
                       ? const Color(0xFFEF4444)
@@ -143,13 +141,13 @@ class _FashionTextFieldState extends State<FashionTextField> {
                           ? const Color(0xFF1A1A1A)
                           : Colors.grey.shade600,
                 ),
-                floatingLabelStyle: GoogleFonts.poppins(
+                floatingLabelStyle: TextStyle(fontFamily: 'system-ui', 
                   fontSize: 12,
                   color: _hasError
                       ? const Color(0xFFEF4444)
                       : const Color(0xFF1A1A1A),
                 ),
-                hintStyle: GoogleFonts.poppins(
+                hintStyle: TextStyle(fontFamily: 'system-ui', 
                   fontSize: 16,
                   color: Colors.grey.shade500,
                 ),
@@ -162,9 +160,9 @@ class _FashionTextFieldState extends State<FashionTextField> {
             padding: const EdgeInsets.only(top: 8, left: 4),
             child: Text(
               widget.validator?.call(widget.controller?.text) ?? '',
-              style: GoogleFonts.poppins(
+              style: const TextStyle(fontFamily: 'system-ui', 
                 fontSize: 12,
-                color: const Color(0xFFEF4444),
+                color: Color(0xFFEF4444),
               ),
             ).animate().fadeIn(duration: 200.ms).slideY(
                   begin: -0.2,

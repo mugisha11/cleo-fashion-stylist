@@ -1,35 +1,32 @@
 import 'dart:async';
 import 'dart:convert';
-import '../../../core/utils/io_stub.dart' if (dart.library.io) 'dart:io' as io;
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/questionnaire_service.dart';
 
 final authStateProvider = StreamProvider<User?>((ref) {
   try {
- 
     if (Firebase.apps.isEmpty) {
       debugPrint('⚠️ Firebase not initialized yet - returning null stream');
       return Stream.value(null);
     }
     final auth = FirebaseAuth.instanceFor(app: Firebase.apps.first);
-    
+
     return auth.authStateChanges().handleError((error) {
       debugPrint('⚠️ Auth state stream error: $error');
-     
     });
   } catch (e) {
     debugPrint('⚠️ Auth state initialization error: $e');
-  
+
     return Stream.value(null);
   }
 });
 
 final authServiceProvider = Provider<AuthService>((ref) {
-  const logPath = 'd:\\styleapp\\.cursor\\debug.log';
   void log(String location, String message,
       {Map<String, dynamic>? data,
       String runId = 'run1',
@@ -43,12 +40,11 @@ final authServiceProvider = Provider<AuthService>((ref) {
       'runId': runId,
       'hypothesisId': hypothesisId,
     });
-    if (!kIsWeb) {
-      io.File(logPath)
-          .writeAsStringSync('$payload\n', flush: true);
-    } else {
+    if (kIsWeb) {
       // ignore: avoid_print
       print(payload);
+    } else {
+      debugPrint(payload);
     }
   }
 
@@ -70,3 +66,17 @@ final currentUserProvider = FutureProvider<UserModel?>((ref) async {
   );
 });
 
+/// User preferences from questionnaire
+final userPreferencesProvider =
+    FutureProvider<Map<String, dynamic>>((ref) async {
+  final authState = ref.watch(authStateProvider);
+  return authState.when(
+    data: (user) async {
+      if (user == null) return {};
+      final questionnaireService = ref.read(questionnaireServiceProvider);
+      return await questionnaireService.getUserPreferences();
+    },
+    loading: () => {},
+    error: (_, __) => {},
+  );
+});

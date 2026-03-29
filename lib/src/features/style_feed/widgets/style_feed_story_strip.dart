@@ -151,7 +151,7 @@ class _StoryRing extends StatelessWidget {
               child: StyleFeedImage(
                 imagePath: post.imagePath,
                 fit: BoxFit.cover,
-                placeholder: Center(
+                placeholder: const Center(
                   child: Icon(
                     Icons.person,
                     color: DesignTokens.lightTextSecondary,

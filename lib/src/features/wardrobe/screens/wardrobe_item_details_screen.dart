@@ -20,10 +20,12 @@ class WardrobeItemDetailsScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<WardrobeItemDetailsScreen> createState() => _WardrobeItemDetailsScreenState();
+  ConsumerState<WardrobeItemDetailsScreen> createState() =>
+      _WardrobeItemDetailsScreenState();
 }
 
-class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsScreen> {
+class _WardrobeItemDetailsScreenState
+    extends ConsumerState<WardrobeItemDetailsScreen> {
   bool _isLoading = false;
   WardrobeItemModel? _loadedItem;
 
@@ -35,16 +37,17 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
 
   Future<void> _loadItemDetails() async {
     if (!mounted) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       print('📋 Loading item details for: ${widget.item.id}');
       final service = ref.read(wardrobeServiceProvider);
       final item = await service.getItemById(widget.item.id);
-      
-      print('📋 Item loaded: ${item != null ? "Found" : "Not found, using passed item"}');
-      
+
+      print(
+          '📋 Item loaded: ${item != null ? "Found" : "Not found, using passed item"}');
+
       if (mounted) {
         setState(() {
           _loadedItem = item ?? widget.item;
@@ -61,7 +64,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to load details: ${e.toString().replaceAll('Exception: ', '')}'),
+            content: Text(
+                'Failed to load details: ${e.toString().replaceAll('Exception: ', '')}'),
             backgroundColor: context.appTheme.accentError,
             duration: const Duration(seconds: 3),
           ),
@@ -73,10 +77,11 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   @override
   Widget build(BuildContext context) {
     final theme = context.appTheme;
-    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+    final accentPink =
+        context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     final item = _loadedItem ?? widget.item;
     final isMobile = MediaQuery.of(context).size.width < 768;
-    
+
     // Use processed image if available, otherwise original
     final displayImageUrl = item.processedImageUrl ?? item.imageUrl;
 
@@ -91,7 +96,7 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
             children: [
               // Header
               _buildHeader(theme),
-              
+
               // Content
               Expanded(
                 child: _isLoading
@@ -102,39 +107,41 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Image
-                            _buildImageSection(theme, displayImageUrl, isMobile),
-                            
+                            _buildImageSection(
+                                theme, displayImageUrl, isMobile),
+
                             const SizedBox(height: AppThemeData.spacingLG),
-                            
-                            // Category & Confidence
+
+// Category
                             _buildCategorySection(theme, item),
-                            
+
                             const SizedBox(height: AppThemeData.spacingMD),
-                            
+
+                            // Quick facts for friendly display
+                            if (_hasFriendlyFacts(item))
+                              _buildQuickFactsSection(theme, item),
+
+                            const SizedBox(height: AppThemeData.spacingMD),
+
                             // Colors
-                            if (item.colorTags.isNotEmpty || item.colorPalette != null)
+                            if (item.colorTags.isNotEmpty ||
+                                item.colorPalette != null)
                               _buildColorsSection(theme, item),
-                            
+
                             const SizedBox(height: AppThemeData.spacingMD),
-                            
+
                             // Pattern
                             if (item.pattern != null)
                               _buildPatternSection(theme, item),
-                            
+
                             const SizedBox(height: AppThemeData.spacingMD),
-                            
-                            // Attributes
-                            if (item.aiAttributes != null && item.aiAttributes!.isNotEmpty)
-                              _buildAttributesSection(theme, item),
-                            
-                            const SizedBox(height: AppThemeData.spacingMD),
-                            
+
                             // Brand & Notes
                             if (item.brand != null || item.notes != null)
                               _buildMetadataSection(theme, item),
-                            
+
                             const SizedBox(height: AppThemeData.spacingMD),
-                            
+
                             // Upload Date
                             _buildDateSection(theme, item),
                           ],
@@ -170,8 +177,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
             child: Text(
               'Item Details',
               style: theme.titleMedium(color: theme.textPrimary).copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
           ),
         ],
@@ -180,7 +187,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   }
 
   Widget _buildLoadingState(AppThemeData theme) {
-    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+    final accentPink =
+        context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return Center(
       child: CircularProgressIndicator(
         color: accentPink,
@@ -188,8 +196,10 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
     );
   }
 
-  Widget _buildImageSection(AppThemeData theme, String imageUrl, bool isMobile) {
-    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+  Widget _buildImageSection(
+      AppThemeData theme, String imageUrl, bool isMobile) {
+    final accentPink =
+        context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return Container(
       width: double.infinity,
       height: isMobile ? 400 : 500,
@@ -230,7 +240,6 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   }
 
   Widget _buildCategorySection(AppThemeData theme, WardrobeItemModel item) {
-    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -241,60 +250,131 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
           width: 1,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: accentPink.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.checkroom,
-              color: accentPink,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Category',
-                  style: theme.bodySmall(color: theme.textSecondary),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  item.category,
-                  style: theme.titleMedium(color: theme.textPrimary).copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Icon(
+                  Icons.checkroom,
+                  color: theme.primary,
+                  size: 24,
                 ),
-              ],
-            ),
-          ),
-          if (item.aiConfidence != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: accentPink.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
               ),
-              child: Text(
-                '${(item.aiConfidence! * 100).toStringAsFixed(0)}%',
-                style: theme.bodySmall(color: accentPink).copyWith(
+              const SizedBox(width: 16),
+              Text(
+                'Category',
+                style: theme.bodySmall(color: theme.textSecondary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            item.category,
+            style: theme.titleMedium(color: theme.textPrimary).copyWith(
                   fontWeight: FontWeight.w600,
                 ),
-              ),
+          ),
+          if (item.subcategory != null && item.subcategory!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              item.subcategory!,
+              style: theme.bodyMedium(color: theme.textSecondary),
             ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  bool _hasFriendlyFacts(WardrobeItemModel item) {
+    return item.subcategory != null && item.subcategory!.isNotEmpty ||
+        item.fit != null && item.fit!.isNotEmpty ||
+        item.occasion != null && item.occasion!.isNotEmpty ||
+        item.season != null && item.season!.isNotEmpty ||
+        item.fabric != null && item.fabric!.isNotEmpty;
+  }
+
+  Widget _buildQuickFactsSection(AppThemeData theme, WardrobeItemModel item) {
+    final facts = <Map<String, String>>[];
+    if (item.subcategory != null && item.subcategory!.isNotEmpty) {
+      facts.add({'Type': item.subcategory!});
+    }
+    if (item.fit != null && item.fit!.isNotEmpty) {
+      facts.add({'Fit': item.fit!});
+    }
+    if (item.fabric != null && item.fabric!.isNotEmpty) {
+      facts.add({'Fabric': item.fabric!});
+    }
+    if (item.occasion != null && item.occasion!.isNotEmpty) {
+      facts.add({'Occasion': item.occasion!.join(', ')});
+    }
+    if (item.season != null && item.season!.isNotEmpty) {
+      facts.add({'Season': item.season!.join(', ')});
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.borderLight.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Quick Details',
+            style: theme.bodyMedium(color: theme.textPrimary).copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+          ),
+          const SizedBox(height: 12),
+          ...facts.map((fact) {
+            final key = fact.keys.first;
+            final value = fact.values.first;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      key,
+                      style: theme.bodyMedium(color: theme.textSecondary),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      value,
+                      style:
+                          theme.bodyMedium(color: theme.textPrimary).copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
         ],
       ),
     );
   }
 
   Widget _buildColorsSection(AppThemeData theme, WardrobeItemModel item) {
-    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+    final accentPink =
+        context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     final colors = item.colorPalette != null
         ? item.colorPalette!.map((c) => c['name'] as String).toList()
         : item.colorTags;
@@ -319,9 +399,9 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
               Text(
                 'Colors',
                 style: theme.bodyMedium(color: theme.textPrimary).copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
               ),
             ],
           ),
@@ -332,12 +412,14 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
             children: colors.map((color) {
               final colorData = item.colorPalette?.firstWhere(
                 (c) => c['name'] == color,
-                orElse: () => {'hex': '#000000', 'name': color, 'percentage': 0},
+                orElse: () =>
+                    {'hex': '#000000', 'name': color, 'percentage': 0},
               );
               final hex = colorData?['hex'] as String? ?? '#000000';
-              
+
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: _hexToColor(hex).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -365,8 +447,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
                     Text(
                       color,
                       style: theme.bodySmall(color: theme.textPrimary).copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
+                            fontWeight: FontWeight.w500,
+                          ),
                     ),
                   ],
                 ),
@@ -379,7 +461,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   }
 
   Widget _buildPatternSection(AppThemeData theme, WardrobeItemModel item) {
-    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+    final accentPink =
+        context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -401,8 +484,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
           Text(
             item.pattern!,
             style: theme.bodyMedium(color: theme.textPrimary).copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ],
       ),
@@ -410,7 +493,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   }
 
   Widget _buildAttributesSection(AppThemeData theme, WardrobeItemModel item) {
-    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+    final accentPink =
+        context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -431,9 +515,9 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
               Text(
                 'Attributes',
                 style: theme.bodyMedium(color: theme.textPrimary).copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
               ),
             ],
           ),
@@ -452,8 +536,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
                   Text(
                     entry.value.toString(),
                     style: theme.bodyMedium(color: theme.textPrimary).copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                 ],
               ),
@@ -465,7 +549,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   }
 
   Widget _buildMetadataSection(AppThemeData theme, WardrobeItemModel item) {
-    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+    final accentPink =
+        context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -488,8 +573,8 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
                   child: Text(
                     item.brand!,
                     style: theme.bodyMedium(color: theme.textPrimary).copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
                 ),
               ],
@@ -516,9 +601,11 @@ class _WardrobeItemDetailsScreenState extends ConsumerState<WardrobeItemDetailsS
   }
 
   Widget _buildDateSection(AppThemeData theme, WardrobeItemModel item) {
-    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
-    final dateFormat = '${item.createdAt.day}/${item.createdAt.month}/${item.createdAt.year}';
-    
+    final accentPink =
+        context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+    final dateFormat =
+        '${item.createdAt.day}/${item.createdAt.month}/${item.createdAt.year}';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

@@ -3,7 +3,6 @@
 library;
 
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 
@@ -112,7 +111,7 @@ class SoundService {
     final numSamples = (sampleRateHz * lengthMs / 1000).round();
     final dataSize = numSamples * 2;
     final byteRate = sampleRateHz * numChannels * (bitsPerSample >> 3);
-    final blockAlign = numChannels * (bitsPerSample >> 3);
+    const blockAlign = numChannels * (bitsPerSample >> 3);
 
     final out = ByteData(44 + dataSize);
     int i = 0;
@@ -158,7 +157,7 @@ class SoundService {
       double t = s / sampleRateHz;
       double env = 1.0;
       if (envelope == 'soft') {
-        final attack = 0.02;
+        const attack = 0.02;
         final decay = lengthMs / 1000.0;
         if (t < attack) {
           env = t / attack;
@@ -168,7 +167,7 @@ class SoundService {
       } else if (envelope == 'click') {
         env = math.exp(-t * 80);
       } else {
-        final attack = 0.015;
+        const attack = 0.015;
         final decay = lengthMs / 1000.0;
         if (t < attack) {
           env = t / attack;

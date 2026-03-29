@@ -45,9 +45,9 @@ class VirtualTwinApp extends ConsumerWidget {
       // Show setup screen if Firebase not configured
       debugPrint('⚠️ Showing Firebase setup screen');
       return MaterialApp(
-        title: 'Virtual Twin',
+        title: 'Nikonyx',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
+        theme: AppTheme.giovanniTheme,
         home: _buildFirebaseSetupScreen(context),
       );
     }
@@ -93,7 +93,7 @@ class VirtualTwinApp extends ConsumerWidget {
               return Directionality(
                 textDirection: textDirection,
                 child: MaterialApp(
-                  title: 'Virtual Twin',
+                  title: 'Nikonyx',
                   debugShowCheckedModeBanner: false,
                   theme: Theme.of(context),
                   initialRoute: initialRoute,

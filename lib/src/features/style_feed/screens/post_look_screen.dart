@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +9,7 @@ import '../../../core/theme/luxury_theme.dart';
 import '../../../core/widgets/dashboard_components.dart';
 import '../../../core/widgets/theme_wrapper.dart';
 import '../../../routes.dart';
+import '../../../core/widgets/fashion_drawer.dart';
 import '../../social/providers/social_provider.dart';
 import '../providers/style_feed_provider.dart';
 import '../widgets/style_feed_image.dart';
@@ -50,6 +50,8 @@ class PostLookScreen extends ConsumerStatefulWidget {
 }
 
 class _PostLookScreenState extends ConsumerState<PostLookScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   late TextEditingController _captionController;
   final List<String> _tags = [];
   late bool _isPublic;
@@ -193,16 +195,18 @@ class _PostLookScreenState extends ConsumerState<PostLookScreen> {
     final previewPath = _imagePathForPreview;
 
     return Scaffold(
+      key: _scaffoldKey,
       appBar: DashboardTopBar(
         aiStatus: 'Post a look',
         isAITyping: false,
         notificationCount: ref.watch(socialUnreadCountProvider),
-        onProfileTap: () => Navigator.of(context).pushNamed(Routes.settings),
+        onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+        onProfileTap: () => _scaffoldKey.currentState?.openDrawer(),
         onNotificationsTap: () {
           Navigator.of(context).pushNamed(Routes.notificationCenter);
         },
       ),
-      drawer: _buildNavigationDrawer(context),
+      drawer: const AppDrawer(currentRoute: Routes.postLook),
       body: Container(
         decoration: theme.backgroundGradient != null
             ? BoxDecoration(gradient: theme.backgroundGradient)
@@ -353,141 +357,4 @@ class _PostLookScreenState extends ConsumerState<PostLookScreen> {
     );
   }
 
-  static Widget _buildNavigationDrawer(BuildContext context) {
-    final isDark = context.isDarkMode;
-    return Drawer(
-      child: Container(
-        color:
-            isDark ? DesignTokens.darkBackground : DesignTokens.lightBackground,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
-                border: Border(
-                  bottom: BorderSide(
-                    color: isDark
-                        ? DesignTokens.darkBorder
-                        : DesignTokens.lightBorder,
-                  ),
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Cleo Fashion',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? DesignTokens.darkAccent
-                              : DesignTokens.lightAccent,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your style companion',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.home_outlined,
-              label: 'Home',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.dashboard);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.auto_awesome_outlined,
-              label: 'Try On',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.tryon);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.checkroom_outlined,
-              label: 'My Closet',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.wardrobe);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.star_outline,
-              label: 'Picks for You',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.recommendations);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.calendar_today_outlined,
-              label: 'Calendar',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.calendar);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.grid_view_rounded,
-              label: 'Style Feed',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.styleFeed);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.photo_library_outlined,
-              label: 'My Outfits',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.generatedOutfits);
-              },
-            ),
-            const Divider(),
-            _buildNavItem(
-              context: context,
-              icon: Icons.settings_outlined,
-              label: 'Settings',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.settings);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static Widget _buildNavItem({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    final isDark = context.isDarkMode;
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isDark ? DesignTokens.darkAccent : DesignTokens.lightAccent,
-      ),
-      title: Text(label),
-      onTap: onTap,
-      hoverColor: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
-    );
-  }
 }

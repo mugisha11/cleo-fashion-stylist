@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:typed_data';
 import '../../../core/theme/settings_theme.dart';
 import '../../../core/providers/user_image_provider.dart';
 import '../providers/settings_provider.dart';
@@ -92,7 +91,7 @@ class _FashionPreferencesScreenState
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Row(
                 children: [
                   SizedBox(
@@ -100,12 +99,12 @@ class _FashionPreferencesScreenState
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   ),
-                  const SizedBox(width: 12),
-                  const Text('Saving your photo…'),
+                  SizedBox(width: 12),
+                  Text('Saving your photo…'),
                 ],
               ),
               behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 2),
+              duration: Duration(seconds: 2),
             ),
           );
         }
@@ -118,10 +117,10 @@ class _FashionPreferencesScreenState
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           if (success) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('✓ Photo saved — it’ll load in Try-On every time'),
+              const SnackBar(
+                content: Text('✓ Photo saved — it’ll load in Try-On every time'),
                 behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 3),
+                duration: Duration(seconds: 3),
                 backgroundColor: SettingsTheme.success,
               ),
             );
@@ -155,7 +154,7 @@ class _FashionPreferencesScreenState
         mainAxisSize: MainAxisSize.min,
         children: [
           if (isLoading)
-            SizedBox(
+            const SizedBox(
               width: 36,
               height: 36,
               child: CircularProgressIndicator(
@@ -170,7 +169,7 @@ class _FashionPreferencesScreenState
               color: SettingsTheme.textSecondary.withOpacity(0.5),
             ),
             const SizedBox(height: 12),
-            Text(
+            const Text(
               'No photo yet',
               style: TextStyle(
                 color: SettingsTheme.textSecondary,
@@ -179,7 +178,7 @@ class _FashionPreferencesScreenState
               ),
             ),
             const SizedBox(height: 4),
-            Text(
+            const Text(
               'Upload a clear full-body photo',
               style: TextStyle(
                 color: SettingsTheme.textTertiary,
@@ -295,7 +294,7 @@ class _FashionPreferencesScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Saved here once — Try-On uses it every time. Clear full-body photo works best.',
                         style: TextStyle(
                           color: SettingsTheme.textSecondary,
@@ -353,8 +352,8 @@ class _FashionPreferencesScreenState
                                           const SizedBox(width: SettingsTheme.spacingSM),
                                           OutlinedButton.icon(
                                             onPressed: userImage.isLoading ? null : _deleteUserImage,
-                                            icon: Icon(Icons.delete_outline, size: 20, color: SettingsTheme.error),
-                                            label: Text(
+                                            icon: const Icon(Icons.delete_outline, size: 20, color: SettingsTheme.error),
+                                            label: const Text(
                                               'Remove',
                                               style: TextStyle(color: SettingsTheme.error, fontWeight: FontWeight.w500),
                                             ),
@@ -372,13 +371,13 @@ class _FashionPreferencesScreenState
                               return _buildEmptyPhotoPlaceholder(userImage.isLoading);
                             },
                             loading: () => _buildEmptyPhotoPlaceholder(true),
-                            error: (error, _) => Center(
+                            error: (error, _) => const Center(
                               child: Padding(
-                                padding: const EdgeInsets.all(24),
+                                padding: EdgeInsets.all(24),
                                 child: Column(
                                   children: [
                                     Icon(Icons.error_outline, size: 48, color: SettingsTheme.error),
-                                    const SizedBox(height: 8),
+                                    SizedBox(height: 8),
                                     Text(
                                       'Couldn’t load image',
                                       style: TextStyle(color: SettingsTheme.error, fontSize: 14),

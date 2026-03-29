@@ -11,6 +11,12 @@ final weatherServiceProvider = Provider<WeatherService>((ref) {
   return WeatherService();
 });
 
+/// Current weather for dashboard header (temperature display). Uses default location/fallback.
+final currentWeatherProvider = FutureProvider<WeatherData?>((ref) async {
+  final service = ref.watch(weatherServiceProvider);
+  return service.getCurrentWeather(cityName: 'London');
+});
+
 final aiRecommendationEngineProvider = Provider<AIRecommendationEngine>((ref) {
   final supabase = Supabase.instance.client;
   final auth = FirebaseAuth.instance;

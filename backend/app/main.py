@@ -28,6 +28,7 @@ from .models.schemas import HealthResponse
 
 # Import routers (NO module-level async instantiation)
 from .api import recommend, openai_api
+from .api import inspiration
 from .api import tryon as tryon_api
 from .api import try_on_compat
 from .api import link_preview
@@ -59,13 +60,7 @@ logger.info(f"Platform: {sys.platform}")
 logger.info(f"Debug Mode: {settings.DEBUG}")
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# CREATE FASTAPI APP WITH LIFESPAN MANAGER
-# ═══════════════════════════════════════════════════════════════════════════
-# The lifespan context manager handles ALL async resource lifecycle:
-# - Startup: Initialize httpx clients
-# - Shutdown: Clean up all resources
-# This prevents orphaned async tasks and graceful shutdown issues
+
 app = FastAPI(
     title=settings.API_TITLE,
     version=settings.API_VERSION,
@@ -154,6 +149,7 @@ else:
     logger.warning("⚠️ clothing_recognition router skipped (missing deps, e.g. torch): %s", _clothing_recognition_error)
 
 app.include_router(openai_api.router)
+app.include_router(inspiration.router)
 logger.info("✅ Registered: openai_api router")
 
 app.include_router(tryon_api.router)

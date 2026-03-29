@@ -17,6 +17,16 @@ import '../../../core/widgets/skeleton_loader.dart';
 import '../../../core/widgets/error_widget.dart';
 import '../../../core/widgets/platform_image.dart';
 
+// UI clone: light grey bars, "Virtual wear on" title, right wardrobe strip, bottom cart/Next/share.
+class _VWOUIColors {
+  static const Color barBg = Color(0xFFE8E8E8);
+  static const Color title = Color(0xFF2C2C2C);
+  static const Color buttonBorder = Color(0xFF4A4A4A);
+  static const Color nextButtonBg = Color(0xFFF0F0F0);
+  static const Color holdStillBg = Color(0xFFE0E0E0);
+  static const Color stripCardBg = Color(0xFFE5E5E5);
+}
+
 /// VirtualWearOn Screen - Professional 3D Avatar with Wardrobe Try-On
 /// World-class UI/UX with game-like interactions and animations
 class VirtualWearOnScreen extends ConsumerStatefulWidget {
@@ -28,7 +38,6 @@ class VirtualWearOnScreen extends ConsumerStatefulWidget {
 
 class _VirtualWearOnScreenState extends ConsumerState<VirtualWearOnScreen>
     with TickerProviderStateMixin {
-  static const _logPath = 'd:\\styleapp\\.cursor\\debug.log';
   void _log(String location, String message,
       {Map<String, dynamic>? data,
       String runId = 'run1',
@@ -42,11 +51,11 @@ class _VirtualWearOnScreenState extends ConsumerState<VirtualWearOnScreen>
       'runId': runId,
       'hypothesisId': hypothesisId,
     });
-    if (!kIsWeb) {
-      io.File(_logPath).writeAsStringSync('$payload\n', flush: true);
-    } else {
+    if (kIsWeb) {
       // ignore: avoid_print
       print(payload);
+    } else {
+      debugPrint(payload);
     }
   }
 
@@ -204,42 +213,155 @@ class _VirtualWearOnScreenState extends ConsumerState<VirtualWearOnScreen>
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        title: Text(
-          'Virtual Twin',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-          ),
-        ),
-        actions: [
-          if (!_showOnboarding)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () {
-                setState(() {
-                  _showOnboarding = true;
-                  _selectedSelfie = null;
-                  _selectedSelfieBytes = null;
-                });
-              },
-              tooltip: 'Create New Avatar',
+      backgroundColor: _VWOUIColors.barBg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildTopBar(context, theme),
+            Expanded(
+              child: _showOnboarding
+                  ? _buildOnboardingView(context, state, theme, colorScheme)
+                  : _build3DView(context, state, theme, colorScheme),
             ),
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: () {
-              _showInfoDialog(context);
-            },
-            tooltip: 'About Virtual Twin',
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopBar(BuildContext context, ThemeData theme) {
+    return Container(
+      height: 56,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: const BoxDecoration(
+        color: _VWOUIColors.barBg,
+      ),
+      child: Row(
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: _VWOUIColors.buttonBorder),
+              style: IconButton.styleFrom(
+                shape: const CircleBorder(),
+                side: const BorderSide(color: _VWOUIColors.buttonBorder),
+              ),
+            ),
           ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Center(
+              child: Text(
+                'Virtual wear on',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: _VWOUIColors.title,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: IconButton(
+              onPressed: () => _showSettingsDialog(context, theme),
+              icon: const Icon(Icons.settings_outlined, size: 22, color: _VWOUIColors.buttonBorder),
+              style: IconButton.styleFrom(
+                shape: const CircleBorder(),
+                side: const BorderSide(color: _VWOUIColors.buttonBorder),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: _showOnboarding
-          ? _buildOnboardingView(context, state, theme, colorScheme)
-          : _build3DView(context, state, theme, colorScheme),
+    );
+  }
+
+  void _showSettingsDialog(BuildContext context, ThemeData theme) {
+    final state = ref.read(virtualWearOnProvider);
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: const Text('About'),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _showInfoDialog(context);
+                },
+              ),
+              if (!_showOnboarding) ...[
+                ListTile(
+                  leading: const Icon(Icons.refresh),
+                  title: const Text('Create New Avatar'),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    setState(() {
+                      _showOnboarding = true;
+                      _selectedSelfie = null;
+                      _selectedSelfieBytes = null;
+                    });
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.zoom_in),
+                  title: Text('Zoom: ${state.zoom.toStringAsFixed(1)}x'),
+                  trailing: SizedBox(
+                    width: 160,
+                    child: Slider(
+                      value: state.zoom,
+                      min: 0.5,
+                      max: 2.0,
+                      divisions: 15,
+                      onChanged: (v) => ref.read(virtualWearOnProvider.notifier).updateZoom(v),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.light_mode),
+                  title: Text('Lighting: ${(state.lightingIntensity * 100).toInt()}%'),
+                  trailing: SizedBox(
+                    width: 160,
+                    child: Slider(
+                      value: state.lightingIntensity,
+                      min: 0.0,
+                      max: 1.0,
+                      divisions: 10,
+                      onChanged: (v) => ref.read(virtualWearOnProvider.notifier).updateLighting(v),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.refresh),
+                  title: const Text('Reset View'),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    ref.read(virtualWearOnProvider.notifier).resetView();
+                  },
+                ),
+              ],
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -766,18 +888,223 @@ class _VirtualWearOnScreenState extends ConsumerState<VirtualWearOnScreen>
       return _buildErrorState(context, state, theme);
     }
 
-    return Column(
+    return Stack(
+      fit: StackFit.expand,
       children: [
-        // 3D Avatar Viewer
-        Expanded(
-          flex: 3,
+        // Main viewer (full area)
+        Positioned.fill(
           child: _build3DAvatarViewer(context, state, theme, colorScheme),
         ),
-        // Wardrobe Selection Toolbar
-        _buildWardrobeToolbar(context, state, theme, colorScheme),
-        // 3D Controls
-        _build3DControls(context, state, theme, colorScheme),
+        // "Hold still" chip overlay
+        Positioned(
+          top: 16,
+          left: 16,
+          right: 80,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: _VWOUIColors.holdStillBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _VWOUIColors.buttonBorder.withValues(alpha: 0.3)),
+              ),
+              child: Text(
+                'Hold still',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: _VWOUIColors.title,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Right vertical wardrobe strip
+        Positioned(
+          top: 0,
+          right: 0,
+          bottom: 80,
+          child: _buildWardrobeRightStrip(context, state, theme, colorScheme),
+        ),
+        // Bottom bar (cart, Next, share)
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: _buildBottomBar(context, theme),
+        ),
       ],
+    );
+  }
+
+  Widget _buildWardrobeRightStrip(
+    BuildContext context,
+    VirtualWearOnState state,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    const double cardSize = 72;
+    const double gap = 10;
+    const double padding = 12;
+
+    if (state.isLoadingWardrobe) {
+      return Container(
+        width: cardSize + padding * 2,
+        padding: const EdgeInsets.symmetric(vertical: padding),
+        child: const Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
+      );
+    }
+
+    return Container(
+      width: cardSize + padding * 2,
+      padding: const EdgeInsets.symmetric(vertical: padding),
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: padding),
+        clipBehavior: Clip.none,
+        children: [
+          ...state.wardrobeItems.take(10).map((item) {
+            final isApplied = state.appliedItems.contains(item.id);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: gap),
+              child: _buildStripWardrobeCard(context, item, isApplied, state, theme, colorScheme, cardSize),
+            );
+          }),
+          Padding(
+            padding: const EdgeInsets.only(bottom: gap),
+            child: GestureDetector(
+              onTap: () {
+                // Add more: could navigate to wardrobe or no-op
+              },
+              child: Container(
+                width: cardSize,
+                height: cardSize,
+                decoration: BoxDecoration(
+                  color: _VWOUIColors.stripCardBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _VWOUIColors.buttonBorder.withValues(alpha: 0.4)),
+                ),
+                child: const Icon(Icons.add, size: 28, color: _VWOUIColors.buttonBorder),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStripWardrobeCard(
+    BuildContext context,
+    WardrobeItemModel item,
+    bool isApplied,
+    VirtualWearOnState state,
+    ThemeData theme,
+    ColorScheme colorScheme,
+    double size,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        if (isApplied) {
+          ref.read(virtualWearOnProvider.notifier).removeWardrobeItem(item.id);
+        } else {
+          ref.read(virtualWearOnProvider.notifier).applyWardrobeItem(item);
+        }
+      },
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isApplied ? colorScheme.primary : _VWOUIColors.buttonBorder.withValues(alpha: 0.3),
+            width: isApplied ? 2.5 : 1,
+          ),
+          boxShadow: [
+            if (isApplied)
+              BoxShadow(
+                color: colorScheme.primary.withValues(alpha: 0.25),
+                blurRadius: 6,
+                spreadRadius: 0,
+              ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: CachedNetworkImage(
+            imageUrl: item.imageUrl,
+            fit: BoxFit.cover,
+            width: size,
+            height: size,
+            placeholder: (context, url) => Container(
+              color: _VWOUIColors.stripCardBg,
+              child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+            ),
+            errorWidget: (context, url, error) => Container(
+              color: _VWOUIColors.stripCardBg,
+              child: Icon(Icons.checkroom, color: colorScheme.primary.withValues(alpha: 0.6)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomBar(BuildContext context, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        color: _VWOUIColors.barBg,
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.shopping_cart_outlined, size: 24, color: _VWOUIColors.buttonBorder),
+            style: IconButton.styleFrom(
+              shape: const CircleBorder(),
+              side: const BorderSide(color: _VWOUIColors.buttonBorder),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: _VWOUIColors.nextButtonBg,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: _VWOUIColors.buttonBorder),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Next'), behavior: SnackBarBehavior.floating),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(24),
+                  child: Center(
+                    child: Text(
+                      'Next',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: _VWOUIColors.title,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.share_outlined, size: 22, color: _VWOUIColors.buttonBorder),
+            style: IconButton.styleFrom(
+              shape: const CircleBorder(),
+              side: const BorderSide(color: _VWOUIColors.buttonBorder),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -789,6 +1116,7 @@ class _VirtualWearOnScreenState extends ConsumerState<VirtualWearOnScreen>
   ) {
     return Container(
       width: double.infinity,
+      height: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -1286,7 +1614,7 @@ class _VirtualWearOnScreenState extends ConsumerState<VirtualWearOnScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('About Virtual Twin'),
+        title: const Text('About Nikonyx'),
         content: const Text(
           'Virtual Twin uses advanced AI and 3D technology to create a personalized avatar from your photo and measurements. You can try on items from your wardrobe and see how they look in 3D.',
         ),

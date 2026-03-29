@@ -1,13 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import '../theme/auth_screen_colors.dart';
+import '../../../core/widgets/nikonyx_logo.dart';
 import '../../../routes.dart';
-import '../../../core/widgets/theme_wrapper.dart';
-import '../../../core/widgets/theme_helpers.dart';
-import '../../../core/widgets/cleo_logo.dart';
-import '../../../core/theme/app_theme_data.dart';
 import '../utils/platform_helper.dart';
-
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -16,167 +14,47 @@ class SignupScreen extends ConsumerStatefulWidget {
   ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends ConsumerState<SignupScreen>
-    with SingleTickerProviderStateMixin {
-  final _nameController = TextEditingController();
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
-  final _emailFormKey = GlobalKey<FormState>();
-  final _passwordFormKey = GlobalKey<FormState>();
-  final _confirmPasswordFormKey = GlobalKey<FormState>();
-  final _nameFormKey = GlobalKey<FormState>();
-  
-  final _emailFocusNode = FocusNode();
-  final _passwordFocusNode = FocusNode();
-  final _confirmPasswordFocusNode = FocusNode();
-  final _nameFocusNode = FocusNode();
-  
-  int _currentStep = 0; // 0 = email, 1 = password, 2 = confirm, 3 = name
+  final _formKey = GlobalKey<FormState>();
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   String? _errorMessage;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: AppThemeData.animationMedium,
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: AppThemeData.smoothCurve,
-      ),
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0.05, 0),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: AppThemeData.smoothCurve,
-      ),
-    );
-    _animationController.forward();
-    
-    _emailFocusNode.addListener(() => setState(() {}));
-    _passwordFocusNode.addListener(() => setState(() {}));
-    _confirmPasswordFocusNode.addListener(() => setState(() {}));
-    _nameFocusNode.addListener(() => setState(() {}));
-  }
 
   @override
   void dispose() {
-    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _emailFocusNode.dispose();
-    _passwordFocusNode.dispose();
-    _confirmPasswordFocusNode.dispose();
-    _nameFocusNode.dispose();
-    _animationController.dispose();
     super.dispose();
   }
 
-  void _goToNextStep() {
-    bool canProceed = false;
-    
-    switch (_currentStep) {
-      case 0:
-        if (_emailFormKey.currentState!.validate()) {
-          canProceed = true;
-        }
-        break;
-      case 1:
-        if (_passwordFormKey.currentState!.validate()) {
-          canProceed = true;
-        }
-        break;
-      case 2:
-        if (_confirmPasswordFormKey.currentState!.validate()) {
-          canProceed = true;
-        }
-        break;
-      case 3:
-        // Name is optional, can always proceed
-        canProceed = true;
-        break;
-    }
-    
-    if (canProceed) {
-      setState(() {
-        _currentStep++;
-        _errorMessage = null;
-      });
-      _animationController.reset();
-      _animationController.forward();
-      
-      // Auto-focus next field
-      Future.delayed(const Duration(milliseconds: 350), () {
-        switch (_currentStep) {
-          case 1:
-            _passwordFocusNode.requestFocus();
-            break;
-          case 2:
-            _confirmPasswordFocusNode.requestFocus();
-            break;
-          case 3:
-            _nameFocusNode.requestFocus();
-            break;
-        }
-      });
-    }
+  static bool _isDeviceOrFileError(Object e) {
+    final msg = e.toString();
+    return msg.contains('FileSystem') ||
+        msg.contains('path =') ||
+        msg.contains('errno') ||
+        msg.contains('OS Error') ||
+        msg.contains('Read-only file system') ||
+        msg.contains('.cursor') ||
+        msg.contains('debug.log') ||
+        (msg.contains(r'\') && msg.contains('.log'));
   }
 
-  void _goToPreviousStep() {
-    if (_currentStep > 0) {
-      setState(() {
-        _currentStep--;
-        _errorMessage = null;
-      });
-      _animationController.reset();
-      _animationController.forward();
-      
-      // Focus previous field
-      switch (_currentStep) {
-        case 0:
-          _emailFocusNode.requestFocus();
-          break;
-        case 1:
-          _passwordFocusNode.requestFocus();
-          break;
-        case 2:
-          _confirmPasswordFocusNode.requestFocus();
-          break;
-      }
+  static String _sanitizeAuthError(Object e) {
+    final msg = e.toString().replaceAll('Exception: ', '');
+    if (_isDeviceOrFileError(e)) {
+      return 'Something went wrong. Please try again.';
     }
+    return msg;
   }
 
   Future<void> _handleEmailSignUp() async {
-    // Validate all steps
-    if (!_emailFormKey.currentState!.validate() ||
-        !_passwordFormKey.currentState!.validate() ||
-        !_confirmPasswordFormKey.currentState!.validate()) {
-      // Go back to first invalid step
-      if (!_emailFormKey.currentState!.validate()) {
-        setState(() => _currentStep = 0);
-      } else if (!_passwordFormKey.currentState!.validate()) {
-        setState(() => _currentStep = 1);
-      } else if (!_confirmPasswordFormKey.currentState!.validate()) {
-        setState(() => _currentStep = 2);
-      }
-      _animationController.reset();
-      _animationController.forward();
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isLoading = true;
@@ -188,9 +66,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
       await authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        displayName: _nameController.text.trim().isEmpty 
-            ? null 
-            : _nameController.text.trim(),
+        displayName: null,
       );
 
       if (mounted) {
@@ -198,8 +74,18 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
       }
     } catch (e) {
       if (mounted) {
+        if (_isDeviceOrFileError(e) && FirebaseAuth.instance.currentUser != null) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = null;
+          });
+          ref.invalidate(currentUserProvider);
+          ref.invalidate(authStateProvider);
+          Navigator.of(context).pushReplacementNamed(Routes.onboarding);
+          return;
+        }
         setState(() {
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _errorMessage = _sanitizeAuthError(e);
           _isLoading = false;
         });
       }
@@ -221,8 +107,18 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
       }
     } catch (e) {
       if (mounted) {
+        if (_isDeviceOrFileError(e) && FirebaseAuth.instance.currentUser != null) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = null;
+          });
+          ref.invalidate(currentUserProvider);
+          ref.invalidate(authStateProvider);
+          Navigator.of(context).pushReplacementNamed(Routes.onboarding);
+          return;
+        }
         setState(() {
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _errorMessage = _sanitizeAuthError(e);
           _isLoading = false;
         });
       }
@@ -251,8 +147,18 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
       }
     } catch (e) {
       if (mounted) {
+        if (_isDeviceOrFileError(e) && FirebaseAuth.instance.currentUser != null) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = null;
+          });
+          ref.invalidate(currentUserProvider);
+          ref.invalidate(authStateProvider);
+          Navigator.of(context).pushReplacementNamed(Routes.onboarding);
+          return;
+        }
         setState(() {
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _errorMessage = _sanitizeAuthError(e);
           _isLoading = false;
         });
       }
@@ -261,650 +167,395 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.appTheme;
-    final isMobile = MediaQuery.of(context).size.width <= 600;
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background
-          _buildBackground(theme),
-          
-          // Content
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  left: isMobile ? AppThemeData.spacingXXL : 120,
-                  right: isMobile ? AppThemeData.spacingXXL : 120,
-                  top: isMobile ? AppThemeData.spacingXL : AppThemeData.spacingXXL,
-                  bottom: keyboardHeight > 0 
-                      ? AppThemeData.spacingXXL 
-                      : (isMobile ? AppThemeData.spacingXL : AppThemeData.spacingXXL),
-                ),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: _buildAuthCard(isMobile, theme),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBackground(AppThemeData theme) {
-    return Positioned.fill(
-      child: Container(
-        decoration: theme.backgroundGradient != null
-            ? BoxDecoration(gradient: theme.backgroundGradient)
-            : BoxDecoration(color: theme.backgroundPrimary),
-      ),
-    );
-  }
-
-  Widget _buildAuthCard(bool isMobile, AppThemeData theme) {
-    return Container(
-      padding: EdgeInsets.all(isMobile ? AppThemeData.spacingXL : AppThemeData.spacingXXL),
-      decoration: BoxDecoration(
-        color: theme.surface,
-        borderRadius: BorderRadius.circular(theme.borderRadiusLarge),
-        border: Border.all(
-          color: theme.borderLight.withValues(alpha: 0.5),
-          width: 1,
-        ),
-        boxShadow: theme.cardGlow != null ? [theme.cardGlow!] : null,
-      ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-          // Logo/Brand
-          _buildLogo(theme),
-          
-          SizedBox(height: isMobile ? AppThemeData.spacingXL : AppThemeData.spacingXXL),
-          
-          // Title
-          _buildTitle(theme, isMobile),
-          
-          const SizedBox(height: AppThemeData.spacingXL),
-          
-          // Step indicator
-          _buildStepIndicator(theme),
-          
-          const SizedBox(height: AppThemeData.spacingXL),
-          
-          // Error message
-          if (_errorMessage != null) 
-            _buildErrorMessage(theme),
-          
-          if (_errorMessage != null) const SizedBox(height: AppThemeData.spacingLG),
-          
-          // Step content
-          AnimatedSwitcher(
-            duration: AppThemeData.animationMedium,
-            switchInCurve: AppThemeData.smoothCurve,
-            switchOutCurve: AppThemeData.smoothCurve,
-            transitionBuilder: (child, animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(0.05, 0),
-                    end: Offset.zero,
-                  ).animate(CurvedAnimation(
-                    parent: animation,
-                    curve: AppThemeData.smoothCurve,
-                  )),
-                  child: child,
-                ),
-              );
-            },
-            child: _buildCurrentStep(theme, isMobile),
-          ),
-          
-          const SizedBox(height: AppThemeData.spacingXL),
-          
-          // Social auth (only on email step)
-          if (_currentStep == 0) _buildSocialAuth(theme),
-          
-          if (_currentStep == 0) const SizedBox(height: AppThemeData.spacingLG),
-          
-          // Footer
-          _buildFooter(theme),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLogo(AppThemeData theme) {
-    return const Center(
-      child: CleoLogo.medium(
-        borderRadius: BorderRadius.all(Radius.circular(12)),
-      ),
-    );
-  }
-
-  Widget _buildTitle(AppThemeData theme, bool isMobile) {
-    final titles = [
-      'Create your account',
-      'Choose a password',
-      'Confirm your password',
-      'What should we call you?',
-    ];
-    
-    final subtitles = [
-      'Get started with your email',
-      'Make it secure',
-      'One more time',
-      'This is optional',
-    ];
-    
-    return Column(
-      children: [
-            Text(
-          titles[_currentStep],
-          style: theme.headlineLarge(isMobile: isMobile).copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.5,
-          ),
-          textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppThemeData.spacingSM),
-            Text(
-          subtitles[_currentStep],
-            style: theme.bodyMedium(isMobile: isMobile).copyWith(
-              color: theme.textSecondary,
-            fontSize: isMobile ? 14 : 15,
-            ),
-              textAlign: TextAlign.center,
-          ),
-      ],
-    );
-  }
-
-  Widget _buildStepIndicator(AppThemeData theme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(4, (index) {
-        final isActive = index <= _currentStep;
-        final isCurrent = index == _currentStep;
-        
-        return Row(
-                children: [
-            AnimatedContainer(
-              duration: AppThemeData.animationFast,
-              width: isCurrent ? 7 : (isActive ? 6 : 5),
-              height: isCurrent ? 7 : (isActive ? 6 : 5),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isActive
-                    ? theme.primary
-                    : theme.borderLight,
-              ),
-            ),
-            if (index < 3) ...[
-              const SizedBox(width: AppThemeData.spacingSM),
-              Container(
-                width: 20,
-                height: 1,
-                color: index < _currentStep
-                    ? theme.primary.withValues(alpha: 0.3)
-                    : theme.borderLight,
-              ),
-              const SizedBox(width: AppThemeData.spacingSM),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AuthScreenColors.signupBgTop,
+              AuthScreenColors.signupBgBottom,
             ],
-          ],
-        );
-      }),
-    );
-  }
-
-  Widget _buildCurrentStep(AppThemeData theme, bool isMobile) {
-    switch (_currentStep) {
-      case 0:
-        return _buildEmailStep(theme, isMobile);
-      case 1:
-        return _buildPasswordStep(theme, isMobile);
-      case 2:
-        return _buildConfirmPasswordStep(theme, isMobile);
-      case 3:
-        return _buildNameStep(theme, isMobile);
-      default:
-        return _buildEmailStep(theme, isMobile);
-    }
-  }
-
-  Widget _buildEmailStep(AppThemeData theme, bool isMobile) {
-    return Form(
-      key: _emailFormKey,
-      child: Column(
-        key: const ValueKey('email_step'),
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildAnimatedInputField(
-            theme: theme,
-                    controller: _emailController,
-            focusNode: _emailFocusNode,
-            label: 'Email',
-            hint: 'Enter your email',
-                    keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                    if (!value.contains('@')) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-            onFieldSubmitted: (_) => _goToNextStep(),
-          ),
-          
-          const SizedBox(height: AppThemeData.spacingXL),
-          
-          _buildContinueButton(theme, _goToNextStep),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPasswordStep(AppThemeData theme, bool isMobile) {
-    return Form(
-      key: _passwordFormKey,
-      child: Column(
-        key: const ValueKey('password_step'),
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildAnimatedInputField(
-            theme: theme,
-                    controller: _passwordController,
-            focusNode: _passwordFocusNode,
-            label: 'Password',
-            hint: 'Enter your password',
-                    obscureText: _obscurePassword,
-            textInputAction: TextInputAction.next,
-            onToggleVisibility: () => setState(() => _obscurePassword = !_obscurePassword),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
-                      return null;
-                    },
-            onFieldSubmitted: (_) => _goToNextStep(),
-          ),
-          
-          const SizedBox(height: AppThemeData.spacingMD),
-          
-          _buildBackButton(theme),
-          
-          const SizedBox(height: AppThemeData.spacingMD),
-          
-          _buildContinueButton(theme, _goToNextStep),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildConfirmPasswordStep(AppThemeData theme, bool isMobile) {
-    return Form(
-      key: _confirmPasswordFormKey,
-      child: Column(
-        key: const ValueKey('confirm_password_step'),
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildAnimatedInputField(
-            theme: theme,
-                    controller: _confirmPasswordController,
-            focusNode: _confirmPasswordFocusNode,
-            label: 'Confirm Password',
-            hint: 'Enter your password again',
-                    obscureText: _obscureConfirmPassword,
-            textInputAction: TextInputAction.next,
-            onToggleVisibility: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
-                      }
-                      if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
-                      return null;
-                    },
-            onFieldSubmitted: (_) => _goToNextStep(),
-          ),
-          
-          const SizedBox(height: AppThemeData.spacingMD),
-          
-          _buildBackButton(theme),
-          
-          const SizedBox(height: AppThemeData.spacingMD),
-          
-          _buildContinueButton(theme, _goToNextStep),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNameStep(AppThemeData theme, bool isMobile) {
-    return Form(
-      key: _nameFormKey,
-      child: Column(
-        key: const ValueKey('name_step'),
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildAnimatedInputField(
-            theme: theme,
-            controller: _nameController,
-            focusNode: _nameFocusNode,
-            label: 'Full Name',
-            hint: 'Enter your name (optional)',
-            textCapitalization: TextCapitalization.words,
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => _handleEmailSignUp(),
-          ),
-          
-          const SizedBox(height: AppThemeData.spacingMD),
-          
-          _buildBackButton(theme),
-          
-          const SizedBox(height: AppThemeData.spacingMD),
-          
-                ThemedButton.primary(
-                  context: context,
-                  text: 'Create Account',
-                  onPressed: _handleEmailSignUp,
-                  isLoading: _isLoading,
-                ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnimatedInputField({
-    required AppThemeData theme,
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required String label,
-    required String hint,
-    TextInputType? keyboardType,
-    TextInputAction? textInputAction,
-    TextCapitalization textCapitalization = TextCapitalization.none,
-    bool obscureText = false,
-    VoidCallback? onToggleVisibility,
-    String? Function(String?)? validator,
-    void Function(String)? onFieldSubmitted,
-  }) {
-    final isFocused = focusNode.hasFocus;
-    
-    return AnimatedContainer(
-      duration: AppThemeData.animationFast,
-      curve: AppThemeData.smoothCurve,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(theme.borderRadius),
-        boxShadow: isFocused
-            ? [
-                BoxShadow(
-                  color: theme.primary.withValues(alpha: 0.15),
-                  blurRadius: 8,
-                  spreadRadius: 0,
-                ),
-              ]
-            : null,
-      ),
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        keyboardType: keyboardType,
-        textInputAction: textInputAction,
-        textCapitalization: textCapitalization,
-        obscureText: obscureText,
-        style: theme.bodyLarge().copyWith(
-          fontSize: 16,
-          height: 1.5,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          floatingLabelBehavior: FloatingLabelBehavior.auto,
-          labelStyle: TextStyle(
-            color: theme.textSecondary,
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-          ),
-          floatingLabelStyle: TextStyle(
-            color: theme.primary,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-          hintStyle: TextStyle(
-            color: theme.textTertiary,
-            fontSize: 16,
-          ),
-          filled: true,
-          fillColor: theme.surfaceElevated,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppThemeData.spacingLG,
-            vertical: AppThemeData.spacingLG,
-          ),
-          suffixIcon: obscureText && onToggleVisibility != null
-              ? IconButton(
-                  icon: Icon(
-                    (obscureText && label == 'Password')
-                        ? (_obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined)
-                        : (_obscureConfirmPassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined),
-                    size: 20,
-                    color: theme.textSecondary,
-                  ),
-                  onPressed: onToggleVisibility,
-                )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(theme.borderRadius),
-            borderSide: BorderSide(
-              color: theme.borderLight,
-              width: 1,
-            ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(theme.borderRadius),
-            borderSide: BorderSide(
-              color: theme.borderLight,
-              width: 1,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(theme.borderRadius),
-            borderSide: BorderSide(
-              color: theme.primary,
-              width: 2,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(theme.borderRadius),
-            borderSide: BorderSide(
-              color: theme.accentError,
-              width: 1,
-            ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(theme.borderRadius),
-            borderSide: BorderSide(
-              color: theme.accentError,
-              width: 2,
-            ),
           ),
         ),
-        validator: validator,
-        onFieldSubmitted: onFieldSubmitted,
-      ),
-    );
-  }
-
-  Widget _buildContinueButton(AppThemeData theme, VoidCallback onPressed) {
-    return ThemedButton.primary(
-      context: context,
-      text: 'Continue',
-      onPressed: onPressed,
-      isLoading: false,
-    );
-  }
-
-  Widget _buildBackButton(AppThemeData theme) {
-    return TextButton(
-      onPressed: _goToPreviousStep,
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppThemeData.spacingMD,
-          vertical: AppThemeData.spacingSM,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.arrow_back_ios,
-            size: 14,
-            color: theme.textSecondary,
-          ),
-          const SizedBox(width: AppThemeData.spacingXS),
-          Text(
-            'Back',
-            style: theme.bodyMedium(color: theme.textSecondary).copyWith(
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSocialAuth(AppThemeData theme) {
-    return Column(
-      children: [
-                  Row(
-                    children: [
-            Expanded(child: Divider(color: theme.borderLight.withValues(alpha: 0.5))),
-                      Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppThemeData.spacingMD),
-              child: Text(
-                'or',
-                style: theme.bodySmall(color: theme.textTertiary).copyWith(
-                  fontSize: 13,
-                ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 20,
+                bottom: keyboardHeight > 0 ? 24 : 32,
               ),
-            ),
-            Expanded(child: Divider(color: theme.borderLight.withValues(alpha: 0.5))),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildLogo(),
+                      const SizedBox(height: 28),
+                      _buildTagline(),
+                      const SizedBox(height: 32),
+                      const Text(
+                        'Signup for free.',
+                        style: TextStyle(fontFamily: 'system-ui', 
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: AuthScreenColors.signupTitle,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      if (_errorMessage != null) ...[
+                        _buildErrorMessage(),
+                        const SizedBox(height: 16),
+                      ],
+                      _buildInput(
+                        controller: _emailController,
+                        hint: 'Email',
+                        keyboardType: TextInputType.emailAddress,
+                        suffixIcon: Icons.person_outline,
+                        suffixIconColor: AuthScreenColors.signupIconBlue,
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Please enter your email';
+                          if (!v.contains('@')) return 'Please enter a valid email';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildInput(
+                        controller: _passwordController,
+                        hint: 'Password',
+                        obscureText: _obscurePassword,
+                        suffixIcon: _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        onSuffixTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                        suffixIconColor: AuthScreenColors.signupIconGrey,
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Please enter a password';
+                          if (v.length < 6) return 'Password must be at least 6 characters';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildInput(
+                        controller: _confirmPasswordController,
+                        hint: 'Confirm password',
+                        obscureText: _obscureConfirmPassword,
+                        suffixIcon: _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        onSuffixTap: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                        suffixIconColor: AuthScreenColors.signupIconGrey,
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Please confirm your password';
+                          if (v != _passwordController.text) return 'Passwords do not match';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 28),
+                      _buildPrimaryButton(
+                        label: 'Continue',
+                        onPressed: _handleEmailSignUp,
+                        isLoading: _isLoading,
+                      ),
+                      const SizedBox(height: 28),
+                      _buildSeparator(),
+                      const SizedBox(height: 24),
+                      _buildSocialButtons(),
+                      const SizedBox(height: 32),
+                      _buildFooter(),
                     ],
                   ),
-                
-                const SizedBox(height: AppThemeData.spacingLG),
-                
-                ThemedButton.secondary(
-                  context: context,
-                  text: 'Continue with Google',
-                  onPressed: _isLoading ? () {} : _handleGoogleSignIn,
-          imageAsset: 'assets/icons/google.jpg',
                 ),
-                
-                  if (isApplePlatform) ...[
-                  const SizedBox(height: AppThemeData.spacingMD),
-                  ThemedButton.secondary(
-                    context: context,
-                    text: 'Continue with Apple',
-                    onPressed: _isLoading ? () {} : _handleAppleSignIn,
-                    icon: Icons.apple,
-                  ),
-                  ],
-                ],
-    );
-  }
-
-  Widget _buildFooter(AppThemeData theme) {
-    return Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-              Text(
-                'Already have an account? ',
-          style: theme.bodyMedium().copyWith(
-            fontSize: 14,
-            color: theme.textSecondary,
-          ),
               ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pushReplacementNamed(Routes.login),
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppThemeData.spacingXS,
-              vertical: AppThemeData.spacingXS,
-            ),
-          ),
-          child: Text(
-            'Log in',
-            style: theme.bodyMedium(color: theme.primary).copyWith(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildErrorMessage(AppThemeData theme) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: AppThemeData.animationFast,
-      curve: AppThemeData.smoothCurve,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Container(
-      padding: const EdgeInsets.all(AppThemeData.spacingMD),
+  Widget _buildErrorMessage() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: theme.accentError.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(theme.borderRadius),
-        border: Border.all(
-                color: theme.accentError.withValues(alpha: 0.2),
-        ),
+        color: AuthScreenColors.errorRed.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.error_outline,
-            color: theme.accentError,
-                  size: 18,
-          ),
-          const SizedBox(width: AppThemeData.spacingSM),
+          const Icon(Icons.error_outline, color: AuthScreenColors.errorRed, size: 18),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               _errorMessage!,
-                    style: theme.bodySmall(color: theme.accentError).copyWith(
-                      fontSize: 13,
-                    ),
+              style: const TextStyle(fontFamily: 'system-ui', 
+                fontSize: 13,
+                color: AuthScreenColors.errorRed,
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLogo() {
+    return const Center(
+      child: NikonyxLogo.large(),
+    );
+  }
+
+  Widget _buildTagline() {
+    return const Center(
+      child: Text(
+        'Your Personal AI stylist',
+        style: TextStyle(fontFamily: 'system-ui', 
+          fontSize: 15,
+          fontWeight: FontWeight.w400,
+          color: AuthScreenColors.signupTitle,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInput({
+    required TextEditingController controller,
+    required String hint,
+    TextInputType? keyboardType,
+    bool obscureText = false,
+    required IconData suffixIcon,
+    VoidCallback? onSuffixTap,
+    Color? suffixIconColor,
+    String? Function(String?)? validator,
+  }) {
+    final iconColor = suffixIconColor ?? AuthScreenColors.signupIconGrey;
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      style: const TextStyle(fontFamily: 'system-ui', 
+        fontSize: 16,
+        color: AuthScreenColors.signupTitle,
+        fontWeight: FontWeight.w400,
+      ),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(fontFamily: 'system-ui', 
+          color: AuthScreenColors.signupPlaceholder,
+          fontSize: 16,
+        ),
+        filled: true,
+        fillColor: AuthScreenColors.signupInputBg,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(28),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(28),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(28),
+          borderSide: const BorderSide(color: AuthScreenColors.signupInputBorderFocused, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(28),
+          borderSide: const BorderSide(color: AuthScreenColors.errorRed, width: 1),
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(suffixIcon, color: iconColor, size: 22),
+          onPressed: onSuffixTap,
+        ),
+      ),
+      validator: validator,
+    );
+  }
+
+  Widget _buildPrimaryButton({
+    required String label,
+    required VoidCallback onPressed,
+    bool isLoading = false,
+  }) {
+    return Container(
+      height: 54,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(27),
+        boxShadow: [
+          BoxShadow(
+            color: AuthScreenColors.signupButtonBottom.withValues(alpha: 0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
-        );
-      },
+        ],
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AuthScreenColors.signupButtonTop,
+            AuthScreenColors.signupButtonBottom,
+          ],
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(27),
+        child: InkWell(
+          onTap: isLoading ? null : onPressed,
+          borderRadius: BorderRadius.circular(27),
+          child: Center(
+            child: isLoading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    label,
+                    style: const TextStyle(fontFamily: 'system-ui', 
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSeparator() {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 1,
+            color: AuthScreenColors.signupSeparatorLine,
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Or login via',
+            style: TextStyle(fontFamily: 'system-ui', 
+              fontSize: 13,
+              color: AuthScreenColors.signupSeparatorText,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            height: 1,
+            color: AuthScreenColors.signupSeparatorLine,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSocialButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _isLoading ? () {} : _handleGoogleSignIn,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: AuthScreenColors.signupSocialBg,
+              foregroundColor: AuthScreenColors.signupSocialText,
+              side: const BorderSide(color: AuthScreenColors.signupSocialBorder),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/icons/google.jpg',
+                  width: 20,
+                  height: 20,
+                  errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, size: 22, color: AuthScreenColors.signupSocialText),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Google',
+                  style: TextStyle(fontFamily: 'system-ui', fontSize: 15, fontWeight: FontWeight.w500, color: AuthScreenColors.signupSocialText),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _isLoading ? () {} : _handleAppleSignIn,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: AuthScreenColors.signupSocialBg,
+              foregroundColor: AuthScreenColors.signupSocialText,
+              side: const BorderSide(color: AuthScreenColors.signupSocialBorder),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.apple, size: 22, color: AuthScreenColors.signupSocialText),
+                SizedBox(width: 10),
+                Text(
+                  'Apple',
+                  style: TextStyle(fontFamily: 'system-ui', fontSize: 15, fontWeight: FontWeight.w500, color: AuthScreenColors.signupSocialText),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFooter() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          "Don't have an account? ",
+          style: TextStyle(fontFamily: 'system-ui', 
+            fontSize: 14,
+            color: AuthScreenColors.signupSeparatorText,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pushReplacementNamed(Routes.login),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            minimumSize: const Size(0, 36),
+          ),
+          child: const Text(
+            'Login',
+            style: TextStyle(fontFamily: 'system-ui', 
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AuthScreenColors.signupLoginLink,
+              decoration: TextDecoration.underline,
+              decorationColor: AuthScreenColors.signupLoginLink,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

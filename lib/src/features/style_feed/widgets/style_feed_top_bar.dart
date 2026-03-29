@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/luxury_theme.dart';
-import '../../../core/widgets/cleo_logo.dart';
+import '../../../core/widgets/nikonyx_logo.dart';
 import '../../../routes.dart';
 
 class StyleFeedTopBar extends StatelessWidget {
@@ -47,9 +47,9 @@ class StyleFeedTopBar extends StatelessWidget {
                   onProfileTap?.call();
                 },
                 borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: CleoLogo.small(
+                child: const Padding(
+                  padding: EdgeInsets.all(8),
+                  child: NikonyxLogo.small(
                     backgroundColor: Colors.transparent,
                   ),
                 ),

@@ -233,7 +233,7 @@ class ProductionWardrobePicker extends ConsumerWidget {
                 ),
               
               // Category tag at bottom
-              if (item.category != null && item.category!.isNotEmpty)
+              if (item.category.isNotEmpty)
                 Positioned(
                   bottom: 0,
                   left: 0,
@@ -250,7 +250,7 @@ class ProductionWardrobePicker extends ConsumerWidget {
                       ),
                     ),
                     child: Text(
-                      item.category!,
+                      item.category,
                       style: TextStyle(
                         color: isSelected ? colorScheme.onPrimary : Colors.white,
                         fontSize: 10,

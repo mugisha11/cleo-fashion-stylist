@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Cleo Fashion",
+    "appName": "Nikonyx",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
@@ -119,7 +119,7 @@
     "serverError": "Server error. Please try again later"
   },
   "messages": {
-    "welcome": "Welcome to Cleo Fashion",
+    "welcome": "Welcome to Nikonyx",
     "setupProfile": "Set up your profile to get started",
     "photoUploadedSuccess": "Photo uploaded successfully",
     "itemAdded": "Item added to wardrobe",

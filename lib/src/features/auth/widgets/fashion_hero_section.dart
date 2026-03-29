@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 /// Hero section with animated fashion elements
 class FashionHeroSection extends StatelessWidget {
   final String title;
@@ -55,7 +53,7 @@ class FashionHeroSection extends StatelessWidget {
           // Title
           Text(
             title,
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'system-ui', 
               fontSize: isWeb ? 48 : isTablet ? 40 : 32,
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.white : Colors.black87,
@@ -70,7 +68,7 @@ class FashionHeroSection extends StatelessWidget {
           // Subtitle
           Text(
             subtitle,
-            style: GoogleFonts.poppins(
+            style: TextStyle(fontFamily: 'system-ui', 
               fontSize: isWeb ? 18 : isTablet ? 16 : 15,
               color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
               height: 1.5,

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 /// Premium 3D Avatar Viewer Widget
 /// Renders GLB models with high-quality settings
 class Avatar3DViewer extends StatelessWidget {
@@ -96,7 +94,7 @@ class Avatar3DViewer extends StatelessWidget {
                       const SizedBox(height: 16),
                       Text(
                         errorMessage!,
-                        style: GoogleFonts.poppins(
+                        style: const TextStyle(fontFamily: 'system-ui', 
                           color: Colors.white,
                           fontSize: 16,
                         ),

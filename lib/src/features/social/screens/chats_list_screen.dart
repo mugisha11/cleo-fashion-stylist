@@ -8,7 +8,6 @@ import '../../auth/providers/auth_provider.dart';
 import '../models/chat_model.dart';
 import '../models/social_user_profile.dart';
 import '../providers/social_provider.dart';
-import '../services/social_service.dart';
 import '../../../routes.dart';
 import 'chat_screen.dart';
 

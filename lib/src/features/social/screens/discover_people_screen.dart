@@ -123,7 +123,7 @@ class DiscoverPeopleScreen extends ConsumerWidget {
                     Icon(Icons.people_rounded, size: 20, color: accent),
                     const SizedBox(width: 8),
                     Text(
-                      'Everyone on Cleo',
+                      'Everyone on Nikonyx',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: textColor,

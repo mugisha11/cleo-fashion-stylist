@@ -66,10 +66,13 @@
   
   <script>
     // The value below is injected by flutter build, do not touch.
-    var serviceWorkerVersion = null;
+    {{flutter_service_worker_version}}
   </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
+  <script>
+    {{flutter_build_config}}
+  </script>
 </head>
 <body>
   <div id="loading" style="display:flex;align-items:center;justify-content:center;height:100vh;background:#FFFFFF;">
@@ -84,10 +87,7 @@
   <script>
     // Standard Flutter web bootstrap (ensures _flutter.buildConfig is set)
     window.addEventListener('load', function(ev) {
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
+      _flutter.loader.load({
         onEntrypointLoaded: function(engineInitializer) {
           engineInitializer.initializeEngine().then(function(appRunner) {
             document.getElementById('loading').style.display = 'none';

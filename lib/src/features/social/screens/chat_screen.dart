@@ -7,12 +7,9 @@ import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/luxury_theme.dart';
 import '../../../core/services/sound_service.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../../core/models/generated_outfit_model.dart';
-import '../../../core/models/wardrobe_item_model.dart';
 import '../../wardrobe/providers/wardrobe_provider.dart';
 import '../models/chat_message_model.dart';
 import '../providers/social_provider.dart';
-import '../services/social_service.dart';
 
 /// Single chat: message bubbles, input, image/tryon support.
 /// Pass [chatId] when known, or leave null to resolve from [otherUserId].
@@ -53,10 +50,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (user == null) return;
     try {
       final id = await ref.read(socialServiceProvider).getOrCreateChat(user.uid, widget.otherUserId);
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         _resolvedChatId = id;
         _resolveError = false;
       });
+      }
     } catch (e) {
       if (mounted) setState(() => _resolveError = true);
     }
@@ -128,7 +127,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   : Icon(Icons.person, size: 22, color: accent),
             ),
             const SizedBox(width: 12),
-            Expanded(child: Text(widget.otherUserName, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600))),
+            Expanded(child: Text(widget.otherUserName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600))),
           ],
         ),
         backgroundColor: Colors.transparent,
@@ -462,7 +461,7 @@ class _MessageBubble extends StatelessWidget {
                   DateFormat.jm().format(message.createdAt),
                   style: TextStyle(fontSize: 11, color: isMe ? Colors.white70 : DesignTokens.lightTextSecondary),
                 ),
-                if (isMe && message.seen) ...[const SizedBox(width: 4), Icon(Icons.done_all, size: 14, color: Colors.white70)],
+                if (isMe && message.seen) ...[const SizedBox(width: 4), const Icon(Icons.done_all, size: 14, color: Colors.white70)],
               ],
             ),
           ],

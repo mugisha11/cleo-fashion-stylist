@@ -18,13 +18,29 @@ class ThemeWrapper extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeData = ref.watch(themeDataProvider);
     final flutterTheme = themeData.toThemeData();
-    
+    final Widget content = _ThemeDataInheritedWidget(
+      themeData: themeData,
+      child: child,
+    );
+
     return Theme(
       data: flutterTheme,
-      child: _ThemeDataInheritedWidget(
-        themeData: themeData,
-        child: child,
-      ),
+      child: themeData.radialGradientBackground != null
+          ? Stack(
+              textDirection: TextDirection.ltr,
+              fit: StackFit.expand,
+              children: [
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: themeData.radialGradientBackground,
+                    ),
+                  ),
+                ),
+                content,
+              ],
+            )
+          : content,
     );
   }
 }

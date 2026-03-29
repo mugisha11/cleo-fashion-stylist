@@ -345,7 +345,7 @@ class SocialService {
       type: 'tryon_completed',
       fromUserId: userId,
       toUserId: userId,
-      fromUserName: 'Cleo',
+      fromUserName: 'Nikonyx',
       messagePreview: messagePreview ?? 'Your try-on is ready!',
       imageUrl: imageUrl,
     );

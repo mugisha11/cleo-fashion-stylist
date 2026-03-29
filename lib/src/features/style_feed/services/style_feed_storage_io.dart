@@ -12,7 +12,7 @@ Future<String?> savePostImage(Uint8List bytes, String postId) async {
     final dir = await getApplicationDocumentsDirectory();
     final sub = Directory('${dir.path}/$_subdir');
     if (!await sub.exists()) await sub.create(recursive: true);
-    final ext = 'jpg';
+    const ext = 'jpg';
     final path = '${sub.path}/$postId.$ext';
     final file = File(path);
     await file.writeAsBytes(bytes);

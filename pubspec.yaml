@@ -95,6 +95,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/pages images/wardrobe.jpg
     - assets/icons/
     - lib/src/core/localization/translations/
 

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../routes.dart';
-import 'cleo_logo.dart';
+import 'nikonyx_logo.dart';
 
 class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
@@ -30,7 +30,7 @@ class SplashScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // App Logo
-            const CleoLogo.large(
+            const NikonyxLogo.large(
               borderRadius: BorderRadius.all(Radius.circular(20)),
             ).animate().scale(duration: 600.ms, curve: Curves.easeOut),
             const SizedBox(height: 24),

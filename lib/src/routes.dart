@@ -3,6 +3,7 @@ import 'features/auth/screens/signup_screen.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
 import 'features/home/screens/home_screen.dart';
+import '../../features/home/presentation/home_page.dart';
 import 'features/avatar/screens/avatar_creation_screen.dart';
 import 'features/avatar/screens/avatar_generation_screen.dart';
 import 'features/wardrobe/screens/wardrobe_screen.dart';
@@ -12,7 +13,6 @@ import 'features/tryon/screens/luxury_tryon_screen.dart';
 import 'features/tryon/screens/tryon_history_screen.dart';
 import 'features/recommendations/screens/recommendations_screen.dart';
 import 'features/virtualwearon/screens/virtualwearon_screen.dart';
-import 'screens/dashboard_screen.dart';
 import 'features/vton/screens/fashion_quiz_screen.dart';
 import 'features/vton/screens/photo_capture_screen.dart';
 import 'features/vton/screens/outfit_source_screen.dart';
@@ -28,6 +28,7 @@ import 'features/social/screens/friend_requests_screen.dart';
 import 'features/social/screens/discover_people_screen.dart';
 import 'features/social/screens/generated_outfits_screen.dart';
 import 'features/notifications/screens/notification_center_screen.dart';
+import 'screens/dashboard_screen.dart';
 import 'core/widgets/splash_screen.dart';
 
 class Routes {
@@ -75,7 +76,7 @@ class Routes {
       case onboarding:
         return _buildRoute(const OnboardingScreen(), settings);
       case home:
-        return _buildRoute(const HomeScreen(), settings);
+        return _buildRoute(const ModernHomeScreen(), settings);
       case avatarCreation:
         return _buildRoute(const AvatarCreationScreen(), settings);
       case avatarGeneration:
@@ -97,7 +98,7 @@ class Routes {
       case virtualwearon:
         return _buildRoute(const VirtualWearOnScreen(), settings);
       case dashboard:
-        // Main screen with AI chat — keep this route; use /dashboard or Routes.dashboard.
+        // Dashboard landing page after login
         return _buildRoute(const DashboardScreen(), settings);
       case fashionQuiz:
         return _buildRoute(const FashionQuizScreen(), settings);

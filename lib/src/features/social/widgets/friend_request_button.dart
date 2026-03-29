@@ -6,7 +6,6 @@ import '../../../core/theme/luxury_theme.dart';
 import '../../../routes.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/social_provider.dart';
-import '../services/social_service.dart';
 
 /// Add Friend / Pending / Friends button. Use on profile, post header, user search.
 class FriendRequestButton extends ConsumerWidget {
@@ -110,7 +109,7 @@ class _Button extends StatelessWidget {
                 borderRadius: BorderRadius.circular(h / 2),
                 border: Border.all(color: DesignTokens.lightSuccess.withValues(alpha: 0.5)),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -137,7 +136,7 @@ class _Button extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.schedule, size: 18, color: isDark ? DesignTokens.darkTextSecondary : DesignTokens.lightTextSecondary),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text('Requested', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: isDark ? DesignTokens.darkTextSecondary : DesignTokens.lightTextSecondary)),
             ],
           ),
@@ -160,7 +159,7 @@ class _Button extends StatelessWidget {
                 borderRadius: BorderRadius.circular(h / 2),
                 border: Border.all(color: DesignTokens.lightSuccess.withValues(alpha: 0.5)),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -183,7 +182,7 @@ class _Button extends StatelessWidget {
               await ref.read(socialServiceProvider).sendFriendRequest(user.uid, otherUserId, fromName: user.displayName, fromAvatar: user.photoURL);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Friend request sent'), behavior: SnackBarBehavior.floating, backgroundColor: accent),
+                  SnackBar(content: const Text('Friend request sent'), behavior: SnackBarBehavior.floating, backgroundColor: accent),
                 );
               }
             },
@@ -202,7 +201,7 @@ class _Button extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.person_add_rounded, size: 18, color: accent),
-                  SizedBox(width: 6),
+                  const SizedBox(width: 6),
                   Text('Add Friend', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: accent)),
                 ],
               ),

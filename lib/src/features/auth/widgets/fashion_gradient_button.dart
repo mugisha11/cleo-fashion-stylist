@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 /// Fashion-oriented gradient button with animations
 class FashionGradientButton extends StatefulWidget {
   final String text;
@@ -126,7 +124,7 @@ class _FashionGradientButtonState extends State<FashionGradientButton>
                           ],
                           Text(
                             widget.text,
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(fontFamily: 'system-ui', 
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/auth_design_system.dart';
 
 /// Social authentication button (Google, Apple) - Canva/Discord style
@@ -122,7 +121,7 @@ class _SocialAuthButtonState extends State<SocialAuthButton>
                             const SizedBox(width: 12),
                             Text(
                               widget.text,
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: 'system-ui', 
                                 fontSize: isMobile ? 15 : 16,
                                 fontWeight: FontWeight.w600,
                                 color: AuthDesignSystem.textPrimary,

@@ -233,6 +233,83 @@ class Stage5ImageGeneration:
                 details=str(e)[:300]
             )
     
+    async def generate_image_from_prompt(self, prompt: str) -> Optional[np.ndarray]:
+        """
+        Generate an image from a text prompt only (no input images).
+        
+        Args:
+            prompt: Text description of the image to generate
+        
+        Returns:
+            Generated image (BGR format) or None if failed
+        """
+        if not self.api_key:
+            raise APIError(
+                code=ErrorCode.CONFIG_MISSING_API_KEY,
+                message="GEMINI_API_KEY not configured",
+                details="Set GEMINI_API_KEY environment variable"
+            )
+        
+        # Ensure httpx client is available
+        if self._httpx_client is None:
+            raise APIError(
+                code=ErrorCode.CONFIG_MISSING_API_KEY,
+                message="httpx client not initialized",
+                details="Lifespan manager did not inject httpx client. This is a startup error."
+            )
+        
+        try:
+            # Prepare request for text-to-image
+            url = f"{self.base_url}/models/{self.model_name}:generateContent"
+            
+            payload = {
+                "contents": [{
+                    "parts": [
+                        {"text": prompt}
+                    ]
+                }],
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "topK": 32,
+                    "topP": 1.0,
+                    "maxOutputTokens": 1024
+                }
+            }
+            
+            # Use injected httpx client
+            logger.info(f"Calling Gemini API for text-to-image: {url}")
+            logger.info(f"Prompt: {prompt[:100]}...")
+            
+            response = await self._httpx_client.post(
+                url,
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": self.api_key
+                },
+                json=payload,
+                timeout=120.0
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"Gemini API error: {response.status_code} - {response.text}")
+                return None
+            
+            result = response.json()
+            logger.info("Gemini API call successful")
+            
+            # Extract image from response
+            generated_image = self._extract_image_from_response(result)
+            
+            if generated_image is None:
+                logger.warning("No image generated in Gemini response")
+                return None
+            
+            return generated_image
+            
+        except Exception as e:
+            logger.error(f"Error in text-to-image generation: {e}")
+            return None
+    
     def _image_to_base64(self, image: np.ndarray) -> str:
         """Convert numpy image to base64 string"""
         # Convert BGR to RGB if needed

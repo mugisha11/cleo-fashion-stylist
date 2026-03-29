@@ -4,11 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/luxury_theme.dart';
-import '../../auth/providers/auth_provider.dart';
 import '../models/friend_request_model.dart';
 import '../models/social_user_profile.dart';
 import '../providers/social_provider.dart';
-import '../services/social_service.dart';
 
 /// Pending (to me) and Sent (from me) friend requests
 class FriendRequestsScreen extends ConsumerWidget {
@@ -141,7 +139,7 @@ class _RequestToMeTile extends ConsumerWidget {
     ref.read(socialServiceProvider).acceptFriendRequest(request.id).then((_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Request accepted'), behavior: SnackBarBehavior.floating, backgroundColor: DesignTokens.lightSuccess),
+          const SnackBar(content: Text('Request accepted'), behavior: SnackBarBehavior.floating, backgroundColor: DesignTokens.lightSuccess),
         );
       }
     }).catchError((Object e, StackTrace _) {
@@ -167,7 +165,7 @@ class _RequestToMeTile extends ConsumerWidget {
     ref.read(socialServiceProvider).rejectFriendRequest(request.id).then((_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Request declined'), behavior: SnackBarBehavior.floating),
+          const SnackBar(content: Text('Request declined'), behavior: SnackBarBehavior.floating),
         );
       }
     }).catchError((Object e, StackTrace _) {

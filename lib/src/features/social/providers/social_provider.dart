@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/chat_model.dart';
 import '../models/chat_message_model.dart';

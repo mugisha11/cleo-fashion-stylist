@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/fashion_design_system.dart';
 
 /// Category Filter Chip - Horizontal scrollable category selector
@@ -29,25 +28,21 @@ class CategoryFilterChip extends StatelessWidget {
         margin: const EdgeInsets.only(right: FashionDesignSystem.spacingMD),
         decoration: BoxDecoration(
           color: isSelected
-              ? accent
+              ? FashionDesignSystem.primaryColor
               : FashionDesignSystem.backgroundWhite,
           borderRadius: BorderRadius.circular(FashionDesignSystem.radiusXL),
           border: Border.all(
             color: isSelected
-                ? accent
+                ? FashionDesignSystem.primaryColor
                 : FashionDesignSystem.borderColor,
             width: 1,
           ),
-          boxShadow: isSelected
-              ? FashionDesignSystem.cardShadow
-              : null,
+          boxShadow: isSelected ? FashionDesignSystem.cardShadow : null,
         ),
         child: Text(
           label,
           style: FashionDesignSystem.bodyMedium().copyWith(
-            color: isSelected
-                ? Colors.white
-                : FashionDesignSystem.textCharcoal,
+            color: isSelected ? Colors.white : FashionDesignSystem.textCharcoal,
             fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
           ),
         ),
@@ -55,4 +50,3 @@ class CategoryFilterChip extends StatelessWidget {
     );
   }
 }
-

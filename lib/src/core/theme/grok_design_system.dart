@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 /// Grok-Inspired Design System
 /// AI-first, minimal, premium, fashion-forward
 /// No gradients, no glassmorphism, high contrast, clean typography
@@ -58,7 +56,7 @@ class GrokDesignSystem {
   
   // AI messages = slightly larger
   static TextStyle aiMessageText({bool isMobile = false}) {
-    return GoogleFonts.inter(
+    return TextStyle(fontFamily: 'system-ui', 
       fontSize: isMobile ? 16 : 17,
       fontWeight: FontWeight.w500,
       color: textPrimary,
@@ -69,7 +67,7 @@ class GrokDesignSystem {
   
   // User messages = lighter weight
   static TextStyle userMessageText({bool isMobile = false}) {
-    return GoogleFonts.inter(
+    return TextStyle(fontFamily: 'system-ui', 
       fontSize: isMobile ? 15 : 16,
       fontWeight: FontWeight.w400,
       color: textInverse,
@@ -80,7 +78,7 @@ class GrokDesignSystem {
   
   // Headlines
   static TextStyle headlineLarge({bool isMobile = false}) {
-    return GoogleFonts.inter(
+    return TextStyle(fontFamily: 'system-ui', 
       fontSize: isMobile ? 28 : 32,
       fontWeight: FontWeight.bold,
       color: textPrimary,
@@ -90,7 +88,7 @@ class GrokDesignSystem {
   }
   
   static TextStyle headlineMedium({bool isMobile = false}) {
-    return GoogleFonts.inter(
+    return TextStyle(fontFamily: 'system-ui', 
       fontSize: isMobile ? 22 : 24,
       fontWeight: FontWeight.bold,
       color: textPrimary,
@@ -100,7 +98,7 @@ class GrokDesignSystem {
   }
   
   static TextStyle headlineSmall({bool isMobile = false}) {
-    return GoogleFonts.inter(
+    return TextStyle(fontFamily: 'system-ui', 
       fontSize: isMobile ? 18 : 20,
       fontWeight: FontWeight.w600,
       color: textPrimary,
@@ -111,7 +109,7 @@ class GrokDesignSystem {
   
   // Body text
   static TextStyle bodyLarge({bool isMobile = false}) {
-    return GoogleFonts.inter(
+    return TextStyle(fontFamily: 'system-ui', 
       fontSize: isMobile ? 16 : 17,
       fontWeight: FontWeight.normal,
       color: textPrimary,
@@ -121,7 +119,7 @@ class GrokDesignSystem {
   }
   
   static TextStyle bodyMedium({bool isMobile = false}) {
-    return GoogleFonts.inter(
+    return TextStyle(fontFamily: 'system-ui', 
       fontSize: isMobile ? 15 : 16,
       fontWeight: FontWeight.normal,
       color: textSecondary,
@@ -131,7 +129,7 @@ class GrokDesignSystem {
   }
   
   static TextStyle bodySmall({bool isMobile = false}) {
-    return GoogleFonts.inter(
+    return TextStyle(fontFamily: 'system-ui', 
       fontSize: isMobile ? 13 : 14,
       fontWeight: FontWeight.normal,
       color: textSecondary,
@@ -142,7 +140,7 @@ class GrokDesignSystem {
   
   // Caption
   static TextStyle caption({bool isMobile = false}) {
-    return GoogleFonts.inter(
+    return TextStyle(fontFamily: 'system-ui', 
       fontSize: isMobile ? 12 : 13,
       fontWeight: FontWeight.w400,
       color: textTertiary,
@@ -153,7 +151,7 @@ class GrokDesignSystem {
   
   // Button text
   static TextStyle buttonText({bool isMobile = false}) {
-    return GoogleFonts.inter(
+    return TextStyle(fontFamily: 'system-ui', 
       fontSize: isMobile ? 15 : 16,
       fontWeight: FontWeight.w600,
       color: textInverse,
@@ -164,7 +162,7 @@ class GrokDesignSystem {
   
   // Link text
   static TextStyle linkText({bool isMobile = false}) {
-    return GoogleFonts.inter(
+    return TextStyle(fontFamily: 'system-ui', 
       fontSize: isMobile ? 14 : 15,
       fontWeight: FontWeight.w600,
       color: accentBlue,

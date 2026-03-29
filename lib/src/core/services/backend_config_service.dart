@@ -7,15 +7,15 @@ import 'package:http/http.dart' as http;
 class BackendConfigService {
   static const String _backendUrlKey = 'backend_url';
 
-  // Default backend URLs
-  // IMPORTANT: For Android emulator, use 10.0.2.2 instead of localhost
-  // For physical devices, use your computer's IP address (e.g., http://192.168.1.100:8001)
-  // For Flutter web, use localhost
-  static const String _defaultBackendUrl = kIsWeb
-      ? 'http://localhost:8001' // Flutter web - use localhost:8001
-      : 'http://10.0.2.2:8001'; // Android emulator - port 8001
+  // Local backend used during development and testing.
+  static const String _localBackendUrl = 'http://localhost:8001';
+
+  // Production backend on Railway.
   static const String _defaultProductionUrl =
-      'https://api.cleofashion.com'; // Update with your production URL
+      'https://cleo-fashion-stylist-production.up.railway.app';
+
+  // Use local backend by default for all platforms when no override is saved.
+  static const String _defaultBackendUrl = _localBackendUrl;
 
   /// Get backend URL
   static Future<String> getBackendUrl() async {
@@ -27,8 +27,6 @@ class BackendConfigService {
         return savedUrl;
       }
 
-      // Use localhost by default on all platforms. Set api.cleofashion.com
-      // explicitly via setBackendUrl when that host is deployed.
       return _defaultBackendUrl;
     } catch (e) {
       return _defaultBackendUrl;
@@ -73,14 +71,14 @@ class BackendConfigService {
     }
   }
 
-  /// Get all possible backend URLs to try (localhost only; production URL omitted to avoid ERR_NAME_NOT_RESOLVED when not deployed)
+  /// Get all possible backend URLs to try (production + local dev fallbacks)
   static List<String> getFallbackUrls() {
-    final urls = <String>[
+    return {
+      _defaultProductionUrl,
       _defaultBackendUrl,
       'http://127.0.0.1:8001',
       'http://localhost:8001',
-    ];
-    // Avoid duplicate if _defaultBackendUrl is already localhost:8001
-    return urls.toSet().toList();
+      'http://10.0.2.2:8001',
+    }.toList();
   }
 }

@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Cleo Mode",
+    "appName": "Nikonyx",
     "loading": "Chargement...",
     "error": "Erreur",
     "success": "Succès",
@@ -119,7 +119,7 @@
     "serverError": "Erreur serveur. Veuillez réessayer plus tard"
   },
   "messages": {
-    "welcome": "Bienvenue à Cleo Mode",
+    "welcome": "Bienvenue sur Nikonyx",
     "setupProfile": "Configurez votre profil pour commencer",
     "photoUploadedSuccess": "Photo téléchargée avec succès",
     "itemAdded": "Article ajouté à la garde-robe",

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -307,7 +306,7 @@ class _AvatarGenerationScreenState
           // Title
           Text(
             'Create Your Virtual Twin',
-            style: GoogleFonts.inter(
+            style: TextStyle(fontFamily: 'system-ui', 
               fontSize: isWeb ? 36 : 28,
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.white : Colors.black87,
@@ -372,7 +371,7 @@ class _AvatarGenerationScreenState
                 ? const Icon(Icons.check, color: Colors.white, size: 20)
                 : Text(
                     '${step + 1}',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'system-ui', 
                       color: isActive || isCompleted
                           ? Colors.white
                           : isDark
@@ -387,7 +386,7 @@ class _AvatarGenerationScreenState
         const SizedBox(height: 8),
         Text(
           label,
-          style: GoogleFonts.poppins(
+          style: TextStyle(fontFamily: 'system-ui', 
             fontSize: 12,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
             color: isActive || isCompleted
@@ -474,7 +473,7 @@ class _AvatarGenerationScreenState
                   const SizedBox(width: 12),
                   Text(
                     'How to create your avatar',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(fontFamily: 'system-ui', 
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : Colors.black87,
@@ -523,7 +522,7 @@ class _AvatarGenerationScreenState
             child: Center(
               child: Text(
                 number,
-                style: GoogleFonts.inter(
+                style: const TextStyle(fontFamily: 'system-ui', 
                   color: Colors.white,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -535,7 +534,7 @@ class _AvatarGenerationScreenState
           Expanded(
             child: Text(
               text,
-              style: GoogleFonts.poppins(
+              style: TextStyle(fontFamily: 'system-ui', 
                 fontSize: 14,
                 color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
               ),
@@ -578,7 +577,7 @@ class _AvatarGenerationScreenState
                   const SizedBox(height: 16),
                   Text(
                     'Loading your avatar...',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(fontFamily: 'system-ui', 
                       fontSize: 16,
                       color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                     ),
@@ -632,9 +631,9 @@ class _AvatarGenerationScreenState
                 size: 64,
               ),
               const SizedBox(height: 16),
-              Text(
+              const Text(
                 'Avatar Created Successfully!',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'system-ui', 
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -644,7 +643,7 @@ class _AvatarGenerationScreenState
               const SizedBox(height: 8),
               Text(
                 'Your virtual twin is ready to try on outfits',
-                style: GoogleFonts.poppins(
+                style: TextStyle(fontFamily: 'system-ui', 
                   fontSize: 16,
                   color: Colors.white.withOpacity(0.9),
                 ),

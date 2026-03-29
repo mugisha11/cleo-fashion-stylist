@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/outfit_model.dart';
+import 'backend_config_service.dart';
 import 'cache_service.dart';
 
 class TryOnService {
@@ -11,8 +12,36 @@ class TryOnService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Backend API endpoint
-  static const String _baseUrl = 'http://localhost:8001';
+  Future<http.Response> _sendTryOnRequest({
+    required String path,
+    required Map<String, dynamic> body,
+  }) async {
+    final errors = <String>[];
+    final urls = BackendConfigService.getFallbackUrls();
+
+    for (final backendUrl in urls) {
+      try {
+        final uri = Uri.parse('$backendUrl$path');
+        final response = await http
+            .post(
+              uri,
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode(body),
+            )
+            .timeout(const Duration(seconds: 30));
+
+        return response;
+      } catch (e) {
+        errors.add('$backendUrl: $e');
+      }
+    }
+
+    throw TryOnException(
+      'Backend unreachable',
+      'Cannot reach the try-on backend. Please start the local backend and ensure it is running at http://localhost:8001.',
+      originalError: errors.join('\n'),
+    );
+  }
 
   /// Generate virtual try-on preview from Base64 user image
   /// Called from recommendations or try-on screens
@@ -28,17 +57,14 @@ class TryOnService {
     }
 
     try {
-      // Call backend API with Base64 image
-      final response = await http.post(
-        Uri.parse('$_baseUrl/tryon'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
+      // Call backend API with Base64 image via fallback list
+      final response = await _sendTryOnRequest(
+        path: '/tryon',
+        body: {
           'user_image_base64': userImageBase64,
           'garment_images': clothingImageUrls,
           'source': 'recommendation',
-        }),
+        },
       );
 
       if (response.statusCode == 200) {

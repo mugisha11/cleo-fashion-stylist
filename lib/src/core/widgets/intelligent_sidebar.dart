@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme_wrapper.dart';
-import 'cleo_logo.dart';
+import 'nikonyx_logo.dart';
 import '../../routes.dart';
 import '../../features/dashboard/widgets/notification_panel.dart';
 import '../../features/dashboard/providers/notification_provider.dart';
@@ -157,7 +157,7 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
                     child: AnimatedOpacity(
                       opacity: _opacityAnimation.value,
                       duration: const Duration(milliseconds: 200),
-                      child: const CleoLogo.small(
+                      child: const NikonyxLogo.small(
                         borderRadius: BorderRadius.all(Radius.circular(8)),
                       ),
                     ),

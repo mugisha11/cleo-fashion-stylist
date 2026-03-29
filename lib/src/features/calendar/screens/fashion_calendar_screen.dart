@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/widgets/fashion_scaffold.dart';
 import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/widgets/dashboard_components.dart';
 import '../../../core/theme/app_theme_data.dart';
-import '../../../core/theme/design_tokens.dart';
-import '../../../core/theme/luxury_theme.dart';
 import '../../../core/models/calendar_day_model.dart';
 import '../../social/providers/social_provider.dart';
 import '../providers/calendar_provider.dart';
@@ -18,6 +15,8 @@ import '../widgets/event_detail_drawer.dart';
 import '../widgets/ai_assistant_button.dart';
 import '../widgets/ai_assistant_dialog.dart';
 import '../../../routes.dart';
+import '../../../core/widgets/fashion_drawer.dart';
+import '../../../features/auth/providers/auth_provider.dart';
 
 /// Fashion Calendar Screen - Complete redesign from scratch
 /// World-class, Google Calendar-inspired, fashion-aware calendar
@@ -33,6 +32,8 @@ enum CalendarViewMode { day, week, month }
 
 class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
     with TickerProviderStateMixin {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   DateTime _selectedDate = DateTime.now();
   CalendarViewMode _viewMode = CalendarViewMode.month;
   CalendarDay? _selectedEvent;
@@ -123,168 +124,45 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
       ),
     );
 
-    return Scaffold(
-      appBar: DashboardTopBar(
-        aiStatus: 'Calendar & Events',
-        isAITyping: false,
-        notificationCount: ref.watch(socialUnreadCountProvider),
-        onProfileTap: () {
-          Navigator.of(context).pushNamed(Routes.settings);
-        },
-        onNotificationsTap: () {
-          Navigator.of(context).pushNamed(Routes.notificationCenter);
-        },
-      ),
-      drawer: _buildNavigationDrawer(context),
-      body: Container(
-        decoration: theme.backgroundGradient != null
-            ? BoxDecoration(gradient: theme.backgroundGradient)
-            : BoxDecoration(color: theme.backgroundPrimary),
-        child: SafeArea(
-          child: calendarDaysAsync.when(
-            loading: () => _buildLoadingState(theme),
-            error: (error, stack) => _buildErrorState(error, theme),
-            data: (calendarDays) => _buildCalendarContent(theme, calendarDays),
-          ),
-        ),
-      ),
-    );
-  }
+    final user = ref.watch(authStateProvider).valueOrNull;
+    final displayName = user?.displayName ?? 'Style Lover';
+    final photoUrl = user?.photoURL;
+    final unreadCount = ref.watch(socialUnreadCountProvider) ?? 0;
 
-  Widget _buildNavigationDrawer(BuildContext context) {
-    final isDark = context.isDarkMode;
-    return Drawer(
-      child: Container(
-        color:
-            isDark ? DesignTokens.darkBackground : DesignTokens.lightBackground,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
-                border: Border(
-                  bottom: BorderSide(
-                    color: isDark
-                        ? DesignTokens.darkBorder
-                        : DesignTokens.lightBorder,
-                  ),
+    return Scaffold(
+      key: _scaffoldKey,
+      drawer: const AppDrawer(currentRoute: Routes.calendar),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SafeArea(
+            bottom: false,
+            child: DashboardHomeHeader(
+              displayName: displayName,
+              photoUrl: photoUrl,
+              unreadCount: unreadCount,
+              onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+              subtitleOverride: 'Calendar',
+              titleOverride: 'Events & Outfits',
+            ),
+          ),
+          Expanded(
+            child: Container(
+              decoration: theme.backgroundGradient != null
+                  ? BoxDecoration(gradient: theme.backgroundGradient)
+                  : BoxDecoration(color: theme.backgroundPrimary),
+              child: SafeArea(
+                top: false,
+                child: calendarDaysAsync.when(
+                  loading: () => _buildLoadingState(theme),
+                  error: (error, stack) => _buildErrorState(error, theme),
+                  data: (calendarDays) => _buildCalendarContent(theme, calendarDays),
                 ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Cleo Fashion',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? DesignTokens.darkAccent
-                              : DesignTokens.lightAccent,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your style companion',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
             ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.home_outlined,
-              label: 'Home',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.dashboard);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.auto_awesome_outlined,
-              label: 'Try On',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.tryon);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.checkroom_outlined,
-              label: 'My Closet',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.wardrobe);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.star_outline,
-              label: 'Picks for You',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.recommendations);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.calendar_today_outlined,
-              label: 'Calendar',
-              onTap: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.grid_view_rounded,
-              label: 'Style Feed',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.styleFeed);
-              },
-            ),
-            _buildNavItem(
-              context: context,
-              icon: Icons.photo_library_outlined,
-              label: 'My Outfits',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.generatedOutfits);
-              },
-            ),
-            const Divider(),
-            _buildNavItem(
-              context: context,
-              icon: Icons.settings_outlined,
-              label: 'Settings',
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed(Routes.settings);
-              },
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildNavItem({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    final isDark = context.isDarkMode;
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isDark ? DesignTokens.darkAccent : DesignTokens.lightAccent,
-      ),
-      title: Text(label),
-      onTap: onTap,
-      hoverColor: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
     );
   }
 

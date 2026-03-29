@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/auth_design_system.dart';
 
@@ -108,7 +107,7 @@ class _PremiumTextFieldState extends State<PremiumTextField> {
               },
               inputFormatters: widget.inputFormatters,
               enabled: widget.enabled,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'system-ui', 
                 fontSize: isMobile ? 15 : 16,
                 color: AuthDesignSystem.textPrimary,
                 fontWeight: FontWeight.w500,
@@ -135,7 +134,7 @@ class _PremiumTextFieldState extends State<PremiumTextField> {
                   horizontal: 16,
                   vertical: 18,
                 ),
-                labelStyle: GoogleFonts.inter(
+                labelStyle: TextStyle(fontFamily: 'system-ui', 
                   fontSize: 14,
                   color: _hasError
                       ? AuthDesignSystem.errorRed
@@ -144,14 +143,14 @@ class _PremiumTextFieldState extends State<PremiumTextField> {
                           : AuthDesignSystem.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
-                floatingLabelStyle: GoogleFonts.inter(
+                floatingLabelStyle: TextStyle(fontFamily: 'system-ui', 
                   fontSize: 12,
                   color: _hasError
                       ? AuthDesignSystem.errorRed
                       : AuthDesignSystem.borderFocus,
                   fontWeight: FontWeight.w600,
                 ),
-                hintStyle: GoogleFonts.inter(
+                hintStyle: TextStyle(fontFamily: 'system-ui', 
                   fontSize: isMobile ? 15 : 16,
                   color: AuthDesignSystem.textSecondary.withValues(alpha: 0.6),
                   fontWeight: FontWeight.w400,
@@ -165,7 +164,7 @@ class _PremiumTextFieldState extends State<PremiumTextField> {
             padding: const EdgeInsets.only(top: 8, left: 4),
             child: Text(
               widget.validator?.call(widget.controller?.text) ?? '',
-              style: GoogleFonts.inter(
+              style: const TextStyle(fontFamily: 'system-ui', 
                 fontSize: 12,
                 color: AuthDesignSystem.errorRed,
                 fontWeight: FontWeight.w500,
