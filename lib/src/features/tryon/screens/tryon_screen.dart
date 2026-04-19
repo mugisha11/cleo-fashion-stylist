@@ -21,6 +21,8 @@ import '../../settings/screens/fashion_preferences_screen.dart';
 import '../../social/providers/social_provider.dart';
 import '../../wardrobe/providers/wardrobe_provider.dart';
 import '../providers/tryon_provider.dart';
+import '../../../core/widgets/cosmic_header_widget.dart';
+import '../../../core/widgets/cosmic_footer_widget.dart';
 
 const _rWardrobe = Routes.wardrobe;
 const _rChat = Routes.chat;
@@ -39,8 +41,6 @@ const _blue = Color(0xFF2A58C8);
 const _slv = Color(0xFFCCDDFF);
 const _chr0 = Color(0xFF3A5A8A);
 const _chr1 = Color(0xFFBBD0EE);
-const _navInk = Color(0xFF1A3060);
-const _navAct = Color(0xFF0A1E58);
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  COSMIC HEADER PAINTER
@@ -71,9 +71,9 @@ class _CosmicPainter extends CustomPainter {
             center: Alignment(0.0, -0.9),
             radius: 1.6,
             colors: [
-              Color(0xFF4880E0),
-              Color(0xFF1848C0),
-              Color(0xFF0A1E58),
+              Color(0xFF1AACCF),
+              Color(0xFF1178B4),
+              Color(0xFF0A4E8F),
               Color(0xFF050F2A),
               Color(0xFF020810)
             ],
@@ -88,7 +88,7 @@ class _CosmicPainter extends CustomPainter {
             width: s.width * 0.55 * 2,
             height: s.height * 0.70 * 2),
         Paint()
-          ..shader = RadialGradient(
+          ..shader = const RadialGradient(
             colors: [Color(0x3878BEFF), Colors.transparent],
           ).createShader(Rect.fromCenter(
               center: rayC,
@@ -100,7 +100,7 @@ class _CosmicPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [Color(0xFF64B4FF).withOpacity(0.14), Colors.transparent],
+        colors: [const Color(0xFF64B4FF).withOpacity(0.14), Colors.transparent],
       ).createShader(Rect.fromLTWH(0, 0, s.width, s.height));
     final beamPath = Path()
       ..moveTo(s.width * 0.38, 0)
@@ -118,8 +118,8 @@ class _CosmicPainter extends CustomPainter {
         Paint()
           ..shader = RadialGradient(
             colors: [
-              Color(0xFF3C82FF).withOpacity(0.48),
-              Color(0xFF1464C8).withOpacity(0.13),
+              const Color(0xFF3C82FF).withOpacity(0.48),
+              const Color(0xFF1464C8).withOpacity(0.13),
               Colors.transparent
             ],
             stops: const [0.0, 0.36, 0.65],
@@ -178,9 +178,9 @@ class _CosmicPainter extends CustomPainter {
       ..strokeWidth = 12
       ..shader = LinearGradient(colors: [
         Colors.transparent,
-        Color(0xFF4878D8).withOpacity(0.22),
-        Color(0xFF6AA4FF).withOpacity(0.44),
-        Color(0xFF4878D8).withOpacity(0.22),
+        const Color(0xFF4878D8).withOpacity(0.22),
+        const Color(0xFF6AA4FF).withOpacity(0.44),
+        const Color(0xFF4878D8).withOpacity(0.22),
         Colors.transparent,
       ]).createShader(Rect.fromLTWH(0, arcH - 30, arcW, 30));
     final arcPath1 = Path()
@@ -236,7 +236,7 @@ class _CosmicPainter extends CustomPainter {
     final arcSec = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.2
-      ..shader = LinearGradient(colors: [
+      ..shader = const LinearGradient(colors: [
         Color(0x261A2E50),
         Color(0xA56888B8),
         Color(0xD9B0CCE4),
@@ -265,17 +265,19 @@ class _StagePainter extends CustomPainter {
     final grid = Paint()
       ..color = const Color(0xFF5082FF).withOpacity(0.03)
       ..strokeWidth = 1;
-    for (double y = 0; y < s.height; y += 40)
+    for (double y = 0; y < s.height; y += 40) {
       c.drawLine(Offset(0, y), Offset(s.width, y), grid);
-    for (double x = 0; x < s.width; x += 40)
+    }
+    for (double x = 0; x < s.width; x += 40) {
       c.drawLine(Offset(x, 0), Offset(x, s.height), grid);
+    }
     final cx = s.width / 2;
     final py = s.height - 10;
     c.drawOval(
         Rect.fromCenter(center: Offset(cx, py), width: 160, height: 28),
         Paint()
           ..shader = RadialGradient(colors: [
-            Color(0xFF3C8CFF).withOpacity(0.30),
+            const Color(0xFF3C8CFF).withOpacity(0.30),
             Colors.transparent
           ]).createShader(
               Rect.fromCenter(center: Offset(cx, py), width: 160, height: 28)));
@@ -294,7 +296,7 @@ class _StagePainter extends CustomPainter {
       ..strokeWidth = 1
       ..shader = LinearGradient(colors: [
         Colors.transparent,
-        Color(0xFF50A0FF).withOpacity(0.18),
+        const Color(0xFF50A0FF).withOpacity(0.18),
         Colors.transparent
       ]).createShader(Rect.fromLTWH(0, 0, s.width, 1));
     c.drawLine(
@@ -322,8 +324,8 @@ class _NxLogo extends StatelessWidget {
             decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(colors: [
-                  Color(0xFF50A0FF).withOpacity(0.48),
-                  Color(0xFF2864DC).withOpacity(0.18),
+                  const Color(0xFF50A0FF).withOpacity(0.48),
+                  const Color(0xFF2864DC).withOpacity(0.18),
                   Colors.transparent
                 ], stops: const [
                   0.0,
@@ -351,14 +353,14 @@ class _NxLogo extends StatelessWidget {
                 ]),
                 boxShadow: [
                   BoxShadow(
-                      color: Color(0xFF96CDFF).withOpacity(0.48),
+                      color: const Color(0xFF96CDFF).withOpacity(0.48),
                       blurRadius: 0,
                       spreadRadius: 2),
                   BoxShadow(
-                      color: Color(0xFF50A0FF).withOpacity(0.62),
+                      color: const Color(0xFF50A0FF).withOpacity(0.62),
                       blurRadius: 14),
                   BoxShadow(
-                      color: Color(0xFF2878E6).withOpacity(0.35),
+                      color: const Color(0xFF2878E6).withOpacity(0.35),
                       blurRadius: 30),
                 ])),
         Container(
@@ -436,8 +438,8 @@ class _GBtn extends StatelessWidget {
                     end: Alignment(0.5, 0.5),
                     colors: [Color(0x29FFFFFF), Color(0x0FFFFFFF)]),
                 border: Border.all(color: const Color(0x42FFFFFF), width: 1),
-                boxShadow: [
-                  BoxShadow(color: const Color(0x661E1E6A), blurRadius: 6)
+                boxShadow: const [
+                  BoxShadow(color: Color(0x661E1E6A), blurRadius: 6)
                 ]),
             child: Icon(icon, color: const Color(0xFFC8DCF4), size: sz * 0.46)),
         if (badge > 0)
@@ -748,9 +750,9 @@ class _FitContent extends StatelessWidget {
                         fontWeight: FontWeight.w600)),
               ]),
           const SizedBox(height: 5),
-          _MetricBar('Size Match', 0.92),
-          _MetricBar('Body Fit', 0.88),
-          _MetricBar('Comfort', 0.95),
+          const _MetricBar('Size Match', 0.92),
+          const _MetricBar('Body Fit', 0.88),
+          const _MetricBar('Comfort', 0.95),
         ])),
         const SizedBox(width: 10),
         Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -777,11 +779,11 @@ class _FitContent extends StatelessWidget {
                       borderRadius: BorderRadius.circular(9),
                       border:
                           Border.all(color: const Color(0x7264AAFF), width: 1),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
-                            color: const Color(0x661E50A0),
+                            color: Color(0x661E50A0),
                             blurRadius: 10,
-                            offset: const Offset(0, 4))
+                            offset: Offset(0, 4))
                       ]),
                   child: const Row(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.shopping_bag_outlined,
@@ -915,15 +917,15 @@ class _ChatContent extends StatelessWidget {
                   child: Container(
                       width: 30,
                       height: 30,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: const LinearGradient(
+                          gradient: LinearGradient(
                               colors: [Color(0xFF2A58C8), Color(0xFF1A3A9A)]),
                           boxShadow: [
                             BoxShadow(
-                                color: const Color(0x4D1428C8),
+                                color: Color(0x4D1428C8),
                                 blurRadius: 6,
-                                offset: const Offset(0, 2))
+                                offset: Offset(0, 2))
                           ]),
                       child: const Icon(Icons.send,
                           color: Colors.white, size: 13))),
@@ -954,112 +956,12 @@ class _ColTab extends StatelessWidget {
                   ? const BorderRadius.horizontal(right: Radius.circular(4))
                   : const BorderRadius.horizontal(left: Radius.circular(4)),
               border: Border.all(color: const Color(0x4D64A0FF), width: 1),
-              boxShadow: [
-                BoxShadow(color: const Color(0x66030828), blurRadius: 8)
+              boxShadow: const [
+                BoxShadow(color: Color(0x66030828), blurRadius: 8)
               ]),
           child: Center(
               child: Icon(arrowRight ? Icons.chevron_right : Icons.chevron_left,
                   color: const Color(0xCCA0D2FF), size: 11))));
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-//  NAV HELPERS
-// ══════════════════════════════════════════════════════════════════════════════
-class _NavSep extends StatelessWidget {
-  const _NavSep();
-  @override
-  Widget build(BuildContext c) => Container(
-      width: 1.5,
-      height: 32,
-      decoration: const BoxDecoration(
-          gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-            Colors.transparent,
-            Color(0x8C3C78DC),
-            Color(0xB350A0FF),
-            Color(0x8C3C78DC),
-            Colors.transparent
-          ])));
-}
-
-class _NavItem extends StatelessWidget {
-  const _NavItem(
-      {required this.icon, required this.label, required this.active});
-  final IconData icon;
-  final String label;
-  final bool active;
-  @override
-  Widget build(BuildContext c) =>
-      Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(icon, size: 18, color: active ? _navAct : _navInk),
-        const SizedBox(height: 2),
-        Text(label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.w700,
-                color: active ? _navAct : _navInk)),
-      ]);
-}
-
-class _NavHome extends StatelessWidget {
-  const _NavHome({required this.onTap});
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext c) => GestureDetector(
-      onTap: onTap,
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const SweepGradient(colors: [
-                  Color(0xFF1E3060),
-                  Color(0xFF5080B0),
-                  Color(0xFF90B8D8),
-                  Color(0xFFC8DCF0),
-                  Color(0xFFE8F4FF),
-                  Color(0xFFFFFFFF),
-                  Color(0xFFE8F4FF),
-                  Color(0xFFC8DCF0),
-                  Color(0xFF90B8D8),
-                  Color(0xFF5080B0),
-                  Color(0xFF1E3060)
-                ]),
-                boxShadow: [
-                  BoxShadow(
-                      color: const Color(0x7282B4FF),
-                      blurRadius: 0,
-                      spreadRadius: 1.5),
-                  BoxShadow(color: const Color(0x803278DC), blurRadius: 10)
-                ]),
-            child: Container(
-                margin: const EdgeInsets.all(3),
-                decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                        center: Alignment(-0.4, -0.4),
-                        colors: [
-                          Color(0xFF1A3A7A),
-                          Color(0xFF0D1E50),
-                          Color(0xFF08122E)
-                        ])),
-                child: Container(
-                    margin: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: const Color(0x47A0D2FF), width: 1)),
-                    child: const Icon(Icons.check_rounded,
-                        color: Color(0xFF8CB4FF), size: 11)))),
-        const SizedBox(height: 2),
-        const Text('Home',
-            style: TextStyle(
-                fontSize: 8, fontWeight: FontWeight.w800, color: _navInk)),
-      ]));
 }
 
 void _toast(BuildContext ctx, String msg) {
@@ -1069,7 +971,7 @@ void _toast(BuildContext ctx, String msg) {
               color: Color(0xE6D2EBFF),
               fontSize: 11.5,
               fontWeight: FontWeight.w700)),
-      backgroundColor: const Color(0xFF0A1E58),
+      backgroundColor: const Color(0xFF0A4E8F),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
@@ -1099,7 +1001,7 @@ class _FlarePainter extends CustomPainter {
     final cx = s.width / 2;
     final cy = s.height / 2;
     final p = Paint()
-      ..color = Color(0xFFDCF0FF).withOpacity(op)
+      ..color = const Color(0xFFDCF0FF).withOpacity(op)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
     c.drawLine(Offset(cx, cy - r), Offset(cx, cy + r), p);
@@ -1142,7 +1044,6 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
   String? _previewUrl;
   bool _isGenerating = false;
   // ── UI state ───────────────────────────────────────────────────────────────
-  int _navIndex = 0;
   bool _tryOnDone = false;
   bool _sbOpen = true;
   bool _rpOpen = true;
@@ -1182,9 +1083,10 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
       if (b.contains(',')) b = b.split(',').last;
       setState(() => _userImageBytes = base64Decode(b));
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 
@@ -1217,9 +1119,10 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
             content: Text('Photo uploaded. Select items and press Try On.')));
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+      }
     }
   }
 
@@ -1336,9 +1239,10 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
           'Looking great! The fit score is 94 — Excellent Fit. Want suggestions?'));
     } catch (e) {
       setState(() => _isGenerating = false);
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Failed: $e')));
+      }
     }
   }
 
@@ -1376,9 +1280,10 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
         ref.invalidate(savedOutfitsProvider);
         if (mounted) _toast(context, 'Outfit saved \u2713');
       } catch (e) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text('Failed: $e')));
+        }
       }
     }
   }
@@ -1405,7 +1310,14 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
             backgroundColor: Colors.white,
             extendBody: true,
             body: Column(children: [
-              _cosmicHeader(unread, mq),
+              CosmicHeader(
+                topPadding: mq.padding.top,
+                hasNotification: unread > 0,
+                onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+                onBellTap: () {},
+                onAvatarTap: () =>
+                    Navigator.of(context).pushNamed(Routes.settings),
+              ),
               Expanded(
                   child: Container(
                       decoration: const BoxDecoration(color: Colors.white),
@@ -1473,129 +1385,15 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
                                 onSend: _sendChat)),
                       ]))),
             ]),
-            bottomNavigationBar: _navBar(mq)));
-  }
-
-  Widget _cosmicHeader(int unread, MediaQueryData mq) {
-    // HTML .cosmic height: 99px + status bar
-    final h = mq.padding.top + 99.0;
-    return SizedBox(
-        height: h,
-        child: Stack(children: [
-          // Cosmic background (gradient + rays + stars + arc rail)
-          Positioned.fill(child: CustomPaint(painter: _CosmicPainter(_stars))),
-
-          // .tbar — the header row
-          // HTML: left=[back, user-avatar] | centre=[logo-abs] | right=[+, bell, person]
-          Positioned(
-            top: mq.padding.top + 8,
-            left: 16,
-            right: 16,
-            child: SizedBox(
-                height: 56,
-                child: Stack(alignment: Alignment.center, children: [
-                  // LEFT buttons
-                  Positioned(
-                      left: 0,
-                      child: Row(children: [
-                        // back arrow
-                        _GBtn(
-                            icon: Icons.arrow_back_ios_new,
-                            onTap: () => Navigator.maybePop(context),
-                            sz: 34),
-                        const SizedBox(width: 6),
-                        // user avatar circle
-                        GestureDetector(
-                            onTap: () =>
-                                Navigator.pushNamed(context, _rProfile),
-                            child: _userImageBytes != null
-                                ? Container(
-                                    width: 34,
-                                    height: 34,
-                                    decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                            color: const Color(0x42FFFFFF),
-                                            width: 1),
-                                        boxShadow: [
-                                          BoxShadow(
-                                              color: const Color(0x661E1E6A),
-                                              blurRadius: 6)
-                                        ]),
-                                    child: ClipOval(
-                                        child: Image.memory(_userImageBytes!,
-                                            fit: BoxFit.cover)))
-                                : _GBtn(
-                                    icon: Icons.person_outline,
-                                    onTap: () =>
-                                        Navigator.pushNamed(context, _rProfile),
-                                    sz: 34)),
-                      ])),
-
-                  // CENTRE — NX logo, absolutely centred (matches .logo-abs)
-                  Center(
-                      child: Stack(alignment: Alignment.center, children: [
-                    // .logo-halo — radial glow behind logo (120×120)
-                    Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(colors: [
-                              Color(0xFF50A0FF).withOpacity(0.48),
-                              Color(0xFF2864DC).withOpacity(0.18),
-                              Colors.transparent,
-                            ], stops: const [
-                              0.0,
-                              0.36,
-                              0.65
-                            ]))),
-                    // .logo-ring — 50px conic gradient chrome ring
-                    const _NxLogo(d: 50),
-                    // Top flare (cross above logo)
-                    Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        child: Align(
-                            alignment: Alignment.topCenter,
-                            child: _FlareCross(size: 11, opacity: 0.9))),
-                    // Right flare
-                    Positioned(
-                        top: 20,
-                        right: 0,
-                        child: _FlareCross(size: 7, opacity: 0.68)),
-                    // Left flare
-                    Positioned(
-                        top: 20,
-                        left: 0,
-                        child: _FlareCross(size: 7, opacity: 0.68)),
-                  ])),
-
-                  // RIGHT buttons
-                  Positioned(
-                      right: 0,
-                      child: Row(children: [
-                        // + add
-                        _GBtn(icon: Icons.add, onTap: () {}, sz: 32),
-                        const SizedBox(width: 5),
-                        // bell with red badge
-                        _GBtn(
-                            icon: Icons.notifications_outlined,
-                            badge: unread,
-                            onTap: () {},
-                            sz: 32),
-                        const SizedBox(width: 5),
-                        // person/profile
-                        _GBtn(
-                            icon: Icons.person_outline,
-                            onTap: () =>
-                                Navigator.pushNamed(context, _rProfile),
-                            sz: 32),
-                      ])),
-                ])),
-          ),
-        ]));
+            bottomNavigationBar: CosmicFooter(
+              bottomPadding: mq.padding.bottom,
+              activeIndex: 0, // Try-On tab active
+              onTryOn: () {}, // Already on try-on page
+              onWardrobe: () => Navigator.pushNamed(context, Routes.wardrobe),
+              onHome: () => Navigator.pushNamed(context, Routes.dashboard),
+              onFriends: () => Navigator.pushNamed(context, Routes.styleFeed),
+              onProfile: () => Navigator.pushNamed(context, Routes.settings),
+            )));
   }
 
   Widget _mainArea(List<WardrobeItemModel> items, MediaQueryData mq) {
@@ -1673,7 +1471,7 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
       // STAGE
       Expanded(
           child: Stack(children: [
-        Positioned.fill(child: CustomPaint(painter: const _StagePainter())),
+        const Positioned.fill(child: CustomPaint(painter: _StagePainter())),
         const Positioned(
             top: 7,
             left: 0,
@@ -1871,12 +1669,23 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
   Widget _stageAvatar() {
     Widget photo;
     if (_previewUrl != null) {
-      photo = CachedNetworkImage(
-          imageUrl: _previewUrl!,
-          fit: BoxFit.contain,
-          placeholder: (_, __) =>
-              const CircularProgressIndicator(color: Color(0xFF4DA3FF)),
-          errorWidget: (_, __, ___) => _photoPlaceholder());
+      // Check if it's a Base64 data URI
+      if (_previewUrl!.startsWith('data:image/')) {
+        // Extract Base64 data from data URI
+        final base64Data = _previewUrl!.split(',')[1];
+        final bytes = base64Decode(base64Data);
+        photo = Image.memory(bytes,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => _photoPlaceholder());
+      } else {
+        // Regular network URL
+        photo = CachedNetworkImage(
+            imageUrl: _previewUrl!,
+            fit: BoxFit.contain,
+            placeholder: (_, __) =>
+                const CircularProgressIndicator(color: Color(0xFF4DA3FF)),
+            errorWidget: (_, __, ___) => _photoPlaceholder());
+      }
     } else if (_userImageBytes != null) {
       photo = Image.memory(_userImageBytes!,
           fit: BoxFit.fitHeight, alignment: Alignment.bottomCenter);
@@ -1898,9 +1707,9 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0x4D5090FF), width: 2),
                 color: const Color(0x0DFFFFFF)),
-            child: Column(
+            child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(Icons.person_outline,
                       color: Color(0x6678B4FF), size: 32),
                   SizedBox(height: 6),
@@ -2018,108 +1827,6 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700))))),
                 ]))));
-  }
-
-  Widget _navBar(MediaQueryData mq) {
-    const navGrad = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFFB8C8E0),
-          Color(0xFFD4E0F0),
-          Color(0xFFE8F0F8),
-          Color(0xFFF2F6FC),
-          Color(0xFFE0EAF6),
-          Color(0xFFC8D8EC),
-          Color(0xFFB0C4DC)
-        ],
-        stops: [
-          0.0,
-          0.08,
-          0.25,
-          0.40,
-          0.60,
-          0.80,
-          1.0
-        ]);
-    return Container(
-        height: 52 + mq.padding.bottom,
-        decoration: BoxDecoration(
-            gradient: navGrad,
-            border: const Border(
-                top: BorderSide(color: Color(0xB3FFFFFF), width: 1)),
-            boxShadow: const [
-              BoxShadow(
-                  color: Color(0x0F143278),
-                  blurRadius: 8,
-                  offset: Offset(0, -2))
-            ]),
-        child: SafeArea(
-            top: false,
-            child: Row(children: [
-              Expanded(
-                  child: GestureDetector(
-                      onTap: () => setState(() => _navIndex = 0),
-                      child: Container(
-                          decoration: BoxDecoration(
-                              border: Border(
-                                  bottom: BorderSide(
-                                      color: _navIndex == 0
-                                          ? _navAct
-                                          : Colors.transparent,
-                                      width: 2))),
-                          child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.camera_alt_outlined,
-                                    size: 18,
-                                    color: _navIndex == 0 ? _navAct : _navInk),
-                                const SizedBox(height: 2),
-                                Text('Try-On',
-                                    style: TextStyle(
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.w700,
-                                        color: _navIndex == 0
-                                            ? _navAct
-                                            : _navInk)),
-                              ])))),
-              const _NavSep(),
-              Expanded(
-                  child: GestureDetector(
-                      onTap: () {
-                        setState(() => _navIndex = 1);
-                        Navigator.pushNamed(context, _rWardrobe);
-                      },
-                      child: _NavItem(
-                          icon: Icons.dry_cleaning_outlined,
-                          label: 'Wardrobe',
-                          active: _navIndex == 1))),
-              const _NavSep(),
-              Expanded(
-                  child: _NavHome(onTap: () => setState(() => _navIndex = 2))),
-              const _NavSep(),
-              Expanded(
-                  child: GestureDetector(
-                      onTap: () {
-                        setState(() => _navIndex = 3);
-                        Navigator.pushNamed(context, _rSocial);
-                      },
-                      child: _NavItem(
-                          icon: Icons.people_outline,
-                          label: 'Friends Space',
-                          active: _navIndex == 3))),
-              const _NavSep(),
-              Expanded(
-                  child: GestureDetector(
-                      onTap: () {
-                        setState(() => _navIndex = 4);
-                        Navigator.pushNamed(context, _rShopping);
-                      },
-                      child: _NavItem(
-                          icon: Icons.shopping_bag_outlined,
-                          label: 'Shopping',
-                          active: _navIndex == 4))),
-            ])));
   }
 }
 

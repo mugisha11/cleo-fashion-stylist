@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/widgets/theme_wrapper.dart';
-import '../../../core/widgets/dashboard_components.dart';
 import '../../../core/theme/app_theme_data.dart';
 import '../../../core/models/calendar_day_model.dart';
 import '../../social/providers/social_provider.dart';
@@ -15,8 +14,19 @@ import '../widgets/event_detail_drawer.dart';
 import '../widgets/ai_assistant_button.dart';
 import '../widgets/ai_assistant_dialog.dart';
 import '../../../routes.dart';
+import '../../../core/widgets/cosmic_footer_widget.dart';
 import '../../../core/widgets/fashion_drawer.dart';
 import '../../../features/auth/providers/auth_provider.dart';
+
+// ─── Route shims ──────────────────────────────────────────────────────────────
+const _rCalendar = Routes.calendar;
+const _rWardrobe = Routes.wardrobe;
+const _rChat = Routes.chat;
+const _rProfile = '/settings';
+const _rTryOn = '/tryon';
+const _rSocial = '/style-feed';
+const _rShopping = '/shopping';
+const _rAddItem = '/wardrobe/add';
 
 /// Fashion Calendar Screen - Complete redesign from scratch
 /// World-class, Google Calendar-inspired, fashion-aware calendar
@@ -32,7 +42,8 @@ enum CalendarViewMode { day, week, month }
 
 class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
     with TickerProviderStateMixin {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  int _navIndex = -1; // Calendar not in main nav
 
   DateTime _selectedDate = DateTime.now();
   CalendarViewMode _viewMode = CalendarViewMode.month;
@@ -129,39 +140,45 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
     final photoUrl = user?.photoURL;
     final unreadCount = ref.watch(socialUnreadCountProvider) ?? 0;
 
-    return Scaffold(
-      key: _scaffoldKey,
-      drawer: const AppDrawer(currentRoute: Routes.calendar),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SafeArea(
-            bottom: false,
-            child: DashboardHomeHeader(
-              displayName: displayName,
-              photoUrl: photoUrl,
-              unreadCount: unreadCount,
-              onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
-              subtitleOverride: 'Calendar',
-              titleOverride: 'Events & Outfits',
-            ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        key: _scaffoldKey,
+        drawer: const AppDrawer(currentRoute: Routes.calendar),
+        backgroundColor: const Color(0xFF0B1D4C),
+        extendBody: true,
+        body: SafeArea(
+          top: false,
+          child: calendarDaysAsync.when(
+            loading: () => _buildLoadingState(theme),
+            error: (error, stack) => _buildErrorState(error, theme),
+            data: (calendarDays) => _buildCalendarContent(theme, calendarDays),
           ),
-          Expanded(
-            child: Container(
-              decoration: theme.backgroundGradient != null
-                  ? BoxDecoration(gradient: theme.backgroundGradient)
-                  : BoxDecoration(color: theme.backgroundPrimary),
-              child: SafeArea(
-                top: false,
-                child: calendarDaysAsync.when(
-                  loading: () => _buildLoadingState(theme),
-                  error: (error, stack) => _buildErrorState(error, theme),
-                  data: (calendarDays) => _buildCalendarContent(theme, calendarDays),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
+        bottomNavigationBar: CosmicFooter(
+          bottomPadding: MediaQuery.of(context).padding.bottom,
+          activeIndex: _navIndex,
+          onTryOn: () {
+            setState(() => _navIndex = 0);
+            Navigator.pushNamed(context, _rTryOn);
+          },
+          onWardrobe: () {
+            setState(() => _navIndex = 1);
+            Navigator.pushNamed(context, _rWardrobe);
+          },
+          onHome: () {
+            setState(() => _navIndex = 2);
+            Navigator.pushNamed(context, Routes.dashboard);
+          },
+          onFriends: () {
+            setState(() => _navIndex = 3);
+            Navigator.pushNamed(context, _rSocial);
+          },
+          onProfile: () {
+            setState(() => _navIndex = 4);
+            Navigator.pushNamed(context, _rProfile);
+          },
+        ),
       ),
     );
   }

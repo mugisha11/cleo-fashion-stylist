@@ -15,6 +15,8 @@ import '../../auth/providers/auth_provider.dart';
 import '../providers/social_provider.dart';
 import '../../../routes.dart';
 import '../../../core/widgets/fashion_scaffold.dart';
+import '../../../core/widgets/cosmic_header_widget.dart';
+import '../../../core/widgets/cosmic_footer_widget.dart';
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  PALETTE — same cosmic dark navy as across all app screens
@@ -93,8 +95,8 @@ class _BgPainter extends CustomPainter {
 
     // Logo halo
     final lc = Offset(s.width / 2, s.height * 0.095);
-    p.shader = RadialGradient(colors: [
-      const Color(0x776644EE),
+    p.shader = const RadialGradient(colors: [
+      Color(0x776644EE),
       Colors.transparent,
     ]).createShader(Rect.fromCircle(center: lc, radius: s.width * 0.5));
     c.drawCircle(lc, s.width * 0.5, p);
@@ -150,13 +152,13 @@ class _NxLogo extends StatelessWidget {
         Container(
             width: d * 1.25,
             height: d * 1.25,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(colors: [
-                  const Color(0x776644EE),
-                  const Color(0x224499FF),
+                  Color(0x776644EE),
+                  Color(0x224499FF),
                   Colors.transparent,
-                ], stops: const [
+                ], stops: [
                   0.0,
                   0.4,
                   1.0
@@ -647,9 +649,9 @@ class _GeneratedOutfitsScreenState
     const accent = NXColors.accentGlow;
 
     if (user == null) {
-      return Scaffold(
+      return const Scaffold(
           backgroundColor: NXColors.bgSpaceTop,
-          body: const Center(
+          body: Center(
               child: Text('Sign in to see your outfits',
                   style: TextStyle(color: Colors.white))));
     }
@@ -658,38 +660,60 @@ class _GeneratedOutfitsScreenState
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
         key: _scaffoldKey,
-        backgroundColor: NXColors.bgSpaceTop,
+        backgroundColor: Colors.white,
         extendBody: true,
         body: Stack(children: [
-          // cosmic background
-          Positioned.fill(child: CustomPaint(painter: _BgPainter(_stars))),
+          // white page background
+          const Positioned.fill(child: ColoredBox(color: Colors.white)),
 
           SafeArea(
             bottom: false,
             child: Column(children: [
-              // ── HEADER ────────────────────────────────────────────────
-              _header(mq),
+              Container(
+                color: NXColors.bgSpaceTop,
+                child: Column(children: [
+                  // ── HEADER ──────────────────────────────────────────
+                  CosmicHeader(
+                    topPadding: mq.padding.top,
+                    hasNotification:
+                        (ref.watch(socialUnreadCountProvider) ?? 0) > 0,
+                    onMenuTap: () => Navigator.maybePop(context),
+                    onBellTap: () =>
+                        Navigator.pushNamed(context, Routes.notificationCenter),
+                    onAvatarTap: () =>
+                        Navigator.pushNamed(context, Routes.settings),
+                  ),
 
-              // ── TABS ──────────────────────────────────────────────────
-              _tabRow(),
-              const SizedBox(height: 8),
+                  // ── TABS ───────────────────────────────────────────
+                  _tabRow(),
+                  const SizedBox(height: 8),
+                ]),
+              ),
 
-              // ── MAIN CONTENT + CHAT ───────────────────────────────────
+              // ── MAIN CONTENT + CHAT ─────────────────────────────────
               Expanded(
+                child: Container(
+                  color: Colors.white,
                   child: Column(children: [
-                Expanded(
-                    child: outfitsAsync.when(
-                  data: (outfits) => _mainContent(context, outfits, accent),
-                  loading: () => const Center(
-                      child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation(accent))),
-                  error: (e, _) => Center(
-                      child: Text('Error: $e',
-                          style: const TextStyle(color: Colors.white))),
-                )),
-                // ── NX CHAT ─────────────────────────────────────────────
-                _chatSection(accent),
-              ])),
+                    Expanded(
+                      child: outfitsAsync.when(
+                        data: (outfits) =>
+                            _mainContent(context, outfits, accent),
+                        loading: () => const Center(
+                          child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation(accent)),
+                        ),
+                        error: (e, _) => Center(
+                          child: Text('Error: $e',
+                              style: const TextStyle(color: Colors.black)),
+                        ),
+                      ),
+                    ),
+                    // ── NX CHAT ─────────────────────────────────────
+                    _chatSection(accent),
+                  ]),
+                ),
+              ),
             ]),
           ),
 
@@ -702,7 +726,16 @@ class _GeneratedOutfitsScreenState
                         color: Colors.black.withOpacity(0.6),
                         child: Center(child: _editDialog(context, accent))))),
         ]),
-        bottomNavigationBar: _bottomNav(mq),
+        // ── COSMIC FOOTER
+        bottomNavigationBar: CosmicFooter(
+          bottomPadding: mq.padding.bottom,
+          activeIndex: 3, // Friends Space active for outfits page
+          onTryOn: () => Navigator.pushNamed(context, Routes.tryon),
+          onWardrobe: () => Navigator.pushNamed(context, Routes.wardrobe),
+          onHome: () => Navigator.pushNamed(context, Routes.dashboard),
+          onFriends: () => Navigator.pushNamed(context, Routes.styleFeed),
+          onProfile: () => Navigator.pushNamed(context, Routes.settings),
+        ),
       ),
     );
   }
@@ -716,7 +749,7 @@ class _GeneratedOutfitsScreenState
             icon: Icons.arrow_back_ios_new,
             onTap: () => Navigator.maybePop(context)),
         const Spacer(),
-        _NxLogo(d: 64),
+        const _NxLogo(d: 64),
         const Spacer(),
         _GBtn(
             icon: Icons.person_outline,
@@ -1061,7 +1094,7 @@ class _GeneratedOutfitsScreenState
                                 children: [
                                   Icon(Icons.add, color: accent, size: 40),
                                   const SizedBox(height: 6),
-                                  Text('Add Item',
+                                  const Text('Add Item',
                                       style: TextStyle(
                                           color: Colors.white70,
                                           fontWeight: FontWeight.w600,
@@ -1142,10 +1175,9 @@ class _GeneratedOutfitsScreenState
   // ─── NX CHAT ───────────────────────────────────────────────────────────────
   Widget _chatSection(Color accent) => AnimatedContainer(
       duration: const Duration(milliseconds: 280),
-      decoration: BoxDecoration(
-          color: const Color(0xFF080F28),
-          border: const Border(
-              top: BorderSide(color: Color(0xFF1D3268), width: 1))),
+      decoration: const BoxDecoration(
+          color: Color(0xFF080F28),
+          border: Border(top: BorderSide(color: Color(0xFF1D3268), width: 1))),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         // chat header
         Padding(
@@ -1326,8 +1358,9 @@ class _GeneratedOutfitsScreenState
                     return GestureDetector(
                         onTap: () {
                           setState(() => _navIndex = idx);
-                          if (route != Routes.generatedOutfits)
+                          if (route != Routes.generatedOutfits) {
                             Navigator.pushNamed(context, route);
+                          }
                         },
                         child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,

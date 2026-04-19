@@ -17,7 +17,7 @@ class SplashScreen extends ConsumerWidget {
         final navigator = Navigator.of(context);
         if (!navigator.mounted) return;
         if (user == null) {
-          navigator.pushReplacementNamed(Routes.signup);
+          navigator.pushReplacementNamed(Routes.welcome);
         } else {
           navigator.pushReplacementNamed(Routes.dashboard);
         }
@@ -53,4 +53,3 @@ class SplashScreen extends ConsumerWidget {
     );
   }
 }
-

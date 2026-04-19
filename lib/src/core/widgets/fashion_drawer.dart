@@ -12,10 +12,10 @@ class _DrawerColors {
   static const Color textPrimary = Color(0xFF0B1B3A);
   static const Color textSecondary = Color(0xFF3D4B66);
   static const Color border = Color(0xFFCAD6EA);
-  static const Color blueDark = Color(0xFF021a3a);
-  static const Color blueMedium = Color(0xFF123b7a);
-  static const Color blueLight = Color(0xFF1f66d1);
-  static const Color accent = Color(0xFF1F4AA8);
+  static const Color blueDark = Color(0xFF1AACCF);
+  static const Color blueMedium = Color(0xFF1178B4);
+  static const Color blueLight = Color(0xFF0A4E8F);
+  static const Color accent = Color(0xFF2A58C8);
 }
 
 /// Single shared sidebar for the app. Match reference: X, profile, 5 items + arrow, Nikonyx.

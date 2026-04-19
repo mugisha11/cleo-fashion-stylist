@@ -12,10 +12,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/widgets/fashion_drawer.dart';
-import '../../../core/widgets/fashion_scaffold.dart';
 import '../../../routes.dart';
-import '../../wardrobe/providers/wardrobe_provider.dart'
-    show wardrobeItemsProvider;
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  PALETTE — exact match to the image

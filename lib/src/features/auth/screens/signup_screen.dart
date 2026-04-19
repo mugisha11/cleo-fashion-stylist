@@ -74,7 +74,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       }
     } catch (e) {
       if (mounted) {
-        if (_isDeviceOrFileError(e) && FirebaseAuth.instance.currentUser != null) {
+        if (_isDeviceOrFileError(e) &&
+            FirebaseAuth.instance.currentUser != null) {
           setState(() {
             _isLoading = false;
             _errorMessage = null;
@@ -107,7 +108,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       }
     } catch (e) {
       if (mounted) {
-        if (_isDeviceOrFileError(e) && FirebaseAuth.instance.currentUser != null) {
+        if (_isDeviceOrFileError(e) &&
+            FirebaseAuth.instance.currentUser != null) {
           setState(() {
             _isLoading = false;
             _errorMessage = null;
@@ -147,7 +149,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       }
     } catch (e) {
       if (mounted) {
-        if (_isDeviceOrFileError(e) && FirebaseAuth.instance.currentUser != null) {
+        if (_isDeviceOrFileError(e) &&
+            FirebaseAuth.instance.currentUser != null) {
           setState(() {
             _isLoading = false;
             _errorMessage = null;
@@ -206,7 +209,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       const SizedBox(height: 32),
                       const Text(
                         'Signup for free.',
-                        style: TextStyle(fontFamily: 'system-ui', 
+                        style: TextStyle(
+                          fontFamily: 'system-ui',
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
                           color: AuthScreenColors.signupTitle,
@@ -224,8 +228,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         suffixIcon: Icons.person_outline,
                         suffixIconColor: AuthScreenColors.signupIconBlue,
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Please enter your email';
-                          if (!v.contains('@')) return 'Please enter a valid email';
+                          if (v == null || v.isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          if (!v.contains('@')) {
+                            return 'Please enter a valid email';
+                          }
                           return null;
                         },
                       ),
@@ -234,12 +242,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         controller: _passwordController,
                         hint: 'Password',
                         obscureText: _obscurePassword,
-                        suffixIcon: _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                        onSuffixTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                        suffixIcon: _obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        onSuffixTap: () => setState(
+                            () => _obscurePassword = !_obscurePassword),
                         suffixIconColor: AuthScreenColors.signupIconGrey,
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Please enter a password';
-                          if (v.length < 6) return 'Password must be at least 6 characters';
+                          if (v == null || v.isEmpty) {
+                            return 'Please enter a password';
+                          }
+                          if (v.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
                           return null;
                         },
                       ),
@@ -248,12 +263,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         controller: _confirmPasswordController,
                         hint: 'Confirm password',
                         obscureText: _obscureConfirmPassword,
-                        suffixIcon: _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                        onSuffixTap: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                        suffixIcon: _obscureConfirmPassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        onSuffixTap: () => setState(() =>
+                            _obscureConfirmPassword = !_obscureConfirmPassword),
                         suffixIconColor: AuthScreenColors.signupIconGrey,
                         validator: (v) {
-                          if (v == null || v.isEmpty) return 'Please confirm your password';
-                          if (v != _passwordController.text) return 'Passwords do not match';
+                          if (v == null || v.isEmpty) {
+                            return 'Please confirm your password';
+                          }
+                          if (v != _passwordController.text) {
+                            return 'Passwords do not match';
+                          }
                           return null;
                         },
                       ),
@@ -289,12 +311,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AuthScreenColors.errorRed, size: 18),
+          const Icon(Icons.error_outline,
+              color: AuthScreenColors.errorRed, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               _errorMessage!,
-              style: const TextStyle(fontFamily: 'system-ui', 
+              style: const TextStyle(
+                fontFamily: 'system-ui',
                 fontSize: 13,
                 color: AuthScreenColors.errorRed,
               ),
@@ -306,8 +330,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
   Widget _buildLogo() {
-    return const Center(
-      child: NikonyxLogo.large(),
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AuthScreenColors.signupIconBlue.withOpacity(0.12),
+          shape: BoxShape.circle,
+        ),
+        child: const NikonyxLogo.medium(),
+      ),
     );
   }
 
@@ -315,7 +346,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     return const Center(
       child: Text(
         'Your Personal AI stylist',
-        style: TextStyle(fontFamily: 'system-ui', 
+        style: TextStyle(
+          fontFamily: 'system-ui',
           fontSize: 15,
           fontWeight: FontWeight.w400,
           color: AuthScreenColors.signupTitle,
@@ -339,20 +371,23 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
-      style: const TextStyle(fontFamily: 'system-ui', 
+      style: const TextStyle(
+        fontFamily: 'system-ui',
         fontSize: 16,
         color: AuthScreenColors.signupTitle,
         fontWeight: FontWeight.w400,
       ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(fontFamily: 'system-ui', 
+        hintStyle: const TextStyle(
+          fontFamily: 'system-ui',
           color: AuthScreenColors.signupPlaceholder,
           fontSize: 16,
         ),
         filled: true,
         fillColor: AuthScreenColors.signupInputBg,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(28),
           borderSide: BorderSide.none,
@@ -363,11 +398,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(28),
-          borderSide: const BorderSide(color: AuthScreenColors.signupInputBorderFocused, width: 1.5),
+          borderSide: const BorderSide(
+              color: AuthScreenColors.signupInputBorderFocused, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(28),
-          borderSide: const BorderSide(color: AuthScreenColors.errorRed, width: 1),
+          borderSide:
+              const BorderSide(color: AuthScreenColors.errorRed, width: 1),
         ),
         suffixIcon: IconButton(
           icon: Icon(suffixIcon, color: iconColor, size: 22),
@@ -421,7 +458,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   )
                 : Text(
                     label,
-                    style: const TextStyle(fontFamily: 'system-ui', 
+                    style: const TextStyle(
+                      fontFamily: 'system-ui',
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -446,7 +484,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Text(
             'Or login via',
-            style: TextStyle(fontFamily: 'system-ui', 
+            style: TextStyle(
+              fontFamily: 'system-ui',
               fontSize: 13,
               color: AuthScreenColors.signupSeparatorText,
               fontWeight: FontWeight.w400,
@@ -472,7 +511,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             style: OutlinedButton.styleFrom(
               backgroundColor: AuthScreenColors.signupSocialBg,
               foregroundColor: AuthScreenColors.signupSocialText,
-              side: const BorderSide(color: AuthScreenColors.signupSocialBorder),
+              side:
+                  const BorderSide(color: AuthScreenColors.signupSocialBorder),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -485,12 +525,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   'assets/icons/google.jpg',
                   width: 20,
                   height: 20,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, size: 22, color: AuthScreenColors.signupSocialText),
+                  errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata,
+                      size: 22, color: AuthScreenColors.signupSocialText),
                 ),
                 const SizedBox(width: 10),
                 const Text(
                   'Google',
-                  style: TextStyle(fontFamily: 'system-ui', fontSize: 15, fontWeight: FontWeight.w500, color: AuthScreenColors.signupSocialText),
+                  style: TextStyle(
+                      fontFamily: 'system-ui',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AuthScreenColors.signupSocialText),
                 ),
               ],
             ),
@@ -503,7 +548,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             style: OutlinedButton.styleFrom(
               backgroundColor: AuthScreenColors.signupSocialBg,
               foregroundColor: AuthScreenColors.signupSocialText,
-              side: const BorderSide(color: AuthScreenColors.signupSocialBorder),
+              side:
+                  const BorderSide(color: AuthScreenColors.signupSocialBorder),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -512,11 +558,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.apple, size: 22, color: AuthScreenColors.signupSocialText),
+                Icon(Icons.apple,
+                    size: 22, color: AuthScreenColors.signupSocialText),
                 SizedBox(width: 10),
                 Text(
                   'Apple',
-                  style: TextStyle(fontFamily: 'system-ui', fontSize: 15, fontWeight: FontWeight.w500, color: AuthScreenColors.signupSocialText),
+                  style: TextStyle(
+                      fontFamily: 'system-ui',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AuthScreenColors.signupSocialText),
                 ),
               ],
             ),
@@ -532,21 +583,24 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       children: [
         const Text(
           "Don't have an account? ",
-          style: TextStyle(fontFamily: 'system-ui', 
+          style: TextStyle(
+            fontFamily: 'system-ui',
             fontSize: 14,
             color: AuthScreenColors.signupSeparatorText,
             fontWeight: FontWeight.w400,
           ),
         ),
         TextButton(
-          onPressed: () => Navigator.of(context).pushReplacementNamed(Routes.login),
+          onPressed: () =>
+              Navigator.of(context).pushReplacementNamed(Routes.login),
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             minimumSize: const Size(0, 36),
           ),
           child: const Text(
             'Login',
-            style: TextStyle(fontFamily: 'system-ui', 
+            style: TextStyle(
+              fontFamily: 'system-ui',
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AuthScreenColors.signupLoginLink,

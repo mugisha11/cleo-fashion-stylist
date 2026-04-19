@@ -25,6 +25,7 @@ class DashboardUIColors {
   static const Color homeSparkleBlue = Color(0xFF8FB6FB);
   static const Color giovanniPink = Color(0xFFFF4C5B);
   static const Color giovanniBlue = Color(0xFF4C7DFF);
+  static const Color blueAccent = Color(0xFF4C7DFF);
 
   // ----- AI CHAT (Image 2 / reference) -----
   static const Color chatHeaderBg = Color(0xFFFFFFFF);

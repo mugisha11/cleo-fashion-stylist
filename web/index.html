@@ -94,7 +94,7 @@
             appRunner.runApp();
           }).catch(function(error) {
             console.error('Error initializing Flutter app:', error);
-            document.getElementById('loading').innerHTML = '<div style="text-align:center;"><h1 style="color:#EF4444;">Error Loading App</h1><p>Please check the browser console for details.</p><p style="color:red;">' + error.toString() + '</p></div>';
+            document.getElementById('loading').innerHTML = '<div style="text-align:center;"><h1 style="color:#EF4444;">Error Loading App</h1><p>Please check the browser console for details.</p><p style="color:red;">' + error.toString() + '</p><p>If this is a local dev run, try <code>flutter run -d chrome --web-renderer html</code> or verify network access to gstatic.com.</p></div>';
           });
         }
       });

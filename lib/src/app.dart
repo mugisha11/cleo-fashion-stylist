@@ -57,7 +57,7 @@ class VirtualTwinApp extends ConsumerWidget {
 
     return authState.when(
       data: (user) {
-        final route = user == null ? Routes.signup : Routes.dashboard;
+        final route = user == null ? Routes.welcome : Routes.dashboard;
         debugPrint(
             '✅ User state: ${user != null ? "logged in" : "not logged in"}, route: $route');
         debugPrint('✅ First frame ready - UI rendering');
@@ -65,16 +65,16 @@ class VirtualTwinApp extends ConsumerWidget {
       },
       loading: () {
         debugPrint(
-            '⏳ Auth state loading, showing signup (app launch loader handles initial loading)');
+            '⏳ Auth state loading, showing welcome (app launch loader handles initial loading)');
         // Don't show splash - app launch loader handles initial loading
-        // Show signup immediately, auth will redirect if needed
-        return _buildMaterialApp(Routes.signup);
+        // Show welcome immediately, auth will redirect if needed
+        return _buildMaterialApp(Routes.welcome);
       },
       error: (error, stack) {
         debugPrint('⚠️ Auth state error: $error');
         debugPrint('Stack: $stack');
-        // Show signup screen on error - don't block
-        return _buildMaterialApp(Routes.signup);
+        // Show welcome screen on error - don't block
+        return _buildMaterialApp(Routes.welcome);
       },
     );
   }

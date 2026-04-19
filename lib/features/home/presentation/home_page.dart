@@ -19,9 +19,9 @@ import '../../../src/features/home/providers/inspiration_provider.dart';
 // ═══════════════════════════════════════════════════════════════════════════
 
 // .cosmic radial gradient
-const _cBg0 = Color(0xFF4880E0);
+const _cBg0 = Color(0xFF1AACCF);
 const _cBg1 = Color(0xFF1848C0);
-const _cBg2 = Color(0xFF0A1E58);
+const _cBg2 = Color(0xFF0A4E8F);
 const _cBg3 = Color(0xFF050F2A);
 const _cBg4 = Color(0xFF020810);
 
@@ -41,7 +41,7 @@ const _occActBg = Color(0xFF2A58C8);
 const _occActBg2 = Color(0xFF1A3A9A);
 
 // .act-card (action card — dark navy)
-const _actBg0 = Color(0xFF0A1E58);
+const _actBg0 = Color(0xFF0A4E8F);
 const _actBg1 = Color(0xFF060F2E);
 const _actBg2 = Color(0xFF0D1E50);
 const _actBdr = Color(0xFF7AB4FF);
@@ -83,7 +83,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         // ── cosmic header (not in scroll — sits at top) ─────────────────
         _CosmicHeader(
           topPadding: mq.padding.top,
-          name: user?.displayName ?? 'Arjün Petel',
+          name: user?.displayName ?? 'user name failed to load',
         ),
         // ── scrollable body ─────────────────────────────────────────────
         Expanded(
@@ -240,14 +240,14 @@ class _CosmicHeader extends StatelessWidget {
             const Spacer(),
 
             // bell + avatar
-            Row(mainAxisSize: MainAxisSize.min, children: [
+            const Row(mainAxisSize: MainAxisSize.min, children: [
               _IBtn(
                   badge: true,
-                  child: const Icon(Icons.notifications_outlined,
+                  child: Icon(Icons.notifications_outlined,
                       color: Color(0xFFC8DCF4), size: 14)),
-              const SizedBox(width: 5),
+              SizedBox(width: 5),
               _IBtn(
-                  child: const Icon(Icons.person_outline,
+                  child: Icon(Icons.person_outline,
                       color: Color(0xFFC8DCF4), size: 14)),
             ]),
           ]),
@@ -651,7 +651,7 @@ class _ArcPainter extends CustomPainter {
     // main silver arc
     arc(
         Paint()
-          ..shader = LinearGradient(colors: const [
+          ..shader = const LinearGradient(colors: [
             Color(0x591A2E50),
             Color(0xE04868A8),
             Color(0xFF90B4D8),
@@ -663,7 +663,7 @@ class _ArcPainter extends CustomPainter {
             Color(0xFF90B4D8),
             Color(0xE04868A8),
             Color(0x591A2E50),
-          ], stops: const [
+          ], stops: [
             0.0,
             0.06,
             0.16,
@@ -690,7 +690,7 @@ class _ArcPainter extends CustomPainter {
     // secondary silver
     arc(
         Paint()
-          ..shader = LinearGradient(colors: const [
+          ..shader = const LinearGradient(colors: [
             Color(0x261A2E50),
             Color(0xA66888B8),
             Color(0xD9B0CCE4),
@@ -698,7 +698,7 @@ class _ArcPainter extends CustomPainter {
             Color(0xD9B0CCE4),
             Color(0xA66888B8),
             Color(0x261A2E50),
-          ], stops: const [
+          ], stops: [
             0.0,
             0.10,
             0.28,
@@ -869,7 +869,7 @@ class _PromptBar extends StatelessWidget {
   Widget build(BuildContext ctx) {
     // Build the full visible section: name + sep + portrait + prompt
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _NameSection(name: 'Arjün Petel'), // static; parent passes via hero
+      const _NameSection(name: 'Arjün Petel'), // static; parent passes via hero
       _Sep(),
       const SizedBox(height: 8),
       _Portrait(),
@@ -906,9 +906,9 @@ class _PromptBar extends StatelessWidget {
                 Color(0xFF4070C0),
               ]),
             ),
-            child: Center(
+            child: const Center(
                 child: Text('NX',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF0A1840)))),
@@ -1352,7 +1352,7 @@ class _InspCard extends StatelessWidget {
                   // actual image if available
                   if (imgBytes != null)
                     Positioned.fill(
-                        child: Image.memory(imgBytes!, fit: BoxFit.cover)),
+                        child: Image.memory(imgBytes, fit: BoxFit.cover)),
                   // .img-ph placeholder
                   if (imgBytes == null)
                     Center(
@@ -1583,8 +1583,8 @@ class _NavSep extends StatelessWidget {
       width: 1.5,
       height: 32,
       margin: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-          gradient: const LinearGradient(
+      decoration: const BoxDecoration(
+          gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [

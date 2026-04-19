@@ -3,6 +3,7 @@ Enhanced OpenRouter Service
 Handles multimodal AI tasks including Gemini image generation via OpenRouter
 """
 import logging
+import re
 import base64
 import httpx
 import json
@@ -55,7 +56,19 @@ class EnhancedOpenRouterService:
         
         base64_str = base64.b64encode(image_bytes).decode('utf-8')
         return f"data:image/jpeg;base64,{base64_str}"
-    
+
+    def _normalize_gender(self, gender: Optional[str]) -> Optional[str]:
+        if not gender:
+            return None
+        value = gender.strip().lower()
+        if value in ("male", "man", "men", "boy", "male-presenting"):
+            return "men"
+        if value in ("female", "woman", "women", "girl", "female-presenting"):
+            return "women"
+        if value in ("unisex", "neutral", "non-binary", "nonbinary", "nb", "all", "all genders"):
+            return "unisex"
+        return value
+
     async def analyze_garment_with_reasoning(
         self,
         user_image: np.ndarray,
@@ -370,4 +383,289 @@ Return ONLY the plain text instruction, nothing else."""
                 
         except Exception as e:
             logger.error(f"[{trace_id}] Prompt synthesis failed: {e}")
+            raise
+
+    async def search_shopping_products(
+        self,
+        user_message: str,
+        retailer: Optional[str] = None,
+        gender: Optional[str] = None,
+        limit: int = 8,
+        trace_id: Optional[str] = None,
+    ) -> List[dict]:
+        if not self.api_key:
+            raise ValueError("OpenRouter API key not configured")
+
+        retailer_hint = f"Retailer: {retailer}" if retailer else "Retailer: any store"
+        normalized_gender = self._normalize_gender(gender)
+        gender_hint = ""
+        if normalized_gender:
+            if normalized_gender == "unisex":
+                gender_hint = (
+                    "The user prefers unisex or gender-neutral fashion."
+                    " Only return products that are unisex or suitable for all genders.\n"
+                )
+            else:
+                gender_hint = (
+                    f"The user prefers {normalized_gender} clothing."
+                    " Only return products intended for that gender or unisex items."
+                    " Do not return products clearly targeted to the opposite gender.\n"
+                )
+        system_prompt = (
+            "You are a fashion shopping assistant.\n"
+            "Given a user search request and an optional retailer preference, return EXACTLY one JSON object with a products array.\n"
+            "Each product must be a real, current fashion product page from a retailer website and include a direct source link.\n"
+            "Prefer popular fashion retailers such as ASOS, Zara, H&M, Mango, Boohoo, SHEIN, Zalando, Revolve, Urban Outfitters, Nordstrom, and similar brands.\n"
+            "Return products from as many different retailer domains as possible in one response.\n"
+            "If a retailer is provided, prioritize that retailer but still include additional strong options from other sites.\n"
+            "Return brand, source domain, image_url, price, availability, and a direct product page link.\n"
+            "If a gender preference is provided, only return products appropriate for that gender or unisex.\n"
+            "The JSON structure must look like:\n"
+            "{\n"
+            "  \"products\": [\n"
+            "    {\n"
+            "      \"title\": \"...\",\n"
+            "      \"link\": \"https://...\",\n"
+            "      \"image_url\": \"https://...\",\n"
+            "      \"price\": \"...\",\n"
+            "      \"brand\": \"...\",\n"
+            "      \"source\": \"...\",\n"
+            "      \"availability\": \"...\",\n"
+            "      \"description\": \"...\"\n"
+            "    }\n"
+            "  ]\n"
+            "}\n"
+            "If there are no products, return {\"products\": []}.\n"
+            "Do not include any markdown, code fences, labels, or explanation text.\n"
+            "Return actual retailer product pages, not general search result pages or marketplace splash pages.\n"
+        )
+
+        user_prompt = (
+            f"Search query: {user_message.strip()}\n"
+            f"{retailer_hint}\n"
+            f"{gender_hint}"
+            f"Return only a JSON object with a products array of at most {limit} items."
+        )
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": settings.OPENROUTER_MODEL_MINI,
+                        "messages": messages,
+                        "temperature": 0.6,
+                        "max_tokens": 700,
+                        "response_format": {"type": "json_object"},
+                    },
+                )
+                response.raise_for_status()
+                result = response.json()
+                choice = result["choices"][0]
+                raw_content = None
+                if isinstance(choice, dict):
+                    raw_content = choice.get("message", {}).get("content") or choice.get("content")
+                else:
+                    raw_content = choice
+
+                def _normalize_raw_content(raw: Any) -> Any:
+                    if isinstance(raw, list):
+                        if all(isinstance(item, str) for item in raw):
+                            return "".join(raw)
+                        text_parts = []
+                        for item in raw:
+                            if isinstance(item, str):
+                                text_parts.append(item)
+                            elif isinstance(item, dict):
+                                if isinstance(item.get("text"), str):
+                                    text_parts.append(item["text"])
+                                elif isinstance(item.get("content"), str):
+                                    text_parts.append(item["content"])
+                                elif isinstance(item.get("content"), list):
+                                    nested = _normalize_raw_content(item["content"])
+                                    if isinstance(nested, str):
+                                        text_parts.append(nested)
+                        if text_parts:
+                            return "".join(text_parts)
+                        return raw
+                    if isinstance(raw, dict):
+                        if raw.get("type") == "output_text" and isinstance(raw.get("text"), str):
+                            return raw["text"]
+                        if isinstance(raw.get("content"), str):
+                            return raw["content"]
+                        if isinstance(raw.get("content"), list):
+                            nested = _normalize_raw_content(raw["content"])
+                            if isinstance(nested, str):
+                                return nested
+                    return raw
+
+                def _find_first_json(text: str) -> Any:
+                    text = text.strip()
+                    if text.startswith("```"):
+                        text = text.split("```", 1)[1].rsplit("```", 1)[0].strip()
+                    try:
+                        return json.loads(text)
+                    except json.JSONDecodeError:
+                        pass
+                    decoder = json.JSONDecoder()
+                    for start in range(len(text)):
+                        if text[start] not in "[{":
+                            continue
+                        try:
+                            obj, end = decoder.raw_decode(text[start:])
+                            return obj
+                        except ValueError:
+                            continue
+                    return None
+
+                raw_content = _normalize_raw_content(raw_content)
+                items = None
+                if isinstance(raw_content, list):
+                    items = raw_content
+                elif isinstance(raw_content, dict):
+                    items = raw_content
+                elif isinstance(raw_content, str):
+                    parsed = _find_first_json(raw_content)
+                    if isinstance(parsed, list):
+                        items = parsed
+                    elif isinstance(parsed, dict):
+                        for key in ("products", "items", "results", "shopping_results", "data"):
+                            value = parsed.get(key)
+                            if isinstance(value, list):
+                                items = value
+                                break
+                        else:
+                            # if this dict looks like a single item, wrap it
+                            if parsed.get("title") and parsed.get("link"):
+                                items = [parsed]
+                    else:
+                        items = None
+                else:
+                    items = None
+
+                if isinstance(items, dict):
+                    for key in ("products", "items", "results", "shopping_results", "data"):
+                        value = items.get(key)
+                        if isinstance(value, list):
+                            items = value
+                            break
+
+                if not isinstance(items, list):
+                    logger.warning(
+                        "[%s] OpenRouter raw shopping response: %r",
+                        trace_id,
+                        raw_content,
+                    )
+                    raise ValueError("OpenRouter returned invalid shopping JSON")
+
+                cleaned_items: List[dict] = []
+                for item in items:
+                    if not isinstance(item, dict):
+                        continue
+                    if not item.get("title") or not item.get("link"):
+                        continue
+                    cleaned_items.append(item)
+                    if len(cleaned_items) >= limit:
+                        break
+
+                logger.info(f"[{trace_id}] OpenRouter shopping search returned {len(cleaned_items)} items")
+                return cleaned_items
+        except Exception as e:
+            logger.warning(f"[{trace_id}] OpenRouter shopping search failed: {e}")
+            raise
+
+    def _clean_search_query(self, text: str) -> str:
+        query = text.strip()
+        if query.startswith("SEARCH_PRODUCTS="):
+            query = query.split("=", 1)[1].strip()
+        if not query:
+            return ""
+        query = query.split("\n")[0].strip()
+        query = re.sub(r"[\.!?]+$", "", query)
+        query = re.sub(r"[^A-Za-z0-9\s\-]", "", query)
+        words = query.split()
+        if len(words) > 7:
+            query = " ".join(words[:7])
+        return query.strip()
+
+    async def rewrite_shopping_query(
+        self,
+        user_message: str,
+        retailer: Optional[str] = None,
+        gender: Optional[str] = None,
+        trace_id: Optional[str] = None,
+    ) -> str:
+        if not self.api_key:
+            raise ValueError("OpenRouter API key not configured")
+
+        system_prompt = """You are a fashion shopping assistant. Rewrite the user's request into a concise product search query suitable for a modern fashion marketplace.
+
+Rules:
+- Output only the final query text.
+- Use 2 to 5 words.
+- Do not include punctuation, markdown, labels, or explanations.
+- Prefer gender-neutral and retailer-neutral phrasing unless the user explicitly asks for a specific brand or shop.
+- If a retailer is provided and the user asks for that shop, include the retailer name only in the query if it improves relevance.
+- Return a short query like 'white blazer women', 'black ankle boots', 'summer midi dress'.
+"""
+
+        retailer_hint = f"Retailer: {retailer}" if retailer else "Retailer: any store"
+        normalized_gender = self._normalize_gender(gender)
+        gender_hint = ""
+        if normalized_gender:
+            if normalized_gender == "unisex":
+                gender_hint = (
+                    "The user prefers unisex or gender-neutral fashion."
+                    " If the search is ambiguous, favor gender-neutral results.\n\n"
+                )
+            else:
+                gender_hint = (
+                    f"The user prefers {normalized_gender} clothing."
+                    " If the search is ambiguous, favor results meant for that gender or unisex items.\n\n"
+                )
+        user_prompt = (
+            f"Rewrite this shopping request into a concise search query:\n\n{user_message.strip()}\n\n"
+            f"{gender_hint}"
+            f"{retailer_hint}\n\nOnly return the query text."
+        )
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        try:
+            async with httpx.AsyncClient(timeout=25.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": settings.OPENROUTER_MODEL_MINI,
+                        "messages": messages,
+                        "temperature": 0.3,
+                        "max_tokens": 100,
+                    },
+                )
+                response.raise_for_status()
+                result = response.json()
+                raw_output = result["choices"][0]["message"]["content"].strip()
+                query = self._clean_search_query(raw_output)
+                if not query:
+                    raise ValueError("OpenRouter returned an empty shopping query")
+                logger.info(f"[{trace_id}] Rewritten shopping query: {query}")
+                return query
+        except Exception as e:
+            logger.warning(f"[{trace_id}] Shopping query rewrite failed: {e}")
             raise

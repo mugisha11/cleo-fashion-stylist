@@ -3,6 +3,7 @@ Configuration Management
 Environment-based settings for production deployment
 """
 import os
+from pathlib import Path
 from typing import Optional
 from pydantic_settings import BaseSettings
 
@@ -67,6 +68,22 @@ class Settings(BaseSettings):
     OPENROUTER_MODEL_MINI: str = os.getenv("OPENROUTER_MODEL_MINI", "openai/gpt-4o-mini")  # GPT-4.1-mini
     OPENROUTER_BASE_URL: str = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
     
+    # Google Cloud Retail fallback (optional)
+    GOOGLE_RETAIL_API_KEY: str = os.getenv("GOOGLE_RETAIL_API_KEY", "")
+    GOOGLE_RETAIL_PROJECT_ID: str = os.getenv("GOOGLE_RETAIL_PROJECT_ID", "")
+    GOOGLE_RETAIL_LOCATION: str = os.getenv("GOOGLE_RETAIL_LOCATION", "global")
+    GOOGLE_RETAIL_CATALOG: str = os.getenv("GOOGLE_RETAIL_CATALOG", "default_catalog")
+    GOOGLE_RETAIL_BRANCH: str = os.getenv("GOOGLE_RETAIL_BRANCH", "0")
+    GOOGLE_RETAIL_PLACEMENT: str = os.getenv("GOOGLE_RETAIL_PLACEMENT", "default_search")
+
+    # Serper.dev Configuration for Google search fallback
+    SERPER_API_KEY: str = os.getenv("SERPER_API_KEY", "")
+    SERPER_API_BASE_URL: str = os.getenv("SERPER_API_BASE_URL", "https://google.serper.dev/search")
+
+    # ASOS RapidAPI Configuration (for product image fetching)
+    ASOS_RAPIDAPI_KEY: str = os.getenv("ASOS_RAPIDAPI_KEY", "")
+    ASOS_RAPIDAPI_HOST: str = os.getenv("ASOS_RAPIDAPI_HOST", "asos-api6.p.rapidapi.com")
+    
     # Try-On Configuration
     MIN_GARMENT_CONFIDENCE: float = float(os.getenv("MIN_GARMENT_CONFIDENCE", "0.90"))
     BODY_PARSING_METHOD: str = os.getenv("BODY_PARSING_METHOD", "mediapipe")  # mediapipe, densepose, openpose, schp
@@ -88,11 +105,10 @@ class Settings(BaseSettings):
     SEGMENTATION_METHOD: str = os.getenv("SEGMENTATION_METHOD", "rembg")  # rembg, sam, opencv
     SAM_CHECKPOINT_PATH: Optional[str] = os.getenv("SAM_CHECKPOINT_PATH", None)
     
-    # Product search (AI shopping) - SerpAPI Google Shopping
-    SERP_API_KEY: str = os.getenv("SERP_API_KEY", "")
-    
+
     class Config:
-        env_file = ".env"
+        env_file = str(Path(__file__).resolve().parents[2] / ".env")
+        env_file_encoding = "utf-8"
         case_sensitive = True
         extra = "ignore"  # Ignore extra environment variables not defined in the class
 

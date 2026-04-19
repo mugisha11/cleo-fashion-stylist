@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'features/auth/screens/signup_screen.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
 import 'features/home/screens/home_screen.dart';
-import '../../features/home/presentation/home_page.dart';
 import 'features/avatar/screens/avatar_creation_screen.dart';
 import 'features/avatar/screens/avatar_generation_screen.dart';
 import 'features/wardrobe/screens/wardrobe_screen.dart';
@@ -33,6 +31,7 @@ import 'core/widgets/splash_screen.dart';
 
 class Routes {
   static const String splash = '/';
+  static const String welcome = '/welcome';
   static const String signup = '/signup';
   static const String login = '/login';
   static const String onboarding = '/onboarding';
@@ -69,8 +68,10 @@ class Routes {
     switch (settings.name) {
       case splash:
         return _buildRoute(const SplashScreen(), settings);
+      case welcome:
+        return _buildRoute(const WelcomeScreen(), settings);
       case signup:
-        return _buildRoute(const SignupScreen(), settings);
+        return _buildRoute(const SignUpScreen(), settings);
       case login:
         return _buildRoute(const LoginScreen(), settings);
       case onboarding:

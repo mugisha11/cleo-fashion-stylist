@@ -366,7 +366,7 @@ class _WardrobeItemDetailsScreenState
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

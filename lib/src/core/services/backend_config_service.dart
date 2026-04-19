@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -24,7 +23,15 @@ class BackendConfigService {
       final savedUrl = prefs.getString(_backendUrlKey);
 
       if (savedUrl != null && savedUrl.isNotEmpty) {
-        return savedUrl;
+        if (await checkBackendHealth(savedUrl)) {
+          return savedUrl;
+        }
+      }
+
+      for (final url in getFallbackUrls()) {
+        if (await checkBackendHealth(url)) {
+          return url;
+        }
       }
 
       return _defaultBackendUrl;
@@ -71,14 +78,14 @@ class BackendConfigService {
     }
   }
 
-  /// Get all possible backend URLs to try (production + local dev fallbacks)
+  /// Get all possible backend URLs to try (local dev fallbacks first, then production)
   static List<String> getFallbackUrls() {
-    return {
-      _defaultProductionUrl,
+    return [
       _defaultBackendUrl,
       'http://127.0.0.1:8001',
       'http://localhost:8001',
       'http://10.0.2.2:8001',
-    }.toList();
+      _defaultProductionUrl,
+    ];
   }
 }

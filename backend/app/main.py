@@ -36,6 +36,7 @@ from .api import product_search
 from .api import proxy_image
 from .api import try_on_openai
 from .api import production_vton_v2
+from .api import fashion_scraper
 
 # Optional: clothing_recognition needs torch/scikit-learn (VC++ Build Tools on Windows)
 try:
@@ -169,6 +170,9 @@ logger.info("✅ Registered: try_on_openai router")
 
 app.include_router(production_vton_v2.router)
 logger.info("✅ Registered: production_vton_v2 router")
+
+app.include_router(fashion_scraper.router)
+logger.info("✅ Registered: fashion_scraper router")
 
 try:
     from .api import vton_pipeline

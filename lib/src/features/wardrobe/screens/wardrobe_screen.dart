@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/widgets/cosmic_header_widget.dart';
+import '../../../core/widgets/cosmic_footer_widget.dart';
 
 import '../../../core/models/wardrobe_item_model.dart';
 import '../../../core/widgets/fashion_drawer.dart';
@@ -29,7 +31,7 @@ const _rShopping = '/shopping';
 const _rAddItem = '/wardrobe/add';
 
 const _cosmicTop = Color(0xFF020810); // background darkest
-const _cosmicMid = Color(0xFF0A1E58); // mid navy
+const _cosmicMid = Color(0xFF0A4E8F); // mid navy
 const _cosmicBot = Color(0xFF1848C0); // bright navy for radial centre
 const _srimL = Color(0xFF1E2E50);
 const _srimM = Color(0xFFC8DFF0);
@@ -42,7 +44,7 @@ const _navTopSilver = Color(0xFFB8C8E0);
 const _navMidSilver = Color(0xFFD4E0F0);
 const _navBotSilver = Color(0xFFB0C4DC);
 const _navSepBlue = Color(0xFF3C78DC);
-const _navTextColor = Color(0xFF1A3060);
+
 const _hlogoRing1 = Color(0xFF1E3060);
 const _hlogoRing2 = Color(0xFF5080B0);
 const _hlogoRing3 = Color(0xFFC8DCF0);
@@ -72,627 +74,6 @@ class _BgPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_) => false;
-}
-
-class _SilverRim extends StatelessWidget {
-  const _SilverRim();
-  @override
-  Widget build(BuildContext ctx) => Container(
-        height: 5,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF1E2E50),
-              Color(0xFF4868A8),
-              Color(0xFF90B4D8),
-              Color(0xFFC8DFF0),
-              Color(0xFFE8F4FF),
-              Color(0xFFFFFFFF),
-              Color(0xFFE8F4FF),
-              Color(0xFFC8DFF0),
-              Color(0xFF90B4D8),
-              Color(0xFF4868A8),
-              Color(0xFF1E2E50),
-            ],
-            stops: [
-              0.0,
-              0.07,
-              0.16,
-              0.26,
-              0.36,
-              0.50,
-              0.64,
-              0.74,
-              0.84,
-              0.93,
-              1.0
-            ],
-          ),
-        ),
-      );
-}
-
-/// Star field layer
-class _Stars extends StatelessWidget {
-  const _Stars();
-  @override
-  Widget build(BuildContext ctx) => Stack(children: [
-        _star(top: 0.12, left: 0.06, size: 2.0, opacity: 0.75, glow: true),
-        _star(top: 0.05, left: 0.46, size: 1.5, opacity: 0.50),
-        _star(top: 0.16, left: 0.87, size: 2.0, opacity: 0.70),
-        _star(top: 0.04, left: 0.93, size: 2.5, opacity: 0.28, glow: true),
-        _star(top: 0.08, left: 0.30, size: 1.5, opacity: 0.40),
-        _star(top: 0.03, left: 0.14, size: 1.5, opacity: 0.50),
-      ]);
-
-  Widget _star(
-          {required double top,
-          required double left,
-          required double size,
-          required double opacity,
-          bool glow = false}) =>
-      Positioned(
-        top: null, left: null, // use FractionalOffset
-        child: FractionallySizedBox(
-          widthFactor: 1,
-          heightFactor: 1,
-          child: LayoutBuilder(
-              builder: (_, c) => Stack(children: [
-                    Positioned(
-                      top: c.maxHeight * top,
-                      left: c.maxWidth * left,
-                      child: Container(
-                        width: size,
-                        height: size,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(opacity),
-                          shape: BoxShape.circle,
-                          boxShadow: glow
-                              ? [
-                                  BoxShadow(
-                                    color: const Color(0xFFC8E6FF)
-                                        .withOpacity(0.8),
-                                    blurRadius: 3,
-                                  )
-                                ]
-                              : null,
-                        ),
-                      ),
-                    ),
-                  ])),
-        ),
-      );
-}
-
-/// Logo ring — mirrors `.logo-ring` conic-gradient + inner dark circle
-class _LogoRing extends StatelessWidget {
-  const _LogoRing({this.size = 50.0});
-  final double size;
-
-  @override
-  Widget build(BuildContext ctx) {
-    final inner = size * 0.86;
-    final deep = size * 0.72;
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const SweepGradient(
-          startAngle: 0.26, // ~15deg
-          colors: [
-            Color(0xFF1E3060),
-            Color(0xFF5080B0),
-            Color(0xFF90B8D8),
-            Color(0xFFC8DCF0),
-            Color(0xFFE8F4FF),
-            Color(0xFFFFFFFF),
-            Color(0xFFFFFFFF),
-            Color(0xFFE8F4FF),
-            Color(0xFFC8DCF0),
-            Color(0xFF90B8D8),
-            Color(0xFF5080B0),
-            Color(0xFF1E3060),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-              color: const Color(0xFF96CDFF).withOpacity(0.48),
-              blurRadius: 0,
-              spreadRadius: 2),
-          BoxShadow(
-              color: const Color(0xFF50A0FF).withOpacity(0.62), blurRadius: 14),
-          BoxShadow(
-              color: const Color(0xFF2878E6).withOpacity(0.35), blurRadius: 30),
-        ],
-      ),
-      child: Center(
-        child: Stack(alignment: Alignment.center, children: [
-          // inner dark bg
-          Container(
-            width: inner,
-            height: inner,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const RadialGradient(
-                center: Alignment(-0.2, -0.35),
-                colors: [
-                  Color(0xFF1A3A7A),
-                  Color(0xFF0D1E50),
-                  Color(0xFF08122E)
-                ],
-              ),
-            ),
-          ),
-          // inner ring border
-          Container(
-            width: deep,
-            height: deep,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: const Color(0xFFB4DCFF).withOpacity(0.30),
-                width: 1,
-              ),
-            ),
-          ),
-          // checklist icon
-          SizedBox(
-            width: size * 0.72,
-            height: size * 0.72,
-            child: CustomPaint(painter: _ChecklistIconPainter()),
-          ),
-        ]),
-      ),
-    );
-  }
-}
-
-/// Draws the checkered rect + checkmark icon inside the logo
-class _ChecklistIconPainter extends CustomPainter {
-  @override
-  void paint(Canvas c, Size s) {
-    final p = Paint()
-      ..color = const Color(0xFFA0C8FF).withOpacity(0.42)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.1;
-    // dashed rect
-    final r = RRect.fromRectAndRadius(
-      Rect.fromLTRB(
-          s.width * .09, s.height * .09, s.width * .91, s.height * .91),
-      const Radius.circular(3.5),
-    );
-    c.drawRRect(r, p);
-    // checkmark
-    final cp = Paint()
-      ..color = const Color(0xFFA0C8FF).withOpacity(0.55)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.3
-      ..strokeCap = StrokeCap.round;
-    final path = Path()
-      ..moveTo(s.width * .31, s.height * .50)
-      ..lineTo(s.width * .44, s.height * .63)
-      ..lineTo(s.width * .69, s.height * .38);
-    c.drawPath(path, cp);
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
-}
-
-/// Crosshair flare SVG clone
-class _Flare extends StatelessWidget {
-  const _Flare({this.size = 11.0, this.opacity = 0.9});
-  final double size;
-  final double opacity;
-  @override
-  Widget build(BuildContext ctx) => SizedBox(
-        width: size,
-        height: size,
-        child: CustomPaint(painter: _FlarePainter(opacity: opacity)),
-      );
-}
-
-class _FlarePainter extends CustomPainter {
-  const _FlarePainter({required this.opacity});
-  final double opacity;
-  @override
-  void paint(Canvas c, Size s) {
-    final p = Paint()
-      ..color = const Color(0xFFDCF0FF).withOpacity(opacity)
-      ..strokeWidth = 1.0;
-    c.drawLine(Offset(s.width / 2, 0), Offset(s.width / 2, s.height), p);
-    c.drawLine(Offset(0, s.height / 2), Offset(s.width, s.height / 2), p);
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
-}
-
-/// Glass icon button — mirrors `.ibtn`
-class _IBtn extends StatelessWidget {
-  const _IBtn({required this.child, this.onTap, this.badge = false});
-  final Widget child;
-  final VoidCallback? onTap;
-  final bool badge;
-  @override
-  Widget build(BuildContext ctx) => GestureDetector(
-        onTap: onTap,
-        child: Stack(clipBehavior: Clip.none, children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                begin: Alignment(-0.6, -0.8),
-                end: Alignment(0.6, 0.8),
-                colors: [Color(0x29FFFFFF), Color(0x0FFFFFFF)],
-              ),
-              border: Border.all(
-                  color: const Color(0xFFFFFFFF).withOpacity(0.26), width: 1),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2)),
-              ],
-            ),
-            child: Center(child: child),
-          ),
-          if (badge)
-            Positioned(
-              top: -1,
-              right: -1,
-              child: Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE85A4F),
-                  shape: BoxShape.circle,
-                  border:
-                      Border.all(color: const Color(0xFF060E28), width: 1.5),
-                ),
-              ),
-            ),
-        ]),
-      );
-}
-
-/// The double-arc chrome separator — mirrors `<svg class="arc-svg">`
-class _ArcSeparator extends CustomPainter {
-  const _ArcSeparator();
-
-  @override
-  void paint(Canvas c, Size s) {
-    final w = s.width;
-
-    // glow layer
-    _drawArc(c, w, s.height,
-        color: const Color(0xFF6AA4FF).withOpacity(0.44),
-        strokeW: 12,
-        sagy: 0.95);
-
-    // main bright arc
-    _drawArcGradient(c, w, s.height,
-        colors: const [
-          Color(0x591A2E50),
-          Color(0xE04868A8),
-          Color(0xFF90B4D8),
-          Color(0xFFC8DFF2),
-          Color(0xFFEEF6FF),
-          Color(0xFFFFFFFF),
-          Color(0xFFEEF6FF),
-          Color(0xFFC8DFF2),
-          Color(0xFF90B4D8),
-          Color(0xE04868A8),
-          Color(0x591A2E50),
-        ],
-        stops: const [
-          0.0,
-          0.06,
-          0.16,
-          0.28,
-          0.42,
-          0.50,
-          0.58,
-          0.72,
-          0.84,
-          0.94,
-          1.0
-        ],
-        strokeW: 4.5,
-        sagy: 0.94);
-
-    // bright highlight line
-    _drawArc(c, w, s.height,
-        color: Colors.white.withOpacity(0.55), strokeW: 1.1, sagy: 0.925);
-
-    // secondary silver arc
-    _drawArcGradient(c, w, s.height,
-        colors: const [
-          Color(0x261A2E50),
-          Color(0xA66888B8),
-          Color(0xD9B0CCE4),
-          Color(0xFFDEEEFF),
-          Color(0xD9B0CCE4),
-          Color(0xA66888B8),
-          Color(0x261A2E50),
-        ],
-        stops: const [0.0, 0.10, 0.28, 0.50, 0.72, 0.90, 1.0],
-        strokeW: 2.2,
-        sagy: 0.82);
-
-    // faint top highlight
-    _drawArc(c, w, s.height,
-        color: Colors.white.withOpacity(0.38), strokeW: 0.6, sagy: 0.78);
-  }
-
-  void _drawArc(Canvas c, double w, double h,
-      {required Color color, required double strokeW, required double sagy}) {
-    final p = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeW;
-    final path = Path()
-      ..moveTo(0, h * 0.20)
-      ..quadraticBezierTo(w / 2, h * sagy, w, h * 0.20);
-    c.drawPath(path, p);
-  }
-
-  void _drawArcGradient(Canvas c, double w, double h,
-      {required List<Color> colors,
-      required List<double> stops,
-      required double strokeW,
-      required double sagy}) {
-    final p = Paint()
-      ..shader = LinearGradient(colors: colors, stops: stops)
-          .createShader(Rect.fromLTWH(0, 0, w, h))
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeW;
-    final path = Path()
-      ..moveTo(0, h * 0.20)
-      ..quadraticBezierTo(w / 2, h * sagy, w, h * 0.20);
-    c.drawPath(path, p);
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
-}
-
-/// Full cosmic header widget — mirrors the entire `.cosmic` div
-class _CosmicHeader extends StatelessWidget {
-  const _CosmicHeader({
-    required this.onMenuTap,
-    required this.onBellTap,
-    required this.onAvatarTap,
-    this.hasNotification = true,
-    required this.topPadding,
-  });
-  final VoidCallback onMenuTap;
-  final VoidCallback onBellTap;
-  final VoidCallback onAvatarTap;
-  final bool hasNotification;
-  final double topPadding;
-
-  @override
-  Widget build(BuildContext ctx) {
-    return SizedBox(
-      height: 99 + topPadding,
-      child: Stack(children: [
-        // ── radial gradient background ──────────────────────────────────
-        Positioned.fill(
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment(0, -0.85),
-                radius: 1.5,
-                colors: [
-                  Color(0xFF4880E0),
-                  Color(0xFF1848C0),
-                  Color(0xFF0A1E58),
-                  Color(0xFF050F2A),
-                  Color(0xFF020810),
-                ],
-                stops: [0.0, 0.16, 0.36, 0.62, 1.0],
-              ),
-            ),
-          ),
-        ),
-
-        // ── radial glow above logo ──────────────────────────────────────
-        Positioned(
-          top: topPadding - 18,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: Container(
-              width: 180,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [
-                  const Color(0xFF3C82FF).withOpacity(0.40),
-                  const Color(0xFF1446C8).withOpacity(0.13),
-                  Colors.transparent,
-                ], stops: const [
-                  0.0,
-                  0.42,
-                  0.70
-                ]),
-              ),
-            ),
-          ),
-        ),
-
-        // ── ray overlay (radial + repeating conic) ──────────────────────
-        Positioned.fill(child: CustomPaint(painter: _RaysPainter())),
-
-        // ── starfield ───────────────────────────────────────────────────
-        const Positioned.fill(child: _Stars()),
-
-        // ── silver rim stripe at top ────────────────────────────────────
-        const Positioned(top: 0, left: 0, right: 0, child: _SilverRim()),
-
-        // ── top bar row ─────────────────────────────────────────────────
-        Positioned(
-          top: topPadding + 8,
-          left: 14,
-          right: 14,
-          height: 34,
-          child: Row(children: [
-            // hamburger
-            _IBtn(
-              onTap: onMenuTap,
-              child: _HamburgerIcon(),
-            ),
-            const Spacer(),
-
-            // ── centred logo ──────────────────────────────────────────
-            Stack(alignment: Alignment.center, children: [
-              // halo
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(colors: [
-                    const Color(0xFF50A0FF).withOpacity(0.48),
-                    const Color(0xFF2864DC).withOpacity(0.18),
-                    Colors.transparent,
-                  ], stops: const [
-                    0.0,
-                    0.36,
-                    0.65
-                  ]),
-                ),
-              ),
-              const _LogoRing(size: 50),
-              // top flare
-              const Positioned(
-                top: 0,
-                child: _Flare(size: 11, opacity: 0.9),
-              ),
-              // right flare
-              const Positioned(
-                right: 0,
-                child: _Flare(size: 7, opacity: 0.68),
-              ),
-              // left flare
-              const Positioned(
-                left: 0,
-                child: _Flare(size: 7, opacity: 0.68),
-              ),
-            ]),
-
-            const Spacer(),
-
-            // bell + avatar
-            Row(mainAxisSize: MainAxisSize.min, children: [
-              _IBtn(
-                onTap: onBellTap,
-                badge: hasNotification,
-                child: const Icon(Icons.notifications_outlined,
-                    color: Color(0xFFC8DCF4), size: 14),
-              ),
-              const SizedBox(width: 5),
-              _IBtn(
-                onTap: onAvatarTap,
-                child: const Icon(Icons.person_outline,
-                    color: Color(0xFFC8DCF4), size: 14),
-              ),
-            ]),
-          ]),
-        ),
-
-        // ── double arc at bottom ────────────────────────────────────────
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 30,
-          child: CustomPaint(painter: const _ArcSeparator()),
-        ),
-      ]),
-    );
-  }
-}
-
-/// Rays painter — mirrors `.rays` radial + conic repeating gradient
-class _RaysPainter extends CustomPainter {
-  @override
-  void paint(Canvas c, Size s) {
-    // centre soft radial glow
-    final gPaint = Paint()
-      ..shader = RadialGradient(
-        center: const Alignment(0, -0.30),
-        radius: 0.65,
-        colors: [
-          const Color(0xFF78BEFF).withOpacity(0.22),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, s.width, s.height));
-    c.drawRect(Rect.fromLTWH(0, 0, s.width, s.height), gPaint);
-
-    // centre light shaft (triangle clip)
-    final shaftP = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Color(0x2464B4FF), Colors.transparent],
-        stops: [0.0, 0.70],
-      ).createShader(Rect.fromLTWH(0, 0, s.width, s.height));
-    final shaft = Path()
-      ..moveTo(s.width * 0.38, 0)
-      ..lineTo(s.width * 0.62, 0)
-      ..lineTo(s.width * 0.78, s.height)
-      ..lineTo(s.width * 0.22, s.height)
-      ..close();
-    c.drawPath(shaft, shaftP);
-
-    // ray lines emanating from top-centre
-    final cx = s.width / 2;
-    final cy = s.height * 0.35;
-    final rayP = Paint()
-      ..color = const Color(0xFFB4DCFF).withOpacity(0.05)
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
-    for (int i = 0; i < 24; i++) {
-      final angle = (i * 15.0 - 180) * math.pi / 180;
-      c.drawLine(
-        Offset(cx, cy),
-        Offset(cx + math.cos(angle) * s.width,
-            cy + math.sin(angle) * s.height * 2),
-        rayP,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
-}
-
-class _HamburgerIcon extends StatelessWidget {
-  @override
-  Widget build(BuildContext ctx) => Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _hline(12),
-          const SizedBox(height: 2.5),
-          _hline(12),
-          const SizedBox(height: 2.5),
-          _hline(9),
-        ],
-      );
-  Widget _hline(double w) => Container(
-        width: w,
-        height: 1.5,
-        decoration: BoxDecoration(
-          color: const Color(0xFFC8DCF4),
-          borderRadius: BorderRadius.circular(1),
-        ),
-      );
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -744,9 +125,9 @@ class _HomeLogoRing extends StatelessWidget {
             Container(
               width: size * 0.83,
               height: size * 0.83,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const RadialGradient(
+                gradient: RadialGradient(
                   center: Alignment(-0.2, -0.35),
                   colors: [
                     Color(0xFF1A3A7A),
@@ -775,206 +156,41 @@ class _HomeLogoRing extends StatelessWidget {
       );
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+//  CHECKLIST ICON PAINTER (used by _HomeLogoRing)
+// ──────────────────────────────────────────────────────────────────────────────
+class _ChecklistIconPainter extends CustomPainter {
+  @override
+  void paint(Canvas c, Size s) {
+    final p = Paint()
+      ..color = const Color(0xFFA0C8FF).withOpacity(0.42)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.1;
+    final r = RRect.fromRectAndRadius(
+      Rect.fromLTRB(
+          s.width * .09, s.height * .09, s.width * .91, s.height * .91),
+      const Radius.circular(3.5),
+    );
+    c.drawRRect(r, p);
+    final cp = Paint()
+      ..color = const Color(0xFFA0C8FF).withOpacity(0.55)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.3
+      ..strokeCap = StrokeCap.round;
+    final path = Path()
+      ..moveTo(s.width * .31, s.height * .50)
+      ..lineTo(s.width * .44, s.height * .63)
+      ..lineTo(s.width * .69, s.height * .38);
+    c.drawPath(path, cp);
+  }
+
+  @override
+  bool shouldRepaint(_) => false;
+}
+
 /// Vertical separator line — mirrors `.nav-sep`
-class _NavSep extends StatelessWidget {
-  const _NavSep();
-  @override
-  Widget build(BuildContext ctx) => Container(
-        width: 1.5,
-        height: 32,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Color(0xFF3C78DC),
-              Color(0xFF5096FF),
-              Color(0xFF3C78DC),
-              Colors.transparent,
-            ],
-            stops: [0.0, 0.30, 0.50, 0.70, 1.0],
-          ),
-        ),
-      );
-}
-
-/// Single nav item — mirrors `.ni`
-class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-  final Widget icon;
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext ctx) => Expanded(
-        child: GestureDetector(
-          onTap: onTap,
-          behavior: HitTestBehavior.opaque,
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            icon,
-            const SizedBox(height: 2),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.w700,
-                color: active ? _navTextColor : _navTextColor.withOpacity(0.7),
-                letterSpacing: 0.1,
-                shadows: const [
-                  Shadow(
-                      color: Colors.white, blurRadius: 1, offset: Offset(0, 1))
-                ],
-              ),
-            ),
-          ]),
-        ),
-      );
-}
-
-/// SVG-like nav icons using Flutter's Icon + custom painting to match HTML
-class _NavIcon extends StatelessWidget {
-  const _NavIcon({required this.data, this.size = 18.0});
-  final IconData data;
-  final double size;
-  @override
-  Widget build(BuildContext ctx) => ShaderMask(
-        shaderCallback: (r) => const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF2A4A8A), Color(0xFF1E3060)],
-        ).createShader(r),
-        child: Icon(data, size: size, color: Colors.white),
-      );
-}
 
 /// Full silver-blue metallic footer nav — 100% HTML .nav clone
-class _CosmicNavBar extends StatelessWidget {
-  const _CosmicNavBar({
-    required this.activeIndex,
-    required this.onTryOn,
-    required this.onWardrobe,
-    required this.onHome,
-    required this.onFriends,
-    required this.onProfile,
-    required this.bottomPadding,
-  });
-  final int activeIndex;
-  final VoidCallback onTryOn;
-  final VoidCallback onWardrobe;
-  final VoidCallback onHome;
-  final VoidCallback onFriends;
-  final VoidCallback onProfile;
-  final double bottomPadding;
-
-  @override
-  Widget build(BuildContext ctx) {
-    final h = 52.0 + bottomPadding;
-    return Container(
-      height: h,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFB8C8E0), // nav top silver
-            Color(0xFFD4E0F0), // 8%
-            Color(0xFFE8F0F8), // 25%
-            Color(0xFFF2F6FC), // 40%
-            Color(0xFFE0EAF6), // 60%
-            Color(0xFFC8D8EC), // 80%
-            Color(0xFFB0C4DC), // bottom
-          ],
-          stops: [0.0, 0.08, 0.25, 0.40, 0.60, 0.80, 1.0],
-        ),
-        border: Border(
-          top: BorderSide(color: Colors.white, width: 1.0),
-        ),
-        boxShadow: [
-          BoxShadow(
-              color: Color(0x1F143278), blurRadius: 8, offset: Offset(0, -2)),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(bottom: bottomPadding),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Try-On
-            _NavItem(
-              icon: _NavIcon(data: Icons.camera_alt_outlined),
-              label: 'Try-On',
-              active: activeIndex == 0,
-              onTap: onTryOn,
-            ),
-            const _NavSep(),
-            // Wardrobe
-            _NavItem(
-              icon: _NavIcon(data: Icons.checkroom_outlined),
-              label: 'Wardrobe',
-              active: activeIndex == 1,
-              onTap: onWardrobe,
-            ),
-            const _NavSep(),
-            // Home (centre — larger)
-            Expanded(
-              child: GestureDetector(
-                onTap: onHome,
-                behavior: HitTestBehavior.opaque,
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const _HomeLogoRing(size: 36),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Home',
-                        style: TextStyle(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w800,
-                          color: activeIndex == 2
-                              ? _navTextColor
-                              : _navTextColor.withOpacity(0.8),
-                          shadows: const [
-                            Shadow(
-                                color: Colors.white,
-                                blurRadius: 1,
-                                offset: Offset(0, 1))
-                          ],
-                        ),
-                      ),
-                    ]),
-              ),
-            ),
-            const _NavSep(),
-            // Friends Space
-            _NavItem(
-              icon: _NavIcon(data: Icons.people_outline),
-              label: 'Friends Space',
-              active: activeIndex == 3,
-              onTap: onFriends,
-            ),
-            const _NavSep(),
-            // Profile
-            _NavItem(
-              icon: _NavIcon(data: Icons.person_outline),
-              label: 'Profile',
-              active: activeIndex == 4,
-              onTap: onProfile,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ══════════════════════════════════════════════════════════════════════════════
 //  SECTION HEADER BAR  (unchanged)
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1467,10 +683,10 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
           ),
           if (_isMultiSelectMode) _multiBar(mobile, mq),
         ]),
-        // ── HTML footer nav ───────────────────────────────────────────────
-        bottomNavigationBar: _CosmicNavBar(
-          activeIndex: _navIndex,
+        // ── COSMIC FOOTER ────────────────────────────────────────────────
+        bottomNavigationBar: CosmicFooter(
           bottomPadding: mq.padding.bottom,
+          activeIndex: _navIndex,
           onTryOn: () {
             setState(() => _navIndex = 0);
             Navigator.pushNamed(context, _rTryOn);
@@ -1481,6 +697,7 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
           },
           onHome: () {
             setState(() => _navIndex = 2);
+            Navigator.pushNamed(context, Routes.dashboard);
           },
           onFriends: () {
             setState(() => _navIndex = 3);
@@ -1512,7 +729,7 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
           slivers: [
             // ── HTML cosmic header (scrolls with content) ─────────────────
             SliverToBoxAdapter(
-              child: _CosmicHeader(
+              child: CosmicHeader(
                 topPadding: mq.padding.top,
                 hasNotification: unread > 0,
                 onMenuTap: () {

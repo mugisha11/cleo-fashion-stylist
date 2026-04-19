@@ -113,6 +113,35 @@ Generate outfit recommendations.
 }
 ```
 
+## Online Product Sources
+
+The backend uses **real-time fashion retailer scraping** for authentic product data:
+
+- **Live retailer data** – Direct scraping from ASOS, H&M, and Zara
+- **Real product images** – Actual photos from retailer websites
+- **Direct buy links** – Links go straight to product purchase pages
+- **Always current** – No stale static data, always fresh products
+
+### Supported Retailers
+
+- **ASOS** (`asos.com`) – Global fashion retailer
+- **H&M** (`hm.com`) – Fast fashion brand
+- **Zara** (`zara.com`) – Premium fashion retailer
+
+### Fallback Search Order
+
+When OpenRouter returns fewer than requested products:
+
+1. **Google Retail API** (if `GOOGLE_RETAIL_API_KEY` is set)
+2. **Supabase Catalog** (if connected to products table)
+3. **Fashion Scraper Service** (real-time retailer scraping)
+4. **Serper.dev Search** (if `SERPER_API_KEY` is set)
+5. **Custom Retailer Scrapers** (Zara/H&M direct scraping)
+6. **Google Images** (free web scraping, no API key needed)
+7. **Bing Images** (free web scraping, no API key needed)
+
+This ensures authentic product images and direct purchase links are always returned.
+
 ## Quality Assurance
 
 The system automatically:
@@ -141,6 +170,12 @@ The face locking system:
 - `SUPABASE_SERVICE_KEY`: Service role key
 - `USE_GPU`: Enable GPU acceleration
 - `FACE_SIMILARITY_THRESHOLD`: Minimum face similarity (default: 0.98)
+- `GOOGLE_RETAIL_API_KEY`: Optional Google Cloud Retail API key for live product catalog fallback
+- `GOOGLE_RETAIL_PROJECT_ID`: Optional Google Cloud project ID for Retail API requests
+- `GOOGLE_RETAIL_LOCATION`: Optional Retail API location (default: `global`)
+- `GOOGLE_RETAIL_CATALOG`: Optional Retail catalog name (default: `default_catalog`)
+- `GOOGLE_RETAIL_BRANCH`: Optional Retail branch ID (default: `0`)
+- `GOOGLE_RETAIL_PLACEMENT`: Optional Retail placement name (default: `default_search`)
 
 ### GPU Support
 
