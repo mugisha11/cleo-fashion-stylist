@@ -54,7 +54,7 @@ scikit-learn==1.3.2  # K-means for color extraction
 # Advanced Try-On Dependencies
 diffusers==0.21.4  # For diffusion-based try-on
 transformers==4.35.0  # For CLIP and other models
-controlnet-aux==0.4.0  # ControlNet utilities
+controlnet-aux==0.0.10  # ControlNet utilities (latest available PyPI version)
 accelerate==0.24.1  # Model acceleration
 xformers==0.0.22.post7  # Memory-efficient attention (optional, for GPU)
 realesrgan==0.3.0  # HD upscaling (optional)
