@@ -8,7 +8,7 @@ python-multipart==0.0.6
 # Computer Vision
 opencv-python==4.8.1.78
 opencv-contrib-python==4.8.1.78
-numpy>=1.26.0,<3.0  # Python 3.13 compatible (2.3.5 installed)
+numpy>=1.26.0,<2.0  # Pin NumPy 1.x for OpenCV binary compatibility
 Pillow>=10.2.0  # Python 3.13 compatible (12.0.0 installed)
 scikit-image>=0.22.0  # For SSIM and image metrics
 
