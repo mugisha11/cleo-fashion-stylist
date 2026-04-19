@@ -7,5 +7,6 @@
   "basedpyright.analysis.extraPaths": [
     "C:\\Users\\PETER\\AppData\\Roaming\\Python\\Python313\\site-packages",
     "C:\\Python313\\Lib\\site-packages"
-  ]
+  ],
+  "java.configuration.updateBuildConfiguration": "interactive"
 }
