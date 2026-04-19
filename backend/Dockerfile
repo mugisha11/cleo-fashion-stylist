@@ -31,8 +31,9 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install dlib (requires build)
-RUN pip install dlib==19.24.2
+# dlib/face-recognition are optional for advanced face-locking functionality.
+# The backend falls back to OpenCV if face_recognition is unavailable.
+# Avoid installing dlib in production to prevent build-time compilation failures.
 
 # Copy application code
 COPY app/ ./app/
