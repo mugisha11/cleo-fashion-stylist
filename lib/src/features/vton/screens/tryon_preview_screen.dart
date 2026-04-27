@@ -1,9 +1,15 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:http/http.dart' as http;
 import '../../../core/services/vton_service.dart';
 import '../providers/vton_provider.dart';
+import '../../tryon/utils/save_tryon_result_stub.dart'
+    if (dart.library.io) '../../tryon/utils/save_tryon_result_io.dart'
+    if (dart.library.html) '../../tryon/utils/save_tryon_result_web.dart'
+    as save_tryon_result;
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  NX PALETTE — exact from previous screens
@@ -926,7 +932,7 @@ class _TryOnPreviewScreenState extends ConsumerState<TryOnPreviewScreen>
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             // Main CTA — Save to Wardrobe
             GestureDetector(
-              onTap: _onSave,
+              onTap: () => _onSave(status['result_url'] as String?),
               child: AnimatedBuilder(
                 animation: _pulseAnim,
                 builder: (_, child) =>
@@ -1134,9 +1140,37 @@ class _TryOnPreviewScreenState extends ConsumerState<TryOnPreviewScreen>
             )),
       );
 
-  void _onSave() {
+  Future<void> _onSave(String? resultUrl) async {
     HapticFeedback.mediumImpact();
-    _showFeedbackSnack('Saved to your wardrobe ✓');
+
+    if (resultUrl == null || resultUrl.isEmpty) {
+      _showFeedbackSnack('Unable to save image: no result available.');
+      return;
+    }
+
+    _showFeedbackSnack('Saving your try-on…');
+
+    try {
+      final response = await http
+          .get(Uri.parse(resultUrl))
+          .timeout(const Duration(seconds: 20));
+
+      if (response.statusCode != 200) {
+        throw Exception('Image download failed (${response.statusCode})');
+      }
+
+      final bytes = response.bodyBytes;
+      final savedPath = await save_tryon_result.saveTryOnResultToDevice(bytes);
+
+      if (savedPath != null && savedPath.isNotEmpty) {
+        _showFeedbackSnack('Try-on image saved successfully ✓');
+      } else {
+        _showFeedbackSnack(
+            'Download started. Check your device photos or downloads.');
+      }
+    } catch (e) {
+      _showFeedbackSnack('Failed to save image. Please try again.');
+    }
   }
 
   void _onShare() {

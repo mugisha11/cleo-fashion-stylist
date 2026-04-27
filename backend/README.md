@@ -53,6 +53,13 @@ cp .env.example .env
 # Edit .env with your Supabase credentials
 ```
 
+If you are using the calendar/chat features, also run the Supabase schema file for the missing calendar tables:
+
+```bash
+# Run this in the Supabase SQL editor
+-- backend/supabase_calendar_schema.sql
+```
+
 ### 3. Run Server
 
 ```bash

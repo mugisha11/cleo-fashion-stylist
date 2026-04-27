@@ -2445,7 +2445,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           _openScheduleForDate(scheduleDate);
         } else if (searchQuery != null && searchQuery.isNotEmpty) {
           final genderPreference =
-              currentUser?.onboardingData?.bodyInputs?.gender?.trim();
+              currentUser?.onboardingData?.bodyInputs.gender.trim();
           _fetchAndShowSearchedProducts(searchQuery, gender: genderPreference);
         }
         final imageUrl = _extractDirectImageUrl(text);
@@ -2978,7 +2978,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             onWardrobe: () => Navigator.pushNamed(context, Routes.wardrobe),
             onHome: () => setState(() => _navIndex = 2),
             onFriends: () => Navigator.pushNamed(context, Routes.styleFeed),
-            onProfile: () => Navigator.pushNamed(context, Routes.settings),
+            onOutfits: () => Navigator.pushNamed(context, Routes.outfitPlanner),
           ),
         ]),
       ),
@@ -3413,7 +3413,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             active: _navIndex == 3,
             onTap: () {
               setState(() => _navIndex = 3);
-              Navigator.of(context).pushNamed(Routes.styleFeed);
+              Navigator.of(context).pushNamed(Routes.friendsSpace);
             }),
         _NavSep(),
         _NavItem(

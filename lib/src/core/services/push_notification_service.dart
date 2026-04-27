@@ -1,11 +1,13 @@
 /// Push Notification Service
 /// Handles Firebase Cloud Messaging (FCM) for Android, iOS, and Web
 library;
+
 import 'dart:async';
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/notification_model.dart';
@@ -22,41 +24,46 @@ class PushNotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
   final NotificationIntelligence _intelligence = NotificationIntelligence();
-  
+
   StreamController<FashionNotification>? _notificationStream;
-  Stream<FashionNotification>? get notificationStream => _notificationStream?.stream;
-  
+  Stream<FashionNotification>? get notificationStream =>
+      _notificationStream?.stream;
+
   String? _fcmToken;
   String? get fcmToken => _fcmToken;
-  
+
   bool _initialized = false;
   bool get isInitialized => _initialized;
 
   /// Initialize push notification service
   Future<void> initialize() async {
     if (_initialized) return;
-    
+
     try {
       // Request permissions
       await _requestPermissions();
-      
+
+      // Initialize timezone support for scheduled notifications
+      _initializeTimeZones();
+
       // Initialize local notifications
       await _initializeLocalNotifications();
-      
+
       // Get FCM token
       await _getFCMToken();
-      
+
       // Set up message handlers
       _setupMessageHandlers();
-      
+
       // Set up token refresh listener
       _setupTokenRefresh();
-      
+
       // Initialize stream
       _notificationStream = StreamController<FashionNotification>.broadcast();
-      
+
       _initialized = true;
       debugPrint('✅ Push Notification Service initialized');
     } catch (e) {
@@ -78,8 +85,9 @@ class PushNotificationService {
         provisional: false,
         sound: true,
       );
-      
-      debugPrint('📱 Web notification permission: ${settings.authorizationStatus}');
+
+      debugPrint(
+          '📱 Web notification permission: ${settings.authorizationStatus}');
     } else if (Platform.isIOS) {
       // iOS: Request permission
       final settings = await _messaging.requestPermission(
@@ -91,38 +99,40 @@ class PushNotificationService {
         provisional: false,
         sound: true,
       );
-      
-      debugPrint('📱 iOS notification permission: ${settings.authorizationStatus}');
+
+      debugPrint(
+          '📱 iOS notification permission: ${settings.authorizationStatus}');
     } else if (Platform.isAndroid) {
       // Android: Request permission (Android 13+)
       final androidSettings = await _localNotifications
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>()
           ?.requestNotificationsPermission();
-      
+
       debugPrint('📱 Android notification permission: $androidSettings');
     }
   }
 
   /// Initialize local notifications plugin
   Future<void> _initializeLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
-    
+
     const initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
-    
+
     await _localNotifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
-    
+
     // Create notification channels for Android
     if (Platform.isAndroid) {
       await _createNotificationChannels();
@@ -133,9 +143,9 @@ class PushNotificationService {
   Future<void> _createNotificationChannels() async {
     final android = _localNotifications.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
-    
+
     if (android == null) return;
-    
+
     // Try-on notifications channel
     await android.createNotificationChannel(
       const AndroidNotificationChannel(
@@ -147,7 +157,7 @@ class PushNotificationService {
         enableVibration: true,
       ),
     );
-    
+
     // Calendar notifications channel
     await android.createNotificationChannel(
       const AndroidNotificationChannel(
@@ -158,7 +168,7 @@ class PushNotificationService {
         playSound: true,
       ),
     );
-    
+
     // System notifications channel
     await android.createNotificationChannel(
       const AndroidNotificationChannel(
@@ -175,7 +185,7 @@ class PushNotificationService {
   Future<void> _getFCMToken() async {
     try {
       _fcmToken = await _messaging.getToken();
-      
+
       if (_fcmToken != null && _auth.currentUser != null) {
         // Save token to Firestore
         await _firestore
@@ -189,7 +199,7 @@ class PushNotificationService {
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
-        
+
         debugPrint('✅ FCM Token saved: ${_fcmToken!.substring(0, 20)}...');
       }
     } catch (e) {
@@ -201,13 +211,13 @@ class PushNotificationService {
   void _setupMessageHandlers() {
     // Background message handler
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    
+
     // Foreground message handler
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-    
+
     // App opened from terminated state
     FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationOpened);
-    
+
     // Check if app was opened from notification
     _messaging.getInitialMessage().then((message) {
       if (message != null) {
@@ -219,24 +229,24 @@ class PushNotificationService {
   /// Handle foreground message (app is open)
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
     debugPrint('📬 Foreground message: ${message.messageId}');
-    
+
     // Use intelligence to decide if we should show notification
     final shouldNotify = await _intelligence.shouldNotify(
       message.data,
       NotificationContext.foreground,
     );
-    
+
     if (!shouldNotify) {
       debugPrint('🤫 Intelligence decided to suppress notification');
       return;
     }
-    
+
     // Convert to FashionNotification
     final notification = _parseRemoteMessage(message);
-    
+
     // Show local notification
     await _showLocalNotification(notification);
-    
+
     // Emit to stream
     _notificationStream?.add(notification);
   }
@@ -244,16 +254,16 @@ class PushNotificationService {
   /// Handle notification opened (user tapped notification)
   Future<void> _handleNotificationOpened(RemoteMessage message) async {
     debugPrint('👆 Notification opened: ${message.messageId}');
-    
+
     final notification = _parseRemoteMessage(message);
-    
+
     // Handle deep link
     if (notification.actionUrl != null) {
       debugPrint('🔗 Deep link: ${notification.actionUrl}');
       // Use static method for background/terminated state
       await handleDeepLinkGlobal(notification.actionUrl);
     }
-    
+
     // Mark as read
     // This will be handled by the notification service
   }
@@ -262,7 +272,7 @@ class PushNotificationService {
   FashionNotification _parseRemoteMessage(RemoteMessage message) {
     final data = message.data;
     final notification = message.notification;
-    
+
     return FashionNotification(
       id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
       type: _parseNotificationType(data['type'] as String?),
@@ -281,7 +291,7 @@ class PushNotificationService {
   /// Parse notification type from string
   NotificationType _parseNotificationType(String? type) {
     if (type == null) return NotificationType.system;
-    
+
     try {
       return NotificationType.values.firstWhere(
         (e) => e.name == type,
@@ -304,18 +314,18 @@ class PushNotificationService {
       // Note: Image handling would require network image download
       // For production, implement image caching and use FilePathAndroidBitmap
     );
-    
+
     const iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
     );
-    
+
     final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
-    
+
     await _localNotifications.show(
       notification.id.hashCode,
       notification.title,
@@ -378,7 +388,7 @@ class PushNotificationService {
   /// Handle notification tap
   void _onNotificationTapped(NotificationResponse response) {
     debugPrint('👆 Local notification tapped: ${response.payload}');
-    
+
     if (response.payload != null) {
       // Handle deep link - will be processed when app is in foreground
       // For background/terminated, handled by _handleNotificationOpened
@@ -386,13 +396,79 @@ class PushNotificationService {
       handleDeepLinkGlobal(response.payload);
     }
   }
-  
+
   /// Handle deep link with global context (static for background handlers)
   static Future<void> handleDeepLinkGlobal(String? actionUrl) async {
     if (actionUrl == null) return;
     debugPrint('🔗 Processing deep link: $actionUrl');
     // Navigation will be handled when app context is available
     // This is called from background handlers where context may not be available
+  }
+
+  /// Schedule a calendar reminder for a specific date/time
+  Future<void> scheduleCalendarReminder({
+    required DateTime scheduledDateTime,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    if (!_initialized) {
+      await initialize();
+    }
+
+    if (scheduledDateTime.isBefore(DateTime.now())) {
+      debugPrint(
+          '⚠️ Reminder time is in the past, not scheduling notification');
+      return;
+    }
+
+    final notificationId =
+        scheduledDateTime.millisecondsSinceEpoch.remainder(100000);
+    final androidDetails = AndroidNotificationDetails(
+      'calendar_notifications',
+      'Calendar Reminders',
+      channelDescription: body,
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+      icon: '@mipmap/ic_launcher',
+    );
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    final scheduledTZ = tz.TZDateTime.from(scheduledDateTime, tz.local);
+
+    await _localNotifications.zonedSchedule(
+      notificationId,
+      title,
+      body,
+      scheduledTZ,
+      details,
+      payload: payload,
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
+
+    debugPrint('✅ Scheduled calendar reminder for $scheduledDateTime');
+  }
+
+  /// Cancel a previously scheduled calendar reminder
+  Future<void> cancelCalendarReminder(DateTime scheduledDateTime) async {
+    if (!_initialized) {
+      await initialize();
+    }
+
+    final notificationId =
+        scheduledDateTime.millisecondsSinceEpoch.remainder(100000);
+    await _localNotifications.cancel(notificationId);
+    debugPrint('🗑️ Cancelled calendar reminder for $scheduledDateTime');
   }
 
   /// Set up token refresh listener

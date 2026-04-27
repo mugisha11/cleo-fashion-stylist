@@ -6,6 +6,12 @@ class CalendarDay extends Equatable {
   final String? outfitId;
   final String? outfitName;
   final String? outfitImageUrl;
+  final String? linkedOutfitId;
+  final String? linkedOutfitName;
+  final String? linkedOutfitImageUrl;
+  final String? linkedTryonImageUrl;
+  final String? outfitLinkingMethod;
+  final DateTime? outfitLinkedAt;
   final String? eventType; // 'work', 'casual', 'event', 'formal', etc.
   final String? eventName; // Custom event name
   final String source; // 'ai' or 'manual'
@@ -17,6 +23,12 @@ class CalendarDay extends Equatable {
     this.outfitId,
     this.outfitName,
     this.outfitImageUrl,
+    this.linkedOutfitId,
+    this.linkedOutfitName,
+    this.linkedOutfitImageUrl,
+    this.linkedTryonImageUrl,
+    this.outfitLinkingMethod,
+    this.outfitLinkedAt,
     this.eventType,
     this.eventName,
     this.source = 'manual',
@@ -24,7 +36,15 @@ class CalendarDay extends Equatable {
     this.isRecommended = false,
   });
 
-  bool get hasOutfit => outfitId != null && outfitImageUrl != null;
+  bool get hasOutfit => outfitId != null ||
+      (outfitName != null && outfitName!.trim().isNotEmpty) ||
+      (outfitImageUrl != null && outfitImageUrl!.trim().isNotEmpty) ||
+      (linkedOutfitId != null) ||
+      (linkedOutfitName != null && linkedOutfitName!.trim().isNotEmpty) ||
+      (linkedOutfitImageUrl != null && linkedOutfitImageUrl!.trim().isNotEmpty);
+
+  bool get hasEvent => hasOutfit || eventName != null || eventType != null;
+
   bool get isToday {
     final now = DateTime.now();
     return date.year == now.year &&
@@ -37,6 +57,12 @@ class CalendarDay extends Equatable {
     String? outfitId,
     String? outfitName,
     String? outfitImageUrl,
+    String? linkedOutfitId,
+    String? linkedOutfitName,
+    String? linkedOutfitImageUrl,
+    String? linkedTryonImageUrl,
+    String? outfitLinkingMethod,
+    DateTime? outfitLinkedAt,
     String? eventType,
     String? eventName,
     String? source,
@@ -48,6 +74,12 @@ class CalendarDay extends Equatable {
       outfitId: outfitId ?? this.outfitId,
       outfitName: outfitName ?? this.outfitName,
       outfitImageUrl: outfitImageUrl ?? this.outfitImageUrl,
+      linkedOutfitId: linkedOutfitId ?? this.linkedOutfitId,
+      linkedOutfitName: linkedOutfitName ?? this.linkedOutfitName,
+      linkedOutfitImageUrl: linkedOutfitImageUrl ?? this.linkedOutfitImageUrl,
+      linkedTryonImageUrl: linkedTryonImageUrl ?? this.linkedTryonImageUrl,
+      outfitLinkingMethod: outfitLinkingMethod ?? this.outfitLinkingMethod,
+      outfitLinkedAt: outfitLinkedAt ?? this.outfitLinkedAt,
       eventType: eventType ?? this.eventType,
       eventName: eventName ?? this.eventName,
       source: source ?? this.source,
@@ -66,6 +98,12 @@ class CalendarDay extends Equatable {
       'outfit_id': outfitId,
       'outfit_name': outfitName,
       'outfit_image_url': outfitImageUrl,
+      'linked_outfit_id': linkedOutfitId,
+      'linked_outfit_name': linkedOutfitName,
+      'linked_outfit_image_url': linkedOutfitImageUrl,
+      'linked_tryon_image_url': linkedTryonImageUrl,
+      'outfit_linking_method': outfitLinkingMethod,
+      'outfit_linked_at': outfitLinkedAt?.toIso8601String(),
       'event_type': eventType,
       'event_name': eventName,
       'source': source,
@@ -85,6 +123,14 @@ class CalendarDay extends Equatable {
       outfitId: json['outfit_id'] as String?,
       outfitName: json['outfit_name'] as String?,
       outfitImageUrl: json['outfit_image_url'] as String?,
+      linkedOutfitId: json['linked_outfit_id'] as String?,
+      linkedOutfitName: json['linked_outfit_name'] as String?,
+      linkedOutfitImageUrl: json['linked_outfit_image_url'] as String?,
+      linkedTryonImageUrl: json['linked_tryon_image_url'] as String?,
+      outfitLinkingMethod: json['outfit_linking_method'] as String?,
+      outfitLinkedAt: json['outfit_linked_at'] != null
+          ? DateTime.tryParse(json['outfit_linked_at'] as String)
+          : null,
       eventType: json['event_type'] as String?,
       eventName: json['event_name'] as String?,
       source: json['source'] as String? ?? 'manual',
@@ -99,6 +145,12 @@ class CalendarDay extends Equatable {
         outfitId,
         outfitName,
         outfitImageUrl,
+        linkedOutfitId,
+        linkedOutfitName,
+        linkedOutfitImageUrl,
+        linkedTryonImageUrl,
+        outfitLinkingMethod,
+        outfitLinkedAt,
         eventType,
         eventName,
         source,
@@ -180,4 +232,3 @@ class OutfitEvent extends Equatable {
         endTime,
       ];
 }
-

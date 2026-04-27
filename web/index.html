@@ -42,7 +42,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="Virtual Twin">
+  <meta name="apple-mobile-web-app-title" content="nikonyx">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
@@ -50,6 +50,13 @@
 
   <title>Virtual Twin</title>
   <link rel="manifest" href="manifest.json">
+  
+  <!-- System font fallback to prevent CORS issues with Google Fonts -->
+  <style>
+    html, body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+  </style>
 
   <!-- Firebase Web SDK - MUST load before Flutter -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -62,6 +69,18 @@
     if (typeof firebase !== 'undefined' && firebase.firestore && firebase.firestore.setLogLevel) {
       firebase.firestore.setLogLevel('error');
     }
+  </script>
+  
+  <script>
+    // Suppress and handle font loading errors gracefully
+    window.addEventListener('error', function(ev) {
+      if (ev.filename && ev.filename.includes('fonts.gstatic.com')) {
+        console.warn('⚠️ Font loading from CDN failed, using system fonts instead:', ev.message);
+        ev.preventDefault();
+      } else if (ev.message && ev.message.includes('Failed to fetch')) {
+        console.warn('⚠️ Network request failed, app will continue with system fonts');
+      }
+    }, true);
   </script>
   
   <script>

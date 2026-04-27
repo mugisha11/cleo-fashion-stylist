@@ -10,23 +10,18 @@ import '../widgets/calendar_header_new.dart';
 import '../widgets/calendar_day_view_new.dart';
 import '../widgets/calendar_week_view_new.dart';
 import '../widgets/calendar_month_view_new.dart';
-import '../widgets/event_detail_drawer.dart';
+import '../widgets/day_detail_sheet.dart';
 import '../widgets/ai_assistant_button.dart';
 import '../widgets/ai_assistant_dialog.dart';
 import '../../../routes.dart';
 import '../../../core/widgets/cosmic_footer_widget.dart';
 import '../../../core/widgets/fashion_drawer.dart';
-import '../../../features/auth/providers/auth_provider.dart';
+import '../../../core/widgets/cosmic_header_widget.dart';
 
 // ─── Route shims ──────────────────────────────────────────────────────────────
-const _rCalendar = Routes.calendar;
 const _rWardrobe = Routes.wardrobe;
-const _rChat = Routes.chat;
-const _rProfile = '/settings';
 const _rTryOn = '/tryon';
 const _rSocial = '/style-feed';
-const _rShopping = '/shopping';
-const _rAddItem = '/wardrobe/add';
 
 /// Fashion Calendar Screen - Complete redesign from scratch
 /// World-class, Google Calendar-inspired, fashion-aware calendar
@@ -47,12 +42,9 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
 
   DateTime _selectedDate = DateTime.now();
   CalendarViewMode _viewMode = CalendarViewMode.month;
-  CalendarDay? _selectedEvent;
-  bool _showEventDrawer = false;
+  Map<DateTime, CalendarDay> _calendarDays = {};
 
   late AnimationController _viewTransitionController;
-  late AnimationController _drawerController;
-  late Animation<double> _drawerAnimation;
 
   @override
   void initState() {
@@ -61,16 +53,6 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
     _viewTransitionController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
-    );
-
-    _drawerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 250),
-    );
-
-    _drawerAnimation = CurvedAnimation(
-      parent: _drawerController,
-      curve: Curves.easeOutCubic,
     );
 
     // Initialize calendar
@@ -82,7 +64,6 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
   @override
   void dispose() {
     _viewTransitionController.dispose();
-    _drawerController.dispose();
     super.dispose();
   }
 
@@ -99,29 +80,27 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
     HapticFeedback.lightImpact();
     setState(() => _selectedDate = date);
     ref.read(selectedDayProvider.notifier).state = date;
+
+    final dateKey = DateTime(date.year, date.month, date.day);
+    final calendarDay = _calendarDays[dateKey];
+    _showDayDetail(date, calendarDay);
   }
 
   void _onEventTapped(CalendarDay event) {
     HapticFeedback.mediumImpact();
-    setState(() {
-      _selectedEvent = event;
-      _showEventDrawer = true;
-    });
-    _drawerController.forward();
+    _showDayDetail(event.date, event);
   }
 
-  void _closeEventDrawer() {
-    _drawerController.reverse().then((_) {
-      setState(() {
-        _showEventDrawer = false;
-        _selectedEvent = null;
-      });
-    });
-  }
-
-  void _onTryOn() {
-    HapticFeedback.mediumImpact();
-    Navigator.of(context).pushNamed(Routes.tryon);
+  void _showDayDetail(DateTime date, CalendarDay? calendarDay) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DayDetailSheet(
+        date: date,
+        calendarDay: calendarDay,
+      ),
+    );
   }
 
   @override
@@ -135,24 +114,22 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
       ),
     );
 
-    final user = ref.watch(authStateProvider).valueOrNull;
-    final displayName = user?.displayName ?? 'Style Lover';
-    final photoUrl = user?.photoURL;
-    final unreadCount = ref.watch(socialUnreadCountProvider) ?? 0;
+    final unreadCount = ref.watch(socialUnreadCountProvider);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
         key: _scaffoldKey,
         drawer: const AppDrawer(currentRoute: Routes.calendar),
-        backgroundColor: const Color(0xFF0B1D4C),
+        backgroundColor: Colors.white,
         extendBody: true,
         body: SafeArea(
           top: false,
           child: calendarDaysAsync.when(
             loading: () => _buildLoadingState(theme),
             error: (error, stack) => _buildErrorState(error, theme),
-            data: (calendarDays) => _buildCalendarContent(theme, calendarDays),
+            data: (calendarDays) =>
+                _buildCalendarContent(theme, calendarDays, unreadCount),
           ),
         ),
         bottomNavigationBar: CosmicFooter(
@@ -174,9 +151,9 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
             setState(() => _navIndex = 3);
             Navigator.pushNamed(context, _rSocial);
           },
-          onProfile: () {
+          onOutfits: () {
             setState(() => _navIndex = 4);
-            Navigator.pushNamed(context, _rProfile);
+            Navigator.pushNamed(context, Routes.savedTryOns);
           },
         ),
       ),
@@ -223,68 +200,67 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
     );
   }
 
-  Widget _buildCalendarContent(
-      AppThemeData theme, Map<DateTime, CalendarDay> calendarDays) {
+  Widget _buildCalendarContent(AppThemeData theme,
+      Map<DateTime, CalendarDay> calendarDays, int unreadCount) {
     return Stack(
       children: [
-        // Main Calendar Content
-        Column(
-          children: [
-            // Header
-            CalendarHeaderNew(
-              selectedDate: _selectedDate,
-              viewMode: _viewMode,
-              onViewChanged: _switchView,
-              onDateChanged: (date) {
-                setState(() => _selectedDate = date);
-                // Only update month if we're in month view or if month actually changed
-                final currentMonth =
-                    ref.read(calendarStateProvider).currentMonth;
-                if (date.year != currentMonth.year ||
-                    date.month != currentMonth.month) {
-                  ref.read(calendarStateProvider.notifier).setMonth(date);
-                }
-              },
-            ),
-
-            // Calendar View
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: child,
-                  );
-                },
-                child: _buildCalendarView(calendarDays),
-              ),
-            ),
-          ],
+        // Cosmic Header
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: CosmicHeader(
+            topPadding: MediaQuery.of(context).padding.top,
+            hasNotification: unreadCount > 0,
+            onMenuTap: () {
+              try {
+                _scaffoldKey.currentState?.openDrawer();
+              } catch (_) {}
+            },
+            onBellTap: () {},
+            onAvatarTap: () => Navigator.pushNamed(context, Routes.settings),
+          ),
         ),
 
-        // Event Detail Drawer
-        if (_showEventDrawer && _selectedEvent != null)
-          GestureDetector(
-            onTap: _closeEventDrawer,
-            child: Container(
-              color:
-                  Colors.black.withValues(alpha: 0.5 * _drawerAnimation.value),
-            ),
-          ),
+        // Main Calendar Content
+        Padding(
+          padding:
+              EdgeInsets.only(top: 80 + MediaQuery.of(context).padding.top),
+          child: Column(
+            children: [
+              // Header
+              CalendarHeaderNew(
+                selectedDate: _selectedDate,
+                viewMode: _viewMode,
+                onViewChanged: _switchView,
+                onDateChanged: (date) {
+                  setState(() => _selectedDate = date);
+                  // Only update month if we're in month view or if month actually changed
+                  final currentMonth =
+                      ref.read(calendarStateProvider).currentMonth;
+                  if (date.year != currentMonth.year ||
+                      date.month != currentMonth.month) {
+                    ref.read(calendarStateProvider.notifier).setMonth(date);
+                  }
+                },
+              ),
 
-        if (_showEventDrawer && _selectedEvent != null)
-          SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).animate(_drawerAnimation),
-            child: EventDetailDrawer(
-              event: _selectedEvent!,
-              onClose: _closeEventDrawer,
-              onTryOn: _onTryOn,
-            ),
+              // Calendar View
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    );
+                  },
+                  child: _buildCalendarView(calendarDays),
+                ),
+              ),
+            ],
           ),
+        ),
 
         // Floating AI Assistant
         Positioned(
@@ -307,6 +283,8 @@ class _FashionCalendarScreenState extends ConsumerState<FashionCalendarScreen>
   }
 
   Widget _buildCalendarView(Map<DateTime, CalendarDay> calendarDays) {
+    _calendarDays = calendarDays;
+
     Widget view;
     switch (_viewMode) {
       case CalendarViewMode.day:

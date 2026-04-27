@@ -11,6 +11,12 @@ import 'config_service.dart';
 class OpenRouterService {
   static const String _baseUrl = 'https://openrouter.ai/api/v1';
   static const String _prefsKey = 'open_router_api_key';
+  static const String _envApiKey =
+      String.fromEnvironment('OPENROUTER_API_KEY', defaultValue: '');
+  static const String _envBaseUrl =
+      String.fromEnvironment('OPENROUTER_BASE_URL', defaultValue: '');
+  static const String _envModel =
+      String.fromEnvironment('OPENROUTER_MODEL', defaultValue: '');
 
   /// Built-in key so end users get Cleo chat with no setup (no API knowledge needed).
   static const String _defaultApiKey =
@@ -24,6 +30,10 @@ class OpenRouterService {
 
   /// Get API key: user override from Settings, or built-in default for end users.
   static Future<String?> getApiKey() async {
+    if (_envApiKey.isNotEmpty) {
+      return _envApiKey;
+    }
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final stored = prefs.getString(_prefsKey);
@@ -136,8 +146,11 @@ class OpenRouterService {
           'Something went wrong. Please try again later.');
     }
 
+    final effectiveModel = _envModel.isNotEmpty ? _envModel : model;
+    final effectiveBaseUrl = _envBaseUrl.isNotEmpty ? _envBaseUrl : _baseUrl;
+
     final body = <String, dynamic>{
-      'model': model,
+      'model': effectiveModel,
       'messages': _buildMessages(messages, systemPrompt),
       'temperature': temperature,
       'max_tokens': maxTokens,
@@ -145,7 +158,7 @@ class OpenRouterService {
 
     final response = await http
         .post(
-          Uri.parse('$_baseUrl/chat/completions'),
+          Uri.parse('$effectiveBaseUrl/chat/completions'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $apiKey',
@@ -329,6 +342,7 @@ class OpenRouterService {
       },
     ];
 
+    final effectiveBaseUrl = _envBaseUrl.isNotEmpty ? _envBaseUrl : _baseUrl;
     final body = <String, dynamic>{
       'model': model,
       'messages': messages,
@@ -338,7 +352,7 @@ class OpenRouterService {
 
     final response = await http
         .post(
-          Uri.parse('$_baseUrl/chat/completions'),
+          Uri.parse('$effectiveBaseUrl/chat/completions'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $apiKey',

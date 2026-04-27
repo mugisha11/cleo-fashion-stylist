@@ -9,6 +9,7 @@ import '../../../core/widgets/cosmic_footer_widget.dart';
 import '../../social/providers/social_provider.dart';
 import '../../../routes.dart';
 import '../../../core/widgets/fashion_drawer.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../settings/models/settings_state.dart';
 import '../../settings/providers/settings_provider.dart';
 import '../../wardrobe/providers/wardrobe_provider.dart';
@@ -58,7 +59,9 @@ const List<String> _retailerOptions = [
 // MAIN SCREEN
 // ─────────────────────────────────────────────
 class RecommendationsScreen extends ConsumerStatefulWidget {
-  const RecommendationsScreen({super.key});
+  final String? initialQuery;
+
+  const RecommendationsScreen({super.key, this.initialQuery});
 
   @override
   ConsumerState<RecommendationsScreen> createState() =>
@@ -96,7 +99,8 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
   }
 
   String _buildRecommendationSearchQuery(
-      SettingsState settings, List<WardrobeItemModel> wardrobeItems) {
+      SettingsState settings, List<WardrobeItemModel> wardrobeItems,
+      {String? budget}) {
     final parts = <String>[];
 
     if (settings.preferredStyles.isNotEmpty) {
@@ -118,6 +122,11 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
     final wardrobeQuery = _buildWardrobeQuery(wardrobeItems);
     if (wardrobeQuery.isNotEmpty) {
       parts.add(wardrobeQuery);
+    }
+
+    final budgetHint = _budgetPhrase(budget);
+    if (budgetHint.isNotEmpty) {
+      parts.add(budgetHint);
     }
 
     final query = parts.isNotEmpty
@@ -156,31 +165,54 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
     if (settings.isLoading || wardrobeAsync.isLoading) return;
 
     final wardrobeItems = wardrobeAsync.valueOrNull ?? [];
-    final query = _buildRecommendationSearchQuery(settings, wardrobeItems);
+    final initialQuery = widget.initialQuery?.trim();
+    final query = initialQuery?.isNotEmpty == true
+        ? initialQuery!
+        : _buildRecommendationSearchQuery(
+            settings,
+            wardrobeItems,
+            budget: ref
+                .read(currentUserProvider)
+                .valueOrNull
+                ?.onboardingData
+                ?.budget,
+          );
     _initialRecommendationsLoaded = true;
 
     setState(() {
       _urlController.text = query;
       _isLoading = true;
       _recommendationQuery = query;
-      _recommendationMessage = 'Curating your runway-ready looks…';
+      _recommendationMessage = initialQuery?.isNotEmpty == true
+          ? 'Finding outfits tailored to your request…'
+          : 'Curating your runway-ready looks…';
     });
 
-    _fetchProductRecommendations(query, _selectedRetailer);
+    final currentUser = ref.read(currentUserProvider).valueOrNull;
+    final gender = currentUser?.onboardingData?.bodyInputs.gender;
+    final budget = currentUser?.onboardingData?.budget;
+    _fetchProductRecommendations(query, _selectedRetailer, gender, budget);
   }
 
   Future<void> _fetchProductRecommendations(String query,
-      [String? retailer]) async {
+      [String? retailer, String? gender, String? budget]) async {
     setState(() {
       _recommendationMessage = 'Styling your curated edit now…';
     });
 
     try {
       final baseUrl = await BackendConfigService.getBackendUrl();
-      final shoppingQuery = await _rewriteSearchQuery(query, retailer);
+      final shoppingQuery =
+          await _rewriteSearchQuery(query, retailer, gender, budget);
       final params = <String, String>{'q': shoppingQuery, 'limit': '50'};
       if (retailer != null && retailer != 'Any store') {
         params['site'] = retailer;
+      }
+      if (gender != null && gender.isNotEmpty) {
+        params['gender'] = gender;
+      }
+      if (budget != null && budget.isNotEmpty) {
+        params['budget'] = budget;
       }
       final uri = Uri.parse('$baseUrl/product-search').replace(
         queryParameters: params,
@@ -236,7 +268,7 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
           rawImages.add(imageUrl);
         }
         final previewImageUrls = rawImages
-            .where((url) => url is String && url.isNotEmpty)
+            .where((url) => url.isNotEmpty)
             .map(
                 (url) => '$baseUrl/proxy-image?url=${Uri.encodeComponent(url)}')
             .toList();
@@ -287,6 +319,10 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
       return;
     }
 
+    final currentUser = ref.read(currentUserProvider).valueOrNull;
+    final gender = currentUser?.onboardingData?.bodyInputs.gender;
+    final budget = currentUser?.onboardingData?.budget;
+
     setState(() {
       _urlController.text = trimmed;
       _isLoading = true;
@@ -294,16 +330,23 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
       _recommendationMessage = 'Searching the fashion edit for your next look…';
     });
 
-    _fetchProductRecommendations(trimmed, _selectedRetailer);
+    _fetchProductRecommendations(trimmed, _selectedRetailer, gender, budget);
   }
 
-  Future<String> _rewriteSearchQuery(String query, [String? retailer]) async {
+  Future<String> _rewriteSearchQuery(String query,
+      [String? retailer, String? gender, String? budget]) async {
     if (query.trim().isEmpty) return query.trim();
     try {
       final baseUrl = await BackendConfigService.getBackendUrl();
       final params = <String, String>{'q': query.trim()};
       if (retailer != null && retailer != 'Any store') {
         params['site'] = retailer;
+      }
+      if (gender != null && gender.isNotEmpty) {
+        params['gender'] = gender;
+      }
+      if (budget != null && budget.isNotEmpty) {
+        params['budget'] = budget;
       }
       final uri = Uri.parse('$baseUrl/product-search/rewrite').replace(
         queryParameters: params,
@@ -349,8 +392,15 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
                             label: Text(label,
                                 style: const TextStyle(fontSize: 11)),
                             backgroundColor: const Color(0xFFEDF2FF),
-                            onPressed: () => _searchRecommendations(
-                                _buildGapQuery(label, settings)),
+                            onPressed: () {
+                              final currentUser =
+                                  ref.read(currentUserProvider).valueOrNull;
+                              _searchRecommendations(_buildGapQuery(
+                                label,
+                                settings,
+                                budget: currentUser?.onboardingData?.budget,
+                              ));
+                            },
                           ))
                       .toList(),
                 ),
@@ -362,7 +412,7 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
     );
   }
 
-  String _buildGapQuery(String gap, SettingsState settings) {
+  String _buildGapQuery(String gap, SettingsState settings, {String? budget}) {
     final styleHint = settings.preferredStyles.isNotEmpty
         ? settings.preferredStyles.join(' ')
         : 'modern';
@@ -372,23 +422,35 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
     final occasionHint = settings.eventPreferences.isNotEmpty
         ? settings.eventPreferences.join(' ')
         : '';
+    final budgetHint = _budgetPhrase(budget);
+    final budgetSuffix = budgetHint.isNotEmpty ? ' $budgetHint' : '';
 
     if (gap == 'Shoes') {
-      return 'best $styleHint sneakers $colorHint'.trim();
+      return 'best $styleHint sneakers $colorHint$budgetSuffix'.trim();
     }
     if (gap == 'Layering') {
-      return 'light jacket $styleHint $colorHint'.trim();
+      return 'light jacket $styleHint $colorHint$budgetSuffix'.trim();
     }
     if (gap == 'Formal') {
-      return 'formal outfit $styleHint $colorHint'.trim();
+      return 'formal outfit $styleHint $colorHint$budgetSuffix'.trim();
     }
     if (gap == 'Accessories') {
-      return 'accessories for $occasionHint $styleHint'.trim();
+      return 'accessories for $occasionHint $styleHint$budgetSuffix'.trim();
     }
     if (gap == 'Complete outfit') {
-      return '$styleHint complete outfit $colorHint'.trim();
+      return '$styleHint complete outfit $colorHint$budgetSuffix'.trim();
     }
-    return '$gap $styleHint $colorHint'.trim();
+    return '$gap $styleHint $colorHint$budgetSuffix'.trim();
+  }
+
+  String _budgetPhrase(String? budget) {
+    if (budget == null || budget.isEmpty) return '';
+    final normalized = budget.toLowerCase();
+    if (normalized.contains('budget')) return 'budget-friendly';
+    if (normalized.contains('mid')) return 'mid-range';
+    if (normalized.contains('premium')) return 'premium';
+    if (normalized.contains('luxury')) return 'luxury';
+    return budget.trim();
   }
 
   List<String> _detectWardrobeGaps(List<WardrobeItemModel> wardrobeItems) {
@@ -506,10 +568,10 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
                     children: [
                       Container(
                         height: 120,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFEFF4),
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(18)),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFEFEFF4),
+                          borderRadius:
+                              BorderRadius.vertical(top: Radius.circular(18)),
                         ),
                       ),
                       const Padding(
@@ -789,6 +851,11 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
                 isLoading: _isLoading,
                 selectedRetailer: _selectedRetailer,
                 retailerOptions: _retailerOptions,
+                budgetLabel: ref
+                    .read(currentUserProvider)
+                    .valueOrNull
+                    ?.onboardingData
+                    ?.budget,
                 onRetailerChanged: (value) {
                   setState(() {
                     _selectedRetailer = value;
@@ -837,7 +904,7 @@ class _RecommendationsScreenState extends ConsumerState<RecommendationsScreen> {
                     Navigator.of(context).pushNamed(Routes.wardrobe),
                 onHome: () => Navigator.of(context).pushNamed(Routes.dashboard),
                 onFriends: () => _showToastMsg('Friends Space opening…'),
-                onProfile: () => _showToastMsg('Profile'),
+                onOutfits: () => Navigator.pushNamed(context, Routes.savedTryOns),
               ),
             ],
           ),
@@ -923,6 +990,7 @@ class _ShoppingSearchHeader extends StatelessWidget {
   final TextEditingController queryController;
   final bool isLoading;
   final String selectedRetailer;
+  final String? budgetLabel;
   final List<String> retailerOptions;
   final void Function(String) onRetailerChanged;
   final void Function(String) onSearch;
@@ -942,6 +1010,7 @@ class _ShoppingSearchHeader extends StatelessWidget {
     required this.onFav,
     required this.onOutfit,
     required this.onTryOn,
+    this.budgetLabel,
   });
 
   @override
@@ -1034,6 +1103,28 @@ class _ShoppingSearchHeader extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 10),
+          if (budgetLabel != null && budgetLabel!.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0x1AFFFFFF),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF8AADFF)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.attach_money,
+                      size: 12, color: Colors.white70),
+                  const SizedBox(width: 6),
+                  Text('Budget: ${budgetLabel!.trim()}',
+                      style:
+                          const TextStyle(color: Colors.white, fontSize: 11)),
+                ],
+              ),
+            )
+          else
+            const SizedBox.shrink(),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -1466,9 +1557,9 @@ class _ProductDetailPageState extends State<_ProductDetailPage> {
                                 fontWeight: FontWeight.w700,
                                 color: _C.sizeNavy)),
                         const SizedBox(height: 14),
-                        Text('Official product page',
-                            style: const TextStyle(
-                                fontSize: 12, color: _C.textLight)),
+                        const Text('Official product page',
+                            style:
+                                TextStyle(fontSize: 12, color: _C.textLight)),
                         const SizedBox(height: 8),
                         Text(widget.product.link,
                             style: const TextStyle(

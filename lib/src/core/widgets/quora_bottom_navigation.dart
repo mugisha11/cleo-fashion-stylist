@@ -18,12 +18,12 @@ class QuoraBottomNavigation extends StatelessWidget {
     BottomNavItem(
       icon: Icons.home_outlined,
       activeIcon: Icons.home,
-      label: 'Home',
+      label: 'Dashboard',
     ),
     BottomNavItem(
       icon: Icons.checkroom_outlined,
       activeIcon: Icons.checkroom,
-      label: 'My Closet',
+      label: 'Wardrobe',
     ),
     BottomNavItem(
       icon: Icons.auto_awesome_outlined,
@@ -33,7 +33,7 @@ class QuoraBottomNavigation extends StatelessWidget {
     BottomNavItem(
       icon: Icons.notifications_outlined,
       activeIcon: Icons.notifications,
-      label: 'Alerts',
+      label: 'Notifications',
     ),
     BottomNavItem(
       icon: Icons.person_outline,
@@ -87,19 +87,19 @@ class QuoraBottomNavigation extends StatelessWidget {
                         Icon(
                           isActive ? item.activeIcon : item.icon,
                           size: 20,
-                          color: isActive
-                              ? theme.primary
-                              : theme.textSecondary,
+                          color: isActive ? theme.primary : theme.textSecondary,
                         ),
                         const SizedBox(height: AppThemeData.spacingXS),
                         Text(
                           item.label,
                           style: theme.bodySmall().copyWith(
-                            color: isActive
-                                ? theme.primary
-                                : theme.textSecondary,
-                            fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
-                          ),
+                                color: isActive
+                                    ? theme.primary
+                                    : theme.textSecondary,
+                                fontWeight: isActive
+                                    ? FontWeight.w500
+                                    : FontWeight.w400,
+                              ),
                         ),
                       ],
                     ),

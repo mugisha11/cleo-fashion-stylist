@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/models/wardrobe_item_model.dart';
 import '../../../core/widgets/theme_wrapper.dart';
 import '../../../core/theme/app_theme_data.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/luxury_theme.dart';
+import '../../../core/services/wardrobe_service.dart';
 import '../providers/wardrobe_provider.dart';
 
 /// Wardrobe Item Details Screen
@@ -28,6 +30,9 @@ class _WardrobeItemDetailsScreenState
     extends ConsumerState<WardrobeItemDetailsScreen> {
   bool _isLoading = false;
   WardrobeItemModel? _loadedItem;
+  List<WardrobeOutfitSuggestion>? _outfitRecommendations;
+  bool _isGeneratingRecommendations = false;
+  String? _recommendationsError;
 
   @override
   void initState() {
@@ -54,6 +59,7 @@ class _WardrobeItemDetailsScreenState
           _isLoading = false;
         });
         print('✅ Details screen updated with item data');
+        _loadRecommendations(_loadedItem!);
       }
     } catch (e) {
       print('❌ Error loading item details: $e');
@@ -144,6 +150,11 @@ class _WardrobeItemDetailsScreenState
 
                             // Upload Date
                             _buildDateSection(theme, item),
+
+                            const SizedBox(height: AppThemeData.spacingMD),
+
+                            // Outfit Recommendations
+                            _buildOutfitRecommendationsSection(theme, item),
                           ],
                         ),
                       ),
@@ -598,6 +609,378 @@ class _WardrobeItemDetailsScreenState
         ],
       ),
     );
+  }
+
+  Widget _buildOutfitRecommendationsSection(
+      AppThemeData theme, WardrobeItemModel item) {
+    final accentPink =
+        context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.borderLight.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.style_outlined, color: accentPink, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Outfit Ideas',
+                  style: theme.bodyMedium(color: theme.textPrimary).copyWith(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_recommendationsError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _recommendationsError!,
+                style: theme.bodyMedium(color: theme.textTertiary),
+              ),
+            )
+          else if (_outfitRecommendations != null &&
+              _outfitRecommendations!.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: _outfitRecommendations!.map((rec) {
+                final isOnline = rec.source == 'online';
+                final sourceIcon =
+                    isOnline ? Icons.shopping_bag_outlined : Icons.checkroom;
+                final sourceLabel =
+                    isOnline ? 'Online Option' : 'From Wardrobe';
+                final sourceColor = isOnline
+                    ? Colors.blue.withOpacity(0.15)
+                    : accentPink.withOpacity(0.1);
+                final borderColor = isOnline
+                    ? Colors.blue.withOpacity(0.45)
+                    : Colors.transparent;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.backgroundPrimary,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: borderColor != Colors.transparent
+                            ? borderColor
+                            : theme.borderLight.withOpacity(0.2),
+                        width: isOnline ? 2 : 1,
+                      ),
+                      gradient: isOnline
+                          ? LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.blue.withOpacity(0.05),
+                                Colors.transparent,
+                              ],
+                            )
+                          : null,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                rec.title,
+                                style: theme
+                                    .bodyMedium(color: theme.textPrimary)
+                                    .copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                    ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: sourceColor,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    sourceIcon,
+                                    size: 12,
+                                    color: isOnline ? Colors.blue : accentPink,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    sourceLabel,
+                                    style: theme
+                                        .bodySmall(
+                                          color: isOnline
+                                              ? Colors.blue
+                                              : accentPink,
+                                        )
+                                        .copyWith(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 11,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        if (!isOnline && rec.itemIds.isNotEmpty)
+                          FutureBuilder<List<WardrobeItemModel>>(
+                            future: _fetchWardrobeItemsByIds(rec.itemIds),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return SizedBox(
+                                  height: 88,
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: accentPink,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              final wardrobeItems = snapshot.data ?? [];
+                              if (wardrobeItems.isEmpty) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    'No wardrobe images found for this outfit.',
+                                    style: theme.bodySmall(
+                                        color: theme.textSecondary),
+                                  ),
+                                );
+                              }
+
+                              return SizedBox(
+                                height: 88,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: wardrobeItems.length,
+                                  separatorBuilder: (context, index) =>
+                                      const SizedBox(width: 8),
+                                  itemBuilder: (context, index) {
+                                    final item = wardrobeItems[index];
+                                    return ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Container(
+                                        width: 84,
+                                        height: 84,
+                                        color: theme.surface,
+                                        child: CachedNetworkImage(
+                                          imageUrl: item.imageUrl,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) =>
+                                              Container(
+                                            color: theme.surface,
+                                            child: Center(
+                                              child: SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: accentPink,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          errorWidget: (context, url, error) =>
+                                              Container(
+                                            color: theme.surface,
+                                            child: Icon(
+                                              Icons.image_not_supported,
+                                              color: theme.textTertiary,
+                                              size: 24,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        if (!isOnline || rec.itemIds.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              rec.description,
+                              style:
+                                  theme.bodySmall(color: theme.textSecondary),
+                            ),
+                          ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '✨ ${rec.reason}',
+                          style: theme.bodySmall(color: accentPink),
+                        ),
+                        if (isOnline) ...[
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              if (rec.sourceStore != null) ...[
+                                const Icon(Icons.store, size: 14, color: Colors.blue),
+                                const SizedBox(width: 4),
+                                Text(
+                                  rec.sourceStore!,
+                                  style: theme
+                                      .bodySmall(color: Colors.blue)
+                                      .copyWith(fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                              if (rec.price != null) ...[
+                                const SizedBox(width: 12),
+                                const Icon(Icons.local_offer,
+                                    size: 14, color: Colors.green),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '\$${rec.price!.toStringAsFixed(2)}',
+                                  style: theme
+                                      .bodySmall(color: Colors.green)
+                                      .copyWith(fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (rec.sourceLink != null) ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () async {
+                                  if (rec.sourceLink != null) {
+                                    try {
+                                      // Use url_launcher to open the link
+                                      await launchUrl(
+                                        Uri.parse(rec.sourceLink!),
+                                        mode: LaunchMode.externalApplication,
+                                      );
+                                    } catch (e) {
+                                      print('❌ Error opening link: $e');
+                                      // Fallback: show snackbar with link
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                'Could not open link. URL: ${rec.sourceLink}'),
+                                            backgroundColor: theme.accentError,
+                                            duration:
+                                                const Duration(seconds: 5),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  }
+                                },
+                                icon: const Icon(Icons.open_in_new, size: 14),
+                                label: const Text('Shop Now'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 10),
+                                  textStyle: theme.bodySmall(),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'No recommendations available',
+                style: theme.bodyMedium(color: theme.textSecondary),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<List<WardrobeItemModel>> _fetchWardrobeItemsByIds(
+      List<String> itemIds) async {
+    if (itemIds.isEmpty) return [];
+
+    try {
+      final service = ref.read(wardrobeServiceProvider);
+      final items = await service.getUserWardrobe();
+      return items.where((item) => itemIds.contains(item.id)).toList();
+    } catch (e) {
+      print('❌ Error fetching wardrobe items: $e');
+      return [];
+    }
+  }
+
+  Future<void> _loadRecommendations(WardrobeItemModel item) async {
+    if (!mounted) return;
+
+    setState(() {
+      _isGeneratingRecommendations = true;
+      _recommendationsError = null;
+    });
+
+    try {
+      final service = ref.read(wardrobeServiceProvider);
+      final recommendations = await service.generateOutfitRecommendations(item);
+      if (mounted) {
+        setState(() {
+          _outfitRecommendations = recommendations;
+        });
+      }
+    } catch (e) {
+      print('❌ Error loading recommendations: $e');
+      if (mounted) {
+        setState(() {
+          _recommendationsError = 'Could not load outfit ideas right now.';
+          _outfitRecommendations = [];
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGeneratingRecommendations = false;
+        });
+      }
+    }
   }
 
   Widget _buildDateSection(AppThemeData theme, WardrobeItemModel item) {

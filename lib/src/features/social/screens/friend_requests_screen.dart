@@ -118,18 +118,27 @@ class _RequestToMeTile extends ConsumerWidget {
   }
 
   Widget _smallButton(BuildContext context, WidgetRef ref, {required String label, required bool isPrimary, required VoidCallback onTap}) {
-    return Material(
-      color: isPrimary ? accent : (isDark ? DesignTokens.darkCard : DesignTokens.lightCard),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: () {
+    return SizedBox(
+      height: 32,
+      child: ElevatedButton(
+        onPressed: () {
           HapticFeedback.selectionClick();
           onTap();
         },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isPrimary ? Colors.white : (isDark ? DesignTokens.darkText : DesignTokens.lightText))),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isPrimary ? accent : (isDark ? DesignTokens.darkCard : DesignTokens.lightCard),
+          foregroundColor: isPrimary ? Colors.white : (isDark ? DesignTokens.darkText : DesignTokens.lightText),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -213,13 +222,22 @@ class _RequestFromMeTile extends ConsumerWidget {
           title: Text(name, style: TextStyle(fontWeight: FontWeight.w600, color: isDark ? DesignTokens.darkText : DesignTokens.lightText)),
           subtitle: Text(pending ? 'Pending' : request.status, style: TextStyle(fontSize: 12, color: isDark ? DesignTokens.darkTextSecondary : DesignTokens.lightTextSecondary)),
           trailing: pending
-              ? TextButton(
-                  onPressed: () async {
-                    HapticFeedback.selectionClick();
-                    await ref.read(socialServiceProvider).cancelFriendRequest(request.id);
-                    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request cancelled'), behavior: SnackBarBehavior.floating));
-                  },
-                  child: Text('Cancel', style: TextStyle(color: accent, fontSize: 13)),
+              ? SizedBox(
+                  height: 32,
+                  child: TextButton(
+                    onPressed: () async {
+                      HapticFeedback.selectionClick();
+                      await ref.read(socialServiceProvider).cancelFriendRequest(request.id);
+                      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request cancelled'), behavior: SnackBarBehavior.floating));
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: accent,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('Cancel', style: TextStyle(fontSize: 13)),
+                  ),
                 )
               : null,
         ).animate().fadeIn(duration: 200.ms).slideX(begin: 0.05, end: 0, curve: Curves.easeOut);

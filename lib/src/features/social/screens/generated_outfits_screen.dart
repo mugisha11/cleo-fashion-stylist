@@ -9,12 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart' as share_plus;
-import '../../../core/theme/design_tokens.dart';
 import '../../../core/models/generated_outfit_model.dart';
+import '../../../core/models/calendar_day_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/social_provider.dart';
+import '../../calendar/providers/calendar_provider.dart';
 import '../../../routes.dart';
-import '../../../core/widgets/fashion_scaffold.dart';
 import '../../../core/widgets/cosmic_header_widget.dart';
 import '../../../core/widgets/cosmic_footer_widget.dart';
 
@@ -373,10 +373,11 @@ class _OutfitCard extends StatelessWidget {
       {required this.outfit,
       required this.isPrimary,
       required this.onTap,
-      required this.onAction});
+      required this.onAction,
+      required this.onSchedule});
   final GeneratedOutfitModel outfit;
   final bool isPrimary;
-  final VoidCallback onTap, onAction;
+  final VoidCallback onTap, onAction, onSchedule;
 
   @override
   Widget build(BuildContext ctx) {
@@ -451,22 +452,25 @@ class _OutfitCard extends StatelessWidget {
                       Padding(
                           padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
                           child: Row(children: [
-                            Container(
-                                width: 30,
-                                height: 30,
-                                decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color:
-                                        NXColors.accentGlow.withOpacity(0.18),
-                                    border: Border.all(
-                                        color: NXColors.accentGlow,
-                                        width: 1.5)),
-                                child: const Center(
-                                    child: Text('94',
-                                        style: TextStyle(
-                                            color: NXColors.accentGlow,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w900)))),
+                            GestureDetector(
+                              onTap: () => _showScoreBreakdown(ctx, 94),
+                              child: Container(
+                                  width: 30,
+                                  height: 30,
+                                  decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color:
+                                          NXColors.accentGlow.withOpacity(0.18),
+                                      border: Border.all(
+                                          color: NXColors.accentGlow,
+                                          width: 1.5)),
+                                  child: const Center(
+                                      child: Text('94',
+                                          style: TextStyle(
+                                              color: NXColors.accentGlow,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w900)))),
+                            ),
                             const SizedBox(width: 6),
                             const Expanded(
                                 child: Text('Size Match: Excellent Fit',
@@ -474,6 +478,33 @@ class _OutfitCard extends StatelessWidget {
                                         color: Colors.white70,
                                         fontSize: 10.5))),
                           ])),
+                      // calendar schedule button
+                      Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                          child: GestureDetector(
+                            onTap: onSchedule,
+                            child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                    color: const Color(0xFF1A3650),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                        color: NXColors.accentGlow
+                                            .withOpacity(0.3))),
+                                child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.calendar_today,
+                                          color: NXColors.accentGlow, size: 12),
+                                      SizedBox(width: 4),
+                                      Text('Schedule for Event',
+                                          style: TextStyle(
+                                              color: NXColors.accentGlow,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w600)),
+                                    ])),
+                          )),
                       // action button
                       Padding(
                           padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
@@ -734,7 +765,7 @@ class _GeneratedOutfitsScreenState
           onWardrobe: () => Navigator.pushNamed(context, Routes.wardrobe),
           onHome: () => Navigator.pushNamed(context, Routes.dashboard),
           onFriends: () => Navigator.pushNamed(context, Routes.styleFeed),
-          onProfile: () => Navigator.pushNamed(context, Routes.settings),
+          onOutfits: () => Navigator.pushNamed(context, Routes.savedTryOns),
         ),
       ),
     );
@@ -858,8 +889,9 @@ class _GeneratedOutfitsScreenState
                                         outfit: outfits[0],
                                         isPrimary: true,
                                         onTap: () => _openEdit(outfits[0]),
-                                        onAction: () =>
-                                            _openEdit(outfits[0])))),
+                                        onAction: () => _openEdit(outfits[0]),
+                                        onSchedule: () =>
+                                            _scheduleOutfit(outfits[0])))),
                             const SizedBox(width: 10),
                             Expanded(
                                 child: SizedBox(
@@ -870,7 +902,9 @@ class _GeneratedOutfitsScreenState
                                             isPrimary: false,
                                             onTap: () => _openEdit(outfits[1]),
                                             onAction: () => Navigator.pushNamed(
-                                                ctx, Routes.tryon))
+                                                ctx, Routes.tryon),
+                                            onSchedule: () =>
+                                                _scheduleOutfit(outfits[1]))
                                         : _emptyCard())),
                           ])
                     else
@@ -1391,5 +1425,158 @@ class _GeneratedOutfitsScreenState
                       },
                       child: _NxNavBtn(active: _navIndex == 2))),
             ])));
+  }
+
+  void _showScoreBreakdown(BuildContext context, int totalScore) {
+    // Simulate score breakdown based on the 7 criteria from outfit_score_service.dart
+    final breakdown = {
+      'Color Harmony': 18,
+      'Fit & Silhouette': 16,
+      'Occasion Appropriateness': 17,
+      'Trend Alignment': 15,
+      'Styling Details': 14,
+      'Overall Polish': 14,
+    };
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Text('Score Breakdown'),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: NXColors.accentGlow.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: NXColors.accentGlow, width: 1),
+              ),
+              child: Text(
+                '$totalScore',
+                style: const TextStyle(
+                  color: NXColors.accentGlow,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: breakdown.entries.map((entry) {
+            final percentage = (entry.value / 20.0 * 100).round();
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      entry.key,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  Text(
+                    '${entry.value}/20',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 60,
+                    child: LinearProgressIndicator(
+                      value: entry.value / 20.0,
+                      backgroundColor: Colors.grey[300],
+                      valueColor: const AlwaysStoppedAnimation(NXColors.accentGlow),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _scheduleOutfit(GeneratedOutfitModel outfit) async {
+    final events = await ref.read(calendarEventsProvider.future);
+    if (events.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'No upcoming events found. Add events to your calendar first.'),
+        ),
+      );
+      return;
+    }
+
+    // Show event selection dialog
+    final selectedEvent = await showDialog<OutfitEvent>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Schedule for Event'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: events.length,
+            itemBuilder: (context, index) {
+              final event = events[index];
+              return ListTile(
+                title: Text(event.title),
+                subtitle: Text(
+                  '${event.date.toLocal().toString().split(' ')[0]} - ${event.description ?? ''}',
+                ),
+                onTap: () => Navigator.of(context).pop(event),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedEvent == null) return;
+
+    try {
+      final calendarService = ref.read(calendarServiceProvider);
+      await calendarService.linkOutfitToEvent(
+        date: selectedEvent.date,
+        outfitId: outfit.id,
+        outfitName: outfit.caption ?? 'Generated Outfit',
+        outfitImageUrl: outfit.imageUrl,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Outfit scheduled for ${selectedEvent.title}!'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to schedule outfit. Please try again.'),
+          ),
+        );
+      }
+    }
   }
 }

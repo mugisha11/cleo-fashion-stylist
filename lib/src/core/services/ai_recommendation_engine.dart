@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../models/tryon_session_model.dart';
 import '../models/wardrobe_item_model.dart';
 import '../models/calendar_day_model.dart';
+import 'backend_config_service.dart';
 import 'weather_service.dart';
 import 'tryon_memory_service.dart';
 import 'wardrobe_service.dart';
@@ -175,8 +176,8 @@ class AIRecommendationEngine {
         print('Edge function failed, trying local server: $e');
       }
 
-      // Fallback to local server
-      const apiBaseUrl = 'http://localhost:8001';
+      // Fallback to configured backend URL
+      final apiBaseUrl = await BackendConfigService.getBackendUrl();
       final httpResponse = await http
           .post(
             Uri.parse('$apiBaseUrl/ai/generate-recommendations'),

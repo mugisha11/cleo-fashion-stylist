@@ -10,7 +10,6 @@ import 'dart:ui' as ui;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -311,7 +310,7 @@ class _StagePainter extends CustomPainter {
 //  NX METALLIC LOGO
 // ══════════════════════════════════════════════════════════════════════════════
 class _NxLogo extends StatelessWidget {
-  const _NxLogo({this.d = 56.0});
+  const _NxLogo({required this.d});
   final double d;
   @override
   Widget build(BuildContext ctx) => SizedBox(
@@ -418,8 +417,8 @@ class _GBtn extends StatelessWidget {
   const _GBtn(
       {required this.icon,
       required this.onTap,
-      this.badge = 0,
-      this.sz = 34.0});
+      required this.badge,
+      required this.sz});
   final IconData icon;
   final VoidCallback onTap;
   final int badge;
@@ -983,7 +982,7 @@ void _toast(BuildContext ctx, String msg) {
 
 // Flare cross widget (matches HTML .flare SVG cross elements)
 class _FlareCross extends StatelessWidget {
-  const _FlareCross({this.size = 11.0, this.opacity = 0.9});
+  const _FlareCross({required this.size, required this.opacity});
   final double size;
   final double opacity;
   @override
@@ -1392,7 +1391,7 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
               onWardrobe: () => Navigator.pushNamed(context, Routes.wardrobe),
               onHome: () => Navigator.pushNamed(context, Routes.dashboard),
               onFriends: () => Navigator.pushNamed(context, Routes.styleFeed),
-              onProfile: () => Navigator.pushNamed(context, Routes.settings),
+              onOutfits: () => Navigator.pushNamed(context, Routes.savedTryOns),
             )));
   }
 

@@ -57,7 +57,7 @@ class CalendarWeekViewNew extends StatelessWidget {
               final isSelected = date.year == selectedDate.year &&
                   date.month == selectedDate.month &&
                   date.day == selectedDate.day;
-              final hasEvent = calendarDay?.hasOutfit ?? false;
+              final hasEvent = calendarDay?.hasEvent ?? false;
 
               return Expanded(
                 child: _buildWeekDayHeader(
@@ -81,8 +81,8 @@ class CalendarWeekViewNew extends StatelessWidget {
               ...weekDates.map((date) {
                 final dateKey = DateTime(date.year, date.month, date.day);
                 final calendarDay = calendarDays[dateKey];
-                
-                if (calendarDay == null || !calendarDay.hasOutfit) {
+
+                if (calendarDay == null || !calendarDay.hasEvent) {
                   return const SizedBox.shrink();
                 }
 
@@ -119,35 +119,35 @@ class CalendarWeekViewNew extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? theme.primary
-              : (isToday
-                  ? theme.primary.withOpacity(0.1)
-                  : Colors.transparent),
+              : (isToday ? theme.primary.withOpacity(0.1) : Colors.transparent),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
           children: [
             Text(
               DateFormat('EEE').format(date),
-              style: theme.bodySmall(
-                color: isSelected
-                    ? Colors.white
-                    : theme.textSecondary,
-              ).copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: theme
+                  .bodySmall(
+                    color: isSelected ? Colors.white : theme.textSecondary,
+                  )
+                  .copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
             const SizedBox(height: 4),
             Text(
               '${date.day}',
-              style: theme.bodyMedium(
-                color: isSelected
-                    ? Colors.white
-                    : (isToday
-                        ? theme.primary
-                        : theme.textPrimary),
-              ).copyWith(
-                fontWeight: (isSelected || isToday) ? FontWeight.w600 : FontWeight.normal,
-              ),
+              style: theme
+                  .bodyMedium(
+                    color: isSelected
+                        ? Colors.white
+                        : (isToday ? theme.primary : theme.textPrimary),
+                  )
+                  .copyWith(
+                    fontWeight: (isSelected || isToday)
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
             ),
             if (hasEvent)
               Container(

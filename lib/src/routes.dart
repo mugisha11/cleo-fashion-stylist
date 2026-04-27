@@ -9,6 +9,7 @@ import 'features/wardrobe/screens/add_item_screen.dart';
 import 'features/tryon/screens/production_tryon_screen.dart';
 import 'features/tryon/screens/luxury_tryon_screen.dart';
 import 'features/tryon/screens/tryon_history_screen.dart';
+import 'features/tryon/screens/saved_tryons_screen.dart';
 import 'features/recommendations/screens/recommendations_screen.dart';
 import 'features/virtualwearon/screens/virtualwearon_screen.dart';
 import 'features/vton/screens/fashion_quiz_screen.dart';
@@ -24,8 +25,10 @@ import 'features/social/screens/chats_list_screen.dart';
 import 'features/social/screens/chat_screen.dart';
 import 'features/social/screens/friend_requests_screen.dart';
 import 'features/social/screens/discover_people_screen.dart';
-import 'features/social/screens/generated_outfits_screen.dart';
+import 'features/social/screens/friends_space_screen.dart';
 import 'features/notifications/screens/notification_center_screen.dart';
+import 'features/inspiration/screens/inspiration_details_screen.dart';
+import 'features/tryon/screens/outfit_planner_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'core/widgets/splash_screen.dart';
 
@@ -55,6 +58,7 @@ class Routes {
   static const String calendar = '/calendar';
   static const String settings = '/settings';
   static const String tryonHistory = '/tryon-history';
+  static const String savedTryOns = '/saved-try-ons';
   static const String styleFeed = '/style-feed';
   static const String postLook = '/post-look';
   static const String chats = '/chats';
@@ -63,6 +67,9 @@ class Routes {
   static const String discoverPeople = '/discover-people';
   static const String notificationCenter = '/notifications';
   static const String generatedOutfits = '/my-outfits';
+  static const String outfitPlanner = '/outfit-planner';
+  static const String friendsSpace = '/friends-space';
+  static const String inspiration = '/inspiration';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -83,7 +90,14 @@ class Routes {
       case avatarGeneration:
         return _buildRoute(const AvatarGenerationScreen(), settings);
       case wardrobe:
-        return _buildRoute(const WardrobeScreen(), settings);
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          WardrobeScreen(
+            selectionMode: args?['selectionMode'] as bool? ?? false,
+            selectedDate: args?['selectedDate'] as DateTime?,
+          ),
+          settings,
+        );
       case addItem:
         return _buildRoute(const AddItemScreen(), settings);
       case tryon:
@@ -95,7 +109,12 @@ class Routes {
       case mobileVton:
         return _buildRoute(const ProductionTryOnScreen(), settings);
       case recommendations:
-        return _buildRoute(const RecommendationsScreen(), settings);
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          RecommendationsScreen(
+              initialQuery: args?['initialSearchQuery'] as String?),
+          settings,
+        );
       case virtualwearon:
         return _buildRoute(const VirtualWearOnScreen(), settings);
       case dashboard:
@@ -125,6 +144,8 @@ class Routes {
         return _buildRoute(const SettingsPage(), settings);
       case Routes.tryonHistory:
         return _buildRoute(const TryOnHistoryScreen(), settings);
+      case Routes.savedTryOns:
+        return _buildRoute(const SavedTryOnsScreen(), settings);
       case Routes.styleFeed:
         return _buildRoute(const StyleFeedScreen(), settings);
       case Routes.postLook:
@@ -159,7 +180,21 @@ class Routes {
       case Routes.notificationCenter:
         return _buildRoute(const NotificationCenterScreen(), settings);
       case Routes.generatedOutfits:
-        return _buildRoute(const GeneratedOutfitsScreen(), settings);
+        return _buildRoute(const RecommendationsScreen(), settings);
+      case Routes.outfitPlanner:
+        return _buildRoute(const OutfitPlannerScreen(), settings);
+      case Routes.friendsSpace:
+        return _buildRoute(const FriendsSpaceScreen(), settings);
+      case Routes.inspiration:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          InspirationDetailsScreen(
+            imageUrl: args?['imageUrl'] as String?,
+            outfitTitle: args?['title'] as String?,
+            outfitDescription: args?['description'] as String?,
+          ),
+          settings,
+        );
       default:
         return _buildRoute(
           const Scaffold(

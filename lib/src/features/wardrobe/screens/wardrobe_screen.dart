@@ -28,7 +28,7 @@ const _rProfile = '/settings';
 const _rTryOn = '/tryon';
 const _rSocial = '/style-feed';
 const _rShopping = '/shopping';
-const _rAddItem = '/wardrobe/add';
+const _rAddItem = Routes.addItem;
 
 const _cosmicTop = Color(0xFF020810); // background darkest
 const _cosmicMid = Color(0xFF0A4E8F); // mid navy
@@ -82,7 +82,7 @@ class _BgPainter extends CustomPainter {
 
 /// Home logo ring for nav — mirrors `.hlogo` conic-gradient
 class _HomeLogoRing extends StatelessWidget {
-  const _HomeLogoRing({this.size = 36.0});
+  const _HomeLogoRing({required this.size});
   final double size;
   @override
   Widget build(BuildContext ctx) => Container(
@@ -269,7 +269,8 @@ class _ItemCard extends StatelessWidget {
   });
   final WardrobeItemModel item;
   final bool isSelected, isMultiSelect;
-  final VoidCallback onTap, onLongPress;
+  final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -549,7 +550,15 @@ class _TrendCard extends StatelessWidget {
 //  SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
 class WardrobeScreen extends ConsumerStatefulWidget {
-  const WardrobeScreen({super.key});
+  final bool selectionMode;
+  final DateTime? selectedDate;
+
+  const WardrobeScreen({
+    super.key,
+    this.selectionMode = false,
+    this.selectedDate,
+  });
+
   @override
   ConsumerState<WardrobeScreen> createState() => _WardrobeScreenState();
 }
@@ -561,6 +570,7 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
   final Set<String> _selectedItems = {};
   bool _isMultiSelectMode = false;
   int _navIndex = 2; // 2 = Home (centre)
+  WardrobeItemModel? _selectedOutfit;
 
   static const _tabs = <(String, IconData?)>[
     ('Suits', null),
@@ -655,6 +665,25 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
         }
       });
 
+  void _selectOutfit(WardrobeItemModel item) {
+    setState(() => _selectedOutfit = item);
+  }
+
+  Widget _buildConfirmButton() {
+    return FloatingActionButton.extended(
+      onPressed: _selectedOutfit != null ? _confirmOutfitSelection : null,
+      backgroundColor: _selectedOutfit != null ? _blue : Colors.grey,
+      icon: const Icon(Icons.check, color: Colors.white),
+      label: const Text('Confirm Outfit'),
+    );
+  }
+
+  void _confirmOutfitSelection() {
+    if (_selectedOutfit != null && widget.selectedDate != null) {
+      Navigator.of(context).pop(_selectedOutfit);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
@@ -703,11 +732,18 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
             setState(() => _navIndex = 3);
             Navigator.pushNamed(context, _rSocial);
           },
-          onProfile: () {
+          onOutfits: () {
             setState(() => _navIndex = 4);
-            Navigator.pushNamed(context, _rProfile);
+            Navigator.pushNamed(context, Routes.savedTryOns);
           },
         ),
+        floatingActionButton: widget.selectionMode
+            ? _buildConfirmButton()
+            : FloatingActionButton(
+                onPressed: () => Navigator.pushNamed(context, _rAddItem),
+                backgroundColor: _blue,
+                child: const Icon(Icons.add, color: Colors.white),
+              ),
       ),
     );
   }
@@ -918,14 +954,18 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
       else
         _SlidingPairSection(
           items: items,
-          isMultiSelect: _isMultiSelectMode,
+          isMultiSelect: widget.selectionMode ? false : _isMultiSelectMode,
           selectedItems: _selectedItems,
-          onTap: (item) => _isMultiSelectMode ? _toggle(item.id) : _open(item),
-          onLongPress: (item) {
-            HapticFeedback.mediumImpact();
-            setState(() => _isMultiSelectMode = true);
-            _toggle(item.id);
-          },
+          onTap: (item) => widget.selectionMode
+              ? _selectOutfit(item)
+              : (_isMultiSelectMode ? _toggle(item.id) : _open(item)),
+          onLongPress: widget.selectionMode
+              ? null
+              : (item) {
+                  HapticFeedback.mediumImpact();
+                  setState(() => _isMultiSelectMode = true);
+                  _toggle(item.id);
+                },
         ),
     ]);
   }
@@ -1099,7 +1139,7 @@ class _SlidingPairSection extends StatefulWidget {
   final bool isMultiSelect;
   final Set<String> selectedItems;
   final void Function(WardrobeItemModel) onTap;
-  final void Function(WardrobeItemModel) onLongPress;
+  final void Function(WardrobeItemModel)? onLongPress;
 
   @override
   State<_SlidingPairSection> createState() => _SlidingPairSectionState();
@@ -1154,7 +1194,9 @@ class _SlidingPairSectionState extends State<_SlidingPairSection> {
                 isSelected: widget.selectedItems.contains(pair[0].id),
                 isMultiSelect: widget.isMultiSelect,
                 onTap: () => widget.onTap(pair[0]),
-                onLongPress: () => widget.onLongPress(pair[0]),
+                onLongPress: widget.onLongPress != null
+                    ? () => widget.onLongPress!(pair[0])
+                    : null,
               )),
               const SizedBox(width: 10),
               Expanded(
@@ -1164,7 +1206,9 @@ class _SlidingPairSectionState extends State<_SlidingPairSection> {
                           isSelected: widget.selectedItems.contains(pair[1].id),
                           isMultiSelect: widget.isMultiSelect,
                           onTap: () => widget.onTap(pair[1]),
-                          onLongPress: () => widget.onLongPress(pair[1]),
+                          onLongPress: widget.onLongPress != null
+                              ? () => widget.onLongPress!(pair[1])
+                              : null,
                         )
                       : const SizedBox.shrink()),
             ]);

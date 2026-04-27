@@ -43,30 +43,32 @@ class FashionDrawer extends StatelessWidget {
 
   static final List<_DrawerNavItem> items = [
     const _DrawerNavItem(
+        icon: Icons.home_outlined, label: 'Dashboard', route: Routes.dashboard),
+    const _DrawerNavItem(
         icon: Icons.checkroom_outlined,
-        label: 'My wardrobe',
+        label: 'Wardrobe',
         route: Routes.wardrobe),
     const _DrawerNavItem(
-        icon: Icons.favorite_border,
-        label: 'Saved outfits',
+        icon: Icons.shopping_bag_outlined,
+        label: 'Shopping',
         route: Routes.generatedOutfits),
     const _DrawerNavItem(
         icon: Icons.dynamic_feed_outlined,
-        label: 'Posts',
+        label: 'Fashion Feed',
         route: Routes.styleFeed),
     const _DrawerNavItem(
         icon: Icons.calendar_today_outlined,
         label: 'Calendar',
         route: Routes.calendar),
     const _DrawerNavItem(
-        icon: Icons.auto_awesome, label: 'AI Stylist', route: Routes.dashboard),
+        icon: Icons.people_outline,
+        label: 'Friends Space',
+        route: Routes.styleFeed),
     const _DrawerNavItem(
-        icon: Icons.history_rounded,
-        label: 'Chat history',
-        route: Routes.chats),
+        icon: Icons.history_rounded, label: 'Messages', route: Routes.chats),
     const _DrawerNavItem(
         icon: Icons.person_outline,
-        label: 'Profile & setting',
+        label: 'Profile & Settings',
         route: Routes.settings),
   ];
 

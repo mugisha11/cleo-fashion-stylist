@@ -9,12 +9,15 @@ class BackendConfigService {
   // Local backend used during development and testing.
   static const String _localBackendUrl = 'http://localhost:8001';
 
-  // Production backend on Railway.
-  static const String _defaultProductionUrl =
-      'https://cleo-fashion-stylist-production.up.railway.app';
+  // Hosted backend used for Flutter web and remote deployments.
+  static const String _renderBackendUrl =
+      'https://cleo-fashion-stylist.onrender.com';
 
-  // Use local backend by default for all platforms when no override is saved.
-  static const String _defaultBackendUrl = _localBackendUrl;
+  // Production backend on Render.
+  static const String _defaultProductionUrl = _renderBackendUrl;
+
+  // Use hosted backend by default for all platforms when no override is saved.
+  static const String _defaultBackendUrl = _renderBackendUrl;
 
   /// Get backend URL
   static Future<String> getBackendUrl() async {
@@ -78,14 +81,13 @@ class BackendConfigService {
     }
   }
 
-  /// Get all possible backend URLs to try (local dev fallbacks first, then production)
+  /// Get all possible backend URLs to try (hosted fallback first, then local dev URLs)
   static List<String> getFallbackUrls() {
     return [
-      _defaultBackendUrl,
-      'http://127.0.0.1:8001',
-      'http://localhost:8001',
-      'http://10.0.2.2:8001',
       _defaultProductionUrl,
+      _localBackendUrl,
+      'http://127.0.0.1:8001',
+      'http://10.0.2.2:8001',
     ];
   }
 }

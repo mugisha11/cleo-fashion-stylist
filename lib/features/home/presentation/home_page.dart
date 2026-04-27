@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../src/features/auth/providers/auth_provider.dart';
 import '../../../src/core/widgets/fashion_drawer.dart';
-import '../../../src/core/widgets/nikonyx_logo.dart';
 import '../../../src/routes.dart';
 import '../../../src/features/home/providers/inspiration_provider.dart';
 

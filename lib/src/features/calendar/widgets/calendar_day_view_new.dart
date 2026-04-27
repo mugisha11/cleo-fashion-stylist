@@ -71,7 +71,8 @@ class _CalendarDayViewNewState extends State<CalendarDayViewNew> {
       onPageChanged: _onPageChanged,
       itemBuilder: (context, index) {
         final pageDate = widget.selectedDate.add(Duration(days: index - 1));
-        final pageDateKey = DateTime(pageDate.year, pageDate.month, pageDate.day);
+        final pageDateKey =
+            DateTime(pageDate.year, pageDate.month, pageDate.day);
         final pageDay = widget.calendarDays[pageDateKey];
 
         return SingleChildScrollView(
@@ -86,7 +87,7 @@ class _CalendarDayViewNewState extends State<CalendarDayViewNew> {
               const SizedBox(height: 24),
 
               // Event Card
-              if (pageDay != null && pageDay.hasOutfit)
+              if (pageDay != null && pageDay.hasEvent)
                 FashionEventCardNew(
                   event: pageDay,
                   onTap: () => widget.onEventTapped(pageDay),
@@ -124,8 +125,8 @@ class _CalendarDayViewNewState extends State<CalendarDayViewNew> {
               child: Text(
                 '${date.day}',
                 style: theme.titleLarge(color: theme.primary).copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
             ),
           ),
@@ -137,8 +138,8 @@ class _CalendarDayViewNewState extends State<CalendarDayViewNew> {
                 Text(
                   _getDayName(date),
                   style: theme.titleMedium(color: theme.textPrimary).copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -189,7 +190,9 @@ class _CalendarDayViewNewState extends State<CalendarDayViewNew> {
 
   String _getDayName(DateTime date) {
     final now = DateTime.now();
-    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+    if (date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day) {
       return 'Today';
     }
     final tomorrow = now.add(const Duration(days: 1));

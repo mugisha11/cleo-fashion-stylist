@@ -1,6 +1,7 @@
 /// Intelligent Sidebar
 /// Tiny, elegant, minimal navigation - "Less UI, more intelligence"
 library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,12 +50,12 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
   @override
   void initState() {
     super.initState();
-    
+
     _expandController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    
+
     _widthAnimation = Tween<double>(
       begin: _collapsedWidth,
       end: _expandedWidth,
@@ -64,7 +65,7 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
         curve: Curves.easeOutCubic,
       ),
     );
-    
+
     _opacityAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -85,7 +86,7 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
   void _handleHover(bool isHovered) {
     ref.read(sidebarHoveredProvider.notifier).state = isHovered;
     final isManuallyExpanded = ref.read(sidebarExpandedProvider);
-    
+
     if (isHovered) {
       _expandController.forward();
     } else {
@@ -95,7 +96,7 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
       }
     }
   }
-  
+
   void _handleSidebarTap() {
     // Click to toggle lock state
     _toggleExpanded();
@@ -104,7 +105,7 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
   void _toggleExpanded() {
     final isExpanded = ref.read(sidebarExpandedProvider);
     ref.read(sidebarExpandedProvider.notifier).state = !isExpanded;
-    
+
     if (!isExpanded) {
       _expandController.forward();
     } else {
@@ -131,183 +132,188 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
         onEnter: (_) => _handleHover(true),
         onExit: (_) => _handleHover(false),
         child: AnimatedBuilder(
-        animation: _expandController,
-        builder: (context, child) {
-          return Container(
-            width: _widthAnimation.value,
-            decoration: BoxDecoration(
-              color: theme.surface,
-              boxShadow: theme.cardGlow != null
-                  ? [theme.cardGlow!]
-                  : [
-                      BoxShadow(
-                        color: theme.backgroundPrimary.withValues(alpha: 0.1),
-                        blurRadius: 20,
-                        offset: const Offset(2, 0),
-                      ),
-                    ],
-            ),
-            child: Column(
-              children: [
-                // Logo at top
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                  child: Opacity(
-                    opacity: isExpanded || isHovered ? 1.0 : 0.0,
-                    child: AnimatedOpacity(
-                      opacity: _opacityAnimation.value,
-                      duration: const Duration(milliseconds: 200),
-                      child: const NikonyxLogo.small(
-                        borderRadius: BorderRadius.all(Radius.circular(8)),
+          animation: _expandController,
+          builder: (context, child) {
+            return Container(
+              width: _widthAnimation.value,
+              decoration: BoxDecoration(
+                color: theme.surface,
+                boxShadow: theme.cardGlow != null
+                    ? [theme.cardGlow!]
+                    : [
+                        BoxShadow(
+                          color: theme.backgroundPrimary.withValues(alpha: 0.1),
+                          blurRadius: 20,
+                          offset: const Offset(2, 0),
+                        ),
+                      ],
+              ),
+              child: Column(
+                children: [
+                  // Logo at top
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16, horizontal: 12),
+                    child: Opacity(
+                      opacity: isExpanded || isHovered ? 1.0 : 0.0,
+                      child: AnimatedOpacity(
+                        opacity: _opacityAnimation.value,
+                        duration: const Duration(milliseconds: 200),
+                        child: const NikonyxLogo.small(
+                          borderRadius: BorderRadius.all(Radius.circular(8)),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                // Top Section - Primary Navigation
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    children: [
-                      // Lock indicator (when expanded)
-                      if (isExpanded || isHovered)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          child: Opacity(
-                            opacity: _opacityAnimation.value,
-                            child: Row(
-                              children: [
-                                Icon(
-                                  isExpanded ? Icons.lock : Icons.lock_open,
-                                  size: 14,
-                                  color: theme.textTertiary,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  isExpanded ? 'Pinned open' : 'Tap to expand',
-                                  style: TextStyle(
-                                    fontSize: 11,
+                  // Top Section - Primary Navigation
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      children: [
+                        // Lock indicator (when expanded)
+                        if (isExpanded || isHovered)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            child: Opacity(
+                              opacity: _opacityAnimation.value,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isExpanded ? Icons.lock : Icons.lock_open,
+                                    size: 14,
                                     color: theme.textTertiary,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isExpanded
+                                        ? 'Pinned open'
+                                        : 'Tap to expand',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: theme.textTertiary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
+                        _buildNavItem(
+                          icon: Icons.home_outlined,
+                          activeIcon: Icons.home,
+                          label: 'Dashboard',
+                          route: Routes.dashboard,
+                          isActive: widget.currentRoute == Routes.dashboard,
                         ),
-                      _buildNavItem(
-                        icon: Icons.home_outlined,
-                        activeIcon: Icons.home,
-                        label: 'Home',
-                        route: Routes.dashboard,
-                        isActive: widget.currentRoute == Routes.dashboard,
-                      ),
-                      _buildNavItem(
-                        icon: Icons.auto_awesome_outlined,
-                        activeIcon: Icons.auto_awesome,
-                        label: 'Try On',
-                        route: Routes.tryon,
-                        isActive: widget.currentRoute == Routes.tryon,
-                      ),
-                      _buildNavItem(
-                        icon: Icons.checkroom_outlined,
-                        activeIcon: Icons.checkroom,
-                        label: 'My Closet',
-                        route: Routes.wardrobe,
-                        isActive: widget.currentRoute == Routes.wardrobe,
-                      ),
-                      _buildNavItem(
-                        icon: Icons.star_outline,
-                        activeIcon: Icons.star,
-                        label: 'Picks for You',
-                        route: Routes.recommendations,
-                        isActive: widget.currentRoute == Routes.recommendations,
-                      ),
-                      _buildNavItem(
-                        icon: Icons.calendar_today_outlined,
-                        activeIcon: Icons.calendar_today,
-                        label: 'Calendar',
-                        route: Routes.calendar,
-                        isActive: widget.currentRoute == Routes.calendar,
-                        showBadge: false,
-                      ),
-                      _buildNavItem(
-                        icon: Icons.grid_view_rounded,
-                        activeIcon: Icons.grid_view_rounded,
-                        label: 'Style Feed',
-                        route: Routes.styleFeed,
-                        isActive: widget.currentRoute == Routes.styleFeed,
-                      ),
-                      _buildNavItem(
-                        icon: Icons.photo_library_outlined,
-                        activeIcon: Icons.photo_library,
-                        label: 'My Outfits',
-                        route: Routes.generatedOutfits,
-                        isActive: widget.currentRoute == Routes.generatedOutfits,
-                      ),
-                      _buildNavItem(
-                        icon: Icons.notifications_outlined,
-                        activeIcon: Icons.notifications,
-                        label: 'Alerts',
-                        route: null, // Opens panel instead
-                        isActive: false,
-                        onTap: () => _showNotificationPanel(),
-                        showBadge: true,
-                      ),
-                    ],
+                        _buildNavItem(
+                          icon: Icons.auto_awesome_outlined,
+                          activeIcon: Icons.auto_awesome,
+                          label: 'Virtual Try-On',
+                          route: Routes.tryon,
+                          isActive: widget.currentRoute == Routes.tryon,
+                        ),
+                        _buildNavItem(
+                          icon: Icons.checkroom_outlined,
+                          activeIcon: Icons.checkroom,
+                          label: 'Wardrobe',
+                          route: Routes.wardrobe,
+                          isActive: widget.currentRoute == Routes.wardrobe,
+                        ),
+                        _buildNavItem(
+                          icon: Icons.people_outline,
+                          activeIcon: Icons.people,
+                          label: 'Friends Space',
+                          route: Routes.styleFeed,
+                          isActive: widget.currentRoute == Routes.styleFeed,
+                        ),
+                        _buildNavItem(
+                          icon: Icons.calendar_today_outlined,
+                          activeIcon: Icons.calendar_today,
+                          label: 'Calendar',
+                          route: Routes.calendar,
+                          isActive: widget.currentRoute == Routes.calendar,
+                          showBadge: false,
+                        ),
+                        _buildNavItem(
+                          icon: Icons.grid_view_rounded,
+                          activeIcon: Icons.grid_view_rounded,
+                          label: 'Fashion Feed',
+                          route: Routes.styleFeed,
+                          isActive: widget.currentRoute == Routes.styleFeed,
+                        ),
+                        _buildNavItem(
+                          icon: Icons.shopping_bag_outlined,
+                          activeIcon: Icons.shopping_bag,
+                          label: 'Shopping',
+                          route: Routes.generatedOutfits,
+                          isActive:
+                              widget.currentRoute == Routes.generatedOutfits,
+                        ),
+                        _buildNavItem(
+                          icon: Icons.notifications_outlined,
+                          activeIcon: Icons.notifications,
+                          label: 'Notifications',
+                          route: null, // Opens panel instead
+                          isActive: false,
+                          onTap: () => _showNotificationPanel(),
+                          showBadge: true,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                
-                // Divider
-                Divider(
-                  height: 1,
-                  color: theme.borderLight,
-                  indent: 12,
-                  endIndent: 12,
-                ),
-                
-                // Bottom Section - Secondary Navigation
-                Column(
-                  children: [
-                    _buildNavItem(
-                      icon: Icons.person_outline,
-                      activeIcon: Icons.person,
-                      label: 'My Profile',
-                      route: Routes.settings,
-                      isActive: widget.currentRoute == Routes.settings,
-                      onTap: widget.onProfileTap,
-                    ),
-                    _buildNavItem(
-                      icon: Icons.settings_outlined,
-                      activeIcon: Icons.settings,
-                      label: 'Settings',
-                      route: Routes.settings,
-                      isActive: widget.currentRoute == Routes.settings,
-                    ),
-                    _buildNavItem(
-                      icon: Icons.help_outline,
-                      activeIcon: Icons.help,
-                      label: 'Help',
-                      route: null,
-                      isActive: false,
-                    ),
-                    if (widget.onLogout != null)
+
+                  // Divider
+                  Divider(
+                    height: 1,
+                    color: theme.borderLight,
+                    indent: 12,
+                    endIndent: 12,
+                  ),
+
+                  // Bottom Section - Secondary Navigation
+                  Column(
+                    children: [
                       _buildNavItem(
-                        icon: Icons.logout,
-                        activeIcon: Icons.logout,
-                        label: 'Sign out',
+                        icon: Icons.person_outline,
+                        activeIcon: Icons.person,
+                        label: 'Profile',
+                        route: Routes.settings,
+                        isActive: widget.currentRoute == Routes.settings,
+                        onTap: widget.onProfileTap,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.settings_outlined,
+                        activeIcon: Icons.settings,
+                        label: 'Settings',
+                        route: Routes.settings,
+                        isActive: widget.currentRoute == Routes.settings,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.help_outline,
+                        activeIcon: Icons.help,
+                        label: 'Help & Support',
                         route: null,
                         isActive: false,
-                        onTap: widget.onLogout,
-                        isDestructive: true,
                       ),
-                  ],
-                ),
-                
-                const SizedBox(height: 12),
-              ],
-            ),
-          );
-        },
-      ),
+                      if (widget.onLogout != null)
+                        _buildNavItem(
+                          icon: Icons.logout,
+                          activeIcon: Icons.logout,
+                          label: 'Logout',
+                          route: null,
+                          isActive: false,
+                          onTap: widget.onLogout,
+                          isDestructive: true,
+                        ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -323,8 +329,8 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
     bool isDestructive = false,
   }) {
     final theme = context.appTheme;
-    final isExpanded = ref.watch(sidebarExpandedProvider) || 
-                       ref.watch(sidebarHoveredProvider);
+    final isExpanded =
+        ref.watch(sidebarExpandedProvider) || ref.watch(sidebarHoveredProvider);
     // Don't block on notification provider - use try-catch to avoid hangs
     int? unreadCount;
     if (showBadge) {
@@ -379,7 +385,7 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
                             ? theme.accentError
                             : theme.textSecondary),
                   ),
-                  
+
                   // Active indicator bar
                   if (isActive)
                     Positioned(
@@ -394,7 +400,7 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
                         ),
                       ),
                     ),
-                  
+
                   // Badge (non-blocking)
                   if (showBadge && unreadCount != null && unreadCount > 0)
                     Positioned(
@@ -409,7 +415,9 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
                             color: theme.surface,
                             width: 2,
                           ),
-                          boxShadow: theme.primaryGlow != null ? [theme.primaryGlow!] : null,
+                          boxShadow: theme.primaryGlow != null
+                              ? [theme.primaryGlow!]
+                              : null,
                         ),
                         constraints: const BoxConstraints(
                           minWidth: 16,
@@ -428,7 +436,7 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
                     ),
                 ],
               ),
-              
+
               // Label (only when expanded)
               if (isExpanded) ...[
                 const SizedBox(width: 12),
@@ -439,7 +447,8 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
                       label,
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                        fontWeight:
+                            isActive ? FontWeight.w600 : FontWeight.w400,
                         color: isActive
                             ? theme.primary
                             : (isDestructive

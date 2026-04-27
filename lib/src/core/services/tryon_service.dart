@@ -37,8 +37,8 @@ class TryOnService {
     }
 
     throw TryOnException(
-      'Backend unreachable',
-      'Cannot reach the try-on backend. Please start the local backend and ensure it is running at http://localhost:8001.',
+      '',
+      'Please check your network and try again.',
       originalError: errors.join('\n'),
     );
   }

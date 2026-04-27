@@ -28,7 +28,7 @@ class CalendarMonthViewNew extends StatelessWidget {
     final firstWeekday = firstDay.weekday;
     final daysInMonth = lastDay.day;
     final today = DateTime.now();
-    
+
     final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     return Padding(
@@ -44,9 +44,10 @@ class CalendarMonthViewNew extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     child: Text(
                       day,
-                      style: theme.bodySmall(color: theme.textSecondary).copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style:
+                          theme.bodySmall(color: theme.textSecondary).copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                     ),
                   ),
                 ),
@@ -73,7 +74,8 @@ class CalendarMonthViewNew extends StatelessWidget {
                 }
 
                 final day = index - (firstWeekday - 1) + 1;
-                final date = DateTime(selectedDate.year, selectedDate.month, day);
+                final date =
+                    DateTime(selectedDate.year, selectedDate.month, day);
                 final dateKey = DateTime(date.year, date.month, date.day);
                 final calendarDay = calendarDays[dateKey];
 
@@ -83,7 +85,7 @@ class CalendarMonthViewNew extends StatelessWidget {
                 final isSelected = date.year == selectedDate.year &&
                     date.month == selectedDate.month &&
                     date.day == selectedDate.day;
-                final hasEvent = calendarDay?.hasOutfit ?? false;
+                final hasEvent = calendarDay?.hasEvent ?? false;
 
                 return _buildDayCell(
                   theme,
@@ -137,7 +139,6 @@ class CalendarMonthViewNew extends StatelessWidget {
         ),
         child: Stack(
           children: [
-
             // Content
             Padding(
               padding: const EdgeInsets.all(8),
@@ -149,12 +150,12 @@ class CalendarMonthViewNew extends StatelessWidget {
                     '$day',
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: (isSelected || isToday) ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: (isSelected || isToday)
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                       color: isSelected
                           ? theme.primary
-                          : (isToday
-                              ? theme.primary
-                              : theme.textPrimary),
+                          : (isToday ? theme.primary : theme.textPrimary),
                     ),
                   ),
 

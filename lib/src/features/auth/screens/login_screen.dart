@@ -134,7 +134,8 @@ class _UnderlineFieldState extends State<_UnderlineField> {
 
 /// Blue pill "LOGIN" / "Next" button
 class _BlueBtn extends StatelessWidget {
-  const _BlueBtn({required this.label, required this.onTap, this.wide = false});
+  const _BlueBtn(
+      {required this.label, required this.onTap, required this.wide});
   final String label;
   final VoidCallback onTap;
   final bool wide;
@@ -491,23 +492,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           width: double.infinity,
           child: Container(
             decoration: const BoxDecoration(gradient: _loginGradient),
-            child: SafeArea(
+            child: const SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 12, 16, 28),
+                padding: EdgeInsets.fromLTRB(24, 12, 16, 28),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ··· menu top-right
-                    const Align(
+                    Align(
                         alignment: Alignment.topRight,
                         child: _MenuDots(dark: true)),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     // Logo
-                    const NikonyxLogo.medium(),
-                    const SizedBox(height: 12),
+                    NikonyxLogo.medium(),
+                    SizedBox(height: 12),
                     // Title
-                    const Text('Hello\nLog In!',
+                    Text('Hello\nLog In!',
                         style: TextStyle(
                             color: AuthScreenColors.loginHeading,
                             fontSize: 34,
@@ -565,7 +566,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Center(
                     child: _loading
                         ? const CircularProgressIndicator(color: _btnBlue)
-                        : _BlueBtn(label: 'Login', onTap: _onLogin)),
+                        : _BlueBtn(
+                            label: 'Login', onTap: _onLogin, wide: true)),
 
                 const SizedBox(height: 20),
                 _AuthMethodBtn(
@@ -798,7 +800,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 Center(
                     child: _loading
                         ? const CircularProgressIndicator(color: _btnBlue)
-                        : _BlueBtn(label: 'Next', onTap: _onNext)),
+                        : _BlueBtn(label: 'Next', onTap: _onNext, wide: true)),
                 const SizedBox(height: 20),
                 _AuthMethodBtn(
                     icon: Image.asset(

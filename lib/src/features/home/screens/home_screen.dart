@@ -11,6 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../auth/providers/auth_provider.dart';
+import '../providers/search_provider.dart';
+import '../widgets/nx_smart_search_bar.dart';
 import '../../../core/widgets/fashion_drawer.dart';
 import '../../../routes.dart';
 
@@ -429,8 +431,11 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
   late PageController _carouselController;
   final int _currentCarouselIndex = 0;
   int _selectedTabIndex = 0;
+  String? _customOccasion;
   late stt.SpeechToText _speech;
   bool _isListening = false;
+  bool _isProcessing = false;
+  final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   late AnimationController _logoRotationController;
 
@@ -441,7 +446,13 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
   int _inspirationPage = 0;
   int _fitsPage = 0;
 
-  static const _tabs = ['Date', 'Wedding', 'Dining Out', 'Daily', 'Interview'];
+  static const _defaultOccasions = [
+    'Date',
+    'Wedding',
+    'Dining Out',
+    'Daily',
+    'Interview'
+  ];
   static const _actions = ['Create\nOutfits', 'Saved\nOutfits', 'Shopping'];
 
   static const _inspirationUrls = [
@@ -488,7 +499,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
     } else if (label.contains('Saved')) {
       Navigator.of(context).pushNamed(Routes.generatedOutfits);
     } else {
-      Navigator.of(context).pushNamed(Routes.styleFeed);
+      Navigator.of(context).pushNamed(Routes.recommendations);
     }
   }
 
@@ -515,7 +526,14 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
         _speech.listen(onResult: (result) {
           setState(() {
             _searchQuery = result.recognizedWords;
-            if (result.finalResult) _isListening = false;
+            _searchController.text = result.recognizedWords;
+            if (result.finalResult) {
+              _isListening = false;
+              final finalQuery = result.recognizedWords.trim();
+              if (finalQuery.isNotEmpty) {
+                _submitSearchQuery(finalQuery);
+              }
+            }
           });
         });
       }
@@ -525,10 +543,47 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
     }
   }
 
+  Future<void> _submitSearchQuery(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return;
+
+    setState(() {
+      _isProcessing = true;
+      _searchQuery = trimmed;
+      _searchController.text = trimmed;
+    });
+
+    await ref
+        .read(searchHistoryProvider.notifier)
+        .addSearchQuery(SearchHistoryEntry(
+          query: trimmed,
+          timestamp: DateTime.now(),
+        ));
+
+    try {
+      final result = await ref.read(outfitSuggestionsProvider(trimmed).future);
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+
+      Navigator.of(context).pushNamed(
+        Routes.recommendations,
+        arguments: {'initialSearchQuery': trimmed},
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+      Navigator.of(context).pushNamed(
+        Routes.recommendations,
+        arguments: {'initialSearchQuery': trimmed},
+      );
+    }
+  }
+
   @override
   void dispose() {
     _carouselController.dispose();
     _speech.cancel();
+    _searchController.dispose();
     _logoRotationController.dispose();
     _inspirationCtrl.dispose();
     _fitsCtrl.dispose();
@@ -708,108 +763,142 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
   }
 
   // ─── SEARCH / ASK BAR ─────────────────────────────────────────────────────
-  Widget _searchBar() => GestureDetector(
-        onTap: () => Navigator.of(context).pushNamed(Routes.dashboard),
-        child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-            decoration: BoxDecoration(
-                color: const Color(0xFF08142E),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: const Color(0xFF2A4070), width: 1),
-                boxShadow: [
-                  BoxShadow(
-                      color: const Color(0xFF2255CC).withOpacity(0.3),
-                      blurRadius: 12)
-                ]),
-            child: Row(children: [
-              // mini NX logo in search bar
-              Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const RadialGradient(
-                          colors: [Color(0xFF2255BB), Color(0xFF060F28)]),
-                      border: Border.all(
-                          color: _C.chr0.withOpacity(0.6), width: 1)),
-                  child: Center(
-                      child: ShaderMask(
-                          shaderCallback: (r) => const LinearGradient(colors: [
-                                Color(0xFFFFFFFF),
-                                Color(0xFFAABBDD)
-                              ]).createShader(r),
-                          child: const Text('NX',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w900))))),
-              const SizedBox(width: 10),
-              Container(
-                  width: 1, height: 20, color: Colors.white.withOpacity(0.2)),
-              const SizedBox(width: 10),
-              Expanded(
-                  child: Text(
-                      _searchQuery.isNotEmpty
-                          ? _searchQuery
-                          : 'Ask NX for Outfit Suggestions',
-                      style: TextStyle(
-                          color: _searchQuery.isNotEmpty
-                              ? Colors.white
-                              : Colors.white70,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis)),
-              GestureDetector(
-                  onTap: _startListening,
-                  child: Icon(Icons.mic_outlined,
-                      color: _isListening ? Colors.redAccent : Colors.white70,
-                      size: 22)),
-            ])),
+  Widget _searchBar() => NXSmartSearchBar(
+        controller: _searchController,
+        onMicPressed: _startListening,
+        isListening: _isListening,
+        isProcessing: _isProcessing,
+        onSubmit: _submitSearchQuery,
       )
           .animate()
           .fadeIn(duration: 700.ms)
           .slideY(begin: 0.15, duration: 700.ms);
 
+  Future<void> _promptForCustomOccasion() async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add custom occasion'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: 'e.g. rooftop brunch',
+            ),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(controller.text.trim());
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == null || result.trim().isEmpty) return;
+
+    setState(() {
+      _customOccasion = result.trim();
+      _selectedTabIndex = _getOccasionLabels().indexOf(_customOccasion!);
+    });
+    await _performOccasionSearch(_customOccasion!);
+  }
+
+  List<String> _getOccasionLabels() {
+    final labels = [..._defaultOccasions];
+    if (_customOccasion != null && _customOccasion!.isNotEmpty) {
+      labels.add(_customOccasion!);
+    }
+    labels.add('Add Occasion');
+    return labels;
+  }
+
+  Future<void> _performOccasionSearch(String occasion) async {
+    final trimmedOccasion = occasion.trim();
+    if (trimmedOccasion.isEmpty) return;
+
+    await ref
+        .read(occasionFrequencyProvider.notifier)
+        .recordOccasionSelection(trimmedOccasion);
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushNamed(
+      Routes.recommendations,
+      arguments: {
+        'initialSearchQuery':
+            'Outfit suggestions for ${trimmedOccasion.toLowerCase()}',
+      },
+    );
+  }
+
+  void _handleOccasionTap(String label, int index) {
+    if (label == 'Add Occasion') {
+      _promptForCustomOccasion();
+      return;
+    }
+
+    setState(() {
+      _selectedTabIndex = index;
+    });
+    _performOccasionSearch(label);
+  }
+
   // ─── OCCASION TABS ─────────────────────────────────────────────────────────
-  Widget _occasionTabs() => SizedBox(
-        height: 44,
-        child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _tabs.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (_, i) {
-              final sel = _selectedTabIndex == i;
-              return GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() => _selectedTabIndex = i);
-                  },
-                  child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 9),
-                      decoration: BoxDecoration(
-                          color: sel
-                              ? Colors.white
-                              : Colors.white.withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(
-                              color: sel
-                                  ? Colors.white
-                                  : Colors.white.withOpacity(0.35),
-                              width: 1)),
-                      child: Text(_tabs[i],
-                          style: TextStyle(
-                              color: sel ? _C.dark : Colors.white,
-                              fontSize: 13,
-                              fontWeight:
-                                  sel ? FontWeight.w800 : FontWeight.w500))));
-            }),
-      )
-          .animate()
-          .fadeIn(duration: 650.ms)
-          .slideY(begin: 0.15, duration: 650.ms);
+  Widget _occasionTabs() {
+    final labels = _getOccasionLabels();
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: labels.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final label = labels[i];
+          final sel = _selectedTabIndex == i;
+          final isAddButton = label == 'Add Occasion';
+          return GestureDetector(
+            onTap: () => _handleOccasionTap(label, i),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+              decoration: BoxDecoration(
+                color: isAddButton
+                    ? Colors.white.withOpacity(0.12)
+                    : sel
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: sel || isAddButton
+                      ? Colors.white
+                      : Colors.white.withOpacity(0.35),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: sel ? _C.dark : Colors.white,
+                  fontSize: 13,
+                  fontWeight: sel ? FontWeight.w800 : FontWeight.w500,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    ).animate().fadeIn(duration: 650.ms).slideY(begin: 0.15, duration: 650.ms);
+  }
 
   // ─── 3 ACTION CARDS ────────────────────────────────────────────────────────
   Widget _actionCards() => Row(
@@ -841,7 +930,16 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
                 items: _inspirationUrls,
                 ctrl: _inspirationCtrl,
                 page: _inspirationPage,
-                onPage: (p) => setState(() => _inspirationPage = p))),
+                onPage: (p) => setState(() => _inspirationPage = p),
+                onCardTap: (idx) => Navigator.of(context).pushNamed(
+                      Routes.inspiration,
+                      arguments: {
+                        'imageUrl': _inspirationUrls[idx].$1,
+                        'title': _inspirationUrls[idx].$2,
+                        'description':
+                            'Curated outfit inspiration from your style preferences',
+                      },
+                    ))),
         const SizedBox(width: 10),
         Expanded(
             child: _carouselCol(
@@ -849,7 +947,16 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
                 items: _fitsUrls,
                 ctrl: _fitsCtrl,
                 page: _fitsPage,
-                onPage: (p) => setState(() => _fitsPage = p))),
+                onPage: (p) => setState(() => _fitsPage = p),
+                onCardTap: (idx) => Navigator.of(context).pushNamed(
+                      Routes.inspiration,
+                      arguments: {
+                        'imageUrl': _fitsUrls[idx].$1,
+                        'title': _fitsUrls[idx].$2,
+                        'description':
+                            'Perfect matches from your existing wardrobe',
+                      },
+                    ))),
       ]);
 
   Widget _carouselCol({
@@ -858,6 +965,7 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
     required PageController ctrl,
     required int page,
     required ValueChanged<int> onPage,
+    required Function(int) onCardTap,
   }) =>
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Section title with dashes
@@ -880,16 +988,18 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
         // Carousel
         Stack(children: [
           SizedBox(
-              height: 190,
-              child: PageView.builder(
-                  controller: ctrl,
-                  onPageChanged: onPage,
-                  itemCount: items.length,
-                  itemBuilder: (_, i) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: _InspCard(
-                          imageUrl: items[i].$1, label: items[i].$2)))),
-          // left arrow
+            height: 190,
+            child: PageView.builder(
+                controller: ctrl,
+                onPageChanged: onPage,
+                itemCount: items.length,
+                itemBuilder: (_, i) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: _InspCard(
+                        imageUrl: items[i].$1,
+                        label: items[i].$2,
+                        onCopyLook: () => onCardTap(i)))),
+          ),
           Positioned(
               left: 0,
               top: 0,
@@ -1013,11 +1123,17 @@ class _ModernHomeScreenState extends ConsumerState<ModernHomeScreen>
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  INSPIRATION CARD
+//  INSPIRATION CARD — Professional with "Copy this look" button
 // ══════════════════════════════════════════════════════════════════════════════
 class _InspCard extends StatelessWidget {
-  const _InspCard({required this.imageUrl, required this.label});
-  final String imageUrl, label;
+  const _InspCard({
+    required this.imageUrl,
+    required this.label,
+    required this.onCopyLook,
+  });
+  final String imageUrl;
+  final String label;
+  final VoidCallback onCopyLook;
 
   @override
   Widget build(BuildContext ctx) => Container(
@@ -1053,15 +1169,50 @@ class _InspCard extends StatelessWidget {
                             end: Alignment.topCenter,
                             colors: [Color(0xEE000022), Colors.transparent],
                             stops: [0.0, 1.0])),
-                    child: Text(label,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            shadows: [
-                              Shadow(color: Colors.black54, blurRadius: 3)
-                            ]),
-                        textAlign: TextAlign.center,
-                        maxLines: 2))),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(label,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                shadows: [
+                                  Shadow(color: Colors.black54, blurRadius: 3)
+                                ]),
+                            textAlign: TextAlign.center,
+                            maxLines: 2),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: onCopyLook,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 6, horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.95),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add,
+                                    size: 12, color: Color(0xFF0A1830)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Copy this look',
+                                  style: TextStyle(
+                                    color: Color(0xFF0A1830),
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ))),
           ])));
 }

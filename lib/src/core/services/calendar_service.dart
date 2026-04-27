@@ -69,18 +69,28 @@ class CalendarService {
   /// Save or update a calendar day
   Future<void> saveCalendarDay(CalendarDay day) async {
     try {
-      if (_userId.isEmpty) return;
+      if (_userId.isEmpty) {
+        throw Exception('User not authenticated - cannot save calendar day');
+      }
+
+      debugPrint('📅 Saving calendar day for user: $_userId, date: ${day.date}');
 
       final dateStr = DateTime(day.date.year, day.date.month, day.date.day)
           .toIso8601String()
           .split('T')[0];
 
-      await _supabase.from('calendar_days').upsert({
+      final data = {
         'user_id': _userId,
         'date': dateStr,
         ...day.toJson(),
-      });
+      };
+
+      debugPrint('📅 Calendar data to save: $data');
+
+      await _supabase.from('calendar_days').upsert(data);
+      debugPrint('✅ Calendar day saved successfully');
     } catch (e) {
+      debugPrint('❌ Failed to save calendar day: $e');
       throw Exception('Failed to save calendar day: $e');
     }
   }

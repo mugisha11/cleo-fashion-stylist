@@ -1357,13 +1357,23 @@ def _retailer_host_contains(site: str) -> Optional[str]:
     return None
 
 
-def _build_search_query(query: str, site: Optional[str], gender: Optional[str] = None) -> str:
+def _build_search_query(
+    query: str,
+    site: Optional[str],
+    gender: Optional[str] = None,
+    budget: Optional[str] = None,
+) -> str:
     base_query = query.strip()
     if not base_query:
         return ''
+
     normalized_gender = _normalize_gender(gender)
     if normalized_gender and normalized_gender != 'unisex' and normalized_gender not in base_query.lower():
         base_query = f"{base_query} {normalized_gender}"
+
+    budget_phrase = _budget_phrase(budget)
+    if budget_phrase and budget_phrase not in base_query.lower():
+        base_query = f"{base_query} {budget_phrase}"
 
     if not any(keyword in base_query.lower() for keyword in CLOTHING_KEYWORDS):
         base_query = f"{base_query} clothing"
@@ -1373,6 +1383,21 @@ def _build_search_query(query: str, site: Optional[str], gender: Optional[str] =
         if host:
             return f"{base_query} site:{host}"
     return base_query
+
+
+def _budget_phrase(budget: Optional[str]) -> str:
+    if not budget:
+        return ''
+    normalized = budget.strip().lower()
+    if 'budget' in normalized:
+        return 'budget-friendly'
+    if 'mid' in normalized:
+        return 'mid-range'
+    if 'premium' in normalized:
+        return 'premium'
+    if 'luxury' in normalized:
+        return 'luxury'
+    return budget.strip()
 
 
 def _is_retailer_link(link: str, site: str) -> bool:
@@ -1484,6 +1509,7 @@ async def rewrite_search_query(
     q: str = Query(..., min_length=1, description="User search request (e.g. find a summer dress for brunch)"),
     site: Optional[str] = Query(None, description="Optional retailer name to bias the query."),
     gender: Optional[str] = Query(None, description="Optional user gender preference for search relevance."),
+    budget: Optional[str] = Query(None, description="Optional user budget preference for search relevance."),
 ):
     original_query = (q or "").strip()
     if not original_query:
@@ -1495,7 +1521,7 @@ async def rewrite_search_query(
         )
 
     if not settings.OPENROUTER_API_KEY:
-        rewritten = _build_search_query(original_query, site, gender)
+        rewritten = _build_search_query(original_query, site, gender, budget)
         return ProductSearchQueryResponse(
             query=rewritten,
             original_query=original_query,
@@ -1504,7 +1530,13 @@ async def rewrite_search_query(
         )
 
     try:
-        rewritten = await openrouter_service.rewrite_shopping_query(original_query, site, gender, trace_id="query-rewrite")
+        rewritten = await openrouter_service.rewrite_shopping_query(
+            original_query,
+            site,
+            gender,
+            budget,
+            trace_id="query-rewrite",
+        )
         return ProductSearchQueryResponse(
             query=rewritten,
             original_query=original_query,
@@ -1512,7 +1544,7 @@ async def rewrite_search_query(
         )
     except Exception as e:
         logger.warning("Shopping query rewrite failed: %s", e)
-        rewritten = _build_search_query(original_query, site, gender)
+        rewritten = _build_search_query(original_query, site, gender, budget)
         return ProductSearchQueryResponse(
             query=rewritten,
             original_query=original_query,
@@ -1527,6 +1559,7 @@ async def search_products(
     limit: int = Query(12, ge=1, le=50),
     site: Optional[str] = Query(None, description="Optional retailer name to bias the search."),
     gender: Optional[str] = Query(None, description="Optional user gender preference for the search."),
+    budget: Optional[str] = Query(None, description="Optional user budget preference for the search."),
 ):
     """
     Search for fashion products. Returns image URL, title, and buy link for each.
@@ -1540,48 +1573,61 @@ async def search_products(
     if site and site.lower() != 'any store':
         query = f"{query} {site}"
 
-    if not settings.OPENROUTER_API_KEY:
-        return ProductSearchResponse(
-            products=[],
-            query=query,
-            message="Live runway search is not configured. Set OPENROUTER_API_KEY and try again.",
-        )
-
+    use_openrouter = bool(settings.OPENROUTER_API_KEY)
     resource_mgr = get_resource_manager()
     httpx_client = resource_mgr.httpx_client if resource_mgr and resource_mgr.httpx_client else None
+
+    if not use_openrouter:
+        logger.warning("OPENROUTER_API_KEY not configured; using fallback product sources.")
 
     try:
         raw_products: List[ProductItem] = []
         seen_links = set()
         seen_hosts = set()
-        try:
-            search_query = await asyncio.wait_for(
-                openrouter_service.rewrite_shopping_query(
+        search_query = _build_search_query(
+            original_query,
+            site if site and site.lower() != 'any store' else None,
+            gender,
+            budget,
+        )
+        raw_results: List[dict] = []
+
+        if use_openrouter:
+            try:
+                search_query = await asyncio.wait_for(
+                    openrouter_service.rewrite_shopping_query(
+                        original_query,
+                        site if site and site.lower() != 'any store' else None,
+                        gender,
+                        budget,
+                        trace_id="query-rewrite",
+                    ),
+                    timeout=8.0,
+                )
+            except Exception as e:
+                logger.warning("Shopping query rewrite failed or timed out: %s", e)
+                search_query = _build_search_query(
                     original_query,
                     site if site and site.lower() != 'any store' else None,
                     gender,
-                    trace_id="query-rewrite",
-                ),
-                timeout=8.0,
-            )
-        except Exception as e:
-            logger.warning("Shopping query rewrite failed or timed out: %s", e)
-            search_query = _build_search_query(original_query, site if site and site.lower() != 'any store' else None, gender)
+                    budget,
+                )
 
-        try:
-            raw_results = await asyncio.wait_for(
-                openrouter_service.search_shopping_products(
-                    search_query,
-                    retailer=site if site and site.lower() != 'any store' else None,
-                    gender=gender,
-                    limit=min(max(limit, 20), 30),
-                    trace_id="openrouter-product-search",
-                ),
-                timeout=12.0,  # Increased from 8.0 to 12.0 seconds
-            )
-        except Exception as e:
-            logger.warning("Shopping product search failed or timed out: %s", e)
-            raw_results = []
+            try:
+                raw_results = await asyncio.wait_for(
+                    openrouter_service.search_shopping_products(
+                        search_query,
+                        retailer=site if site and site.lower() != 'any store' else None,
+                        gender=gender,
+                        budget=budget,
+                        limit=min(max(limit, 20), 30),
+                        trace_id="openrouter-product-search",
+                    ),
+                    timeout=12.0,  # Increased from 8.0 to 12.0 seconds
+                )
+            except Exception as e:
+                logger.warning("Shopping product search failed or timed out: %s", e)
+                raw_results = []
 
         for item in raw_results:
             if not isinstance(item, dict):

@@ -188,7 +188,7 @@ class CosmicFooter extends StatelessWidget {
     required this.onWardrobe,
     required this.onHome,
     required this.onFriends,
-    required this.onProfile,
+    required this.onOutfits,
   });
   final double bottomPadding;
   final int activeIndex;
@@ -196,7 +196,7 @@ class CosmicFooter extends StatelessWidget {
   final VoidCallback onWardrobe;
   final VoidCallback onHome;
   final VoidCallback onFriends;
-  final VoidCallback onProfile;
+  final VoidCallback onOutfits;
 
   @override
   Widget build(BuildContext ctx) {
@@ -285,12 +285,12 @@ class CosmicFooter extends StatelessWidget {
               onTap: onFriends,
             ),
             const _NavSep(),
-            // Profile
+            // Outfits
             _NavItem(
-              icon: const _NavIcon(data: Icons.person_outline, size: 20),
-              label: 'Profile',
+              icon: const _NavIcon(data: Icons.style_outlined, size: 20),
+              label: 'Outfits',
               active: activeIndex == 4,
-              onTap: onProfile,
+              onTap: onOutfits,
             ),
           ],
         ),

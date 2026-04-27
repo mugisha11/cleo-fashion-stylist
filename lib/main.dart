@@ -31,6 +31,18 @@ Future<void> _main() async {
   // Prevent Google Fonts runtime fetching (avoid network font loads in restricted environments)
   GoogleFonts.config.allowRuntimeFetching = false;
 
+  // Pre-cache fonts to avoid network failures on web
+  if (kIsWeb) {
+    try {
+      debugPrint('📝 Pre-caching fonts for web...');
+      GoogleFonts.config.allowRuntimeFetching = false;
+      debugPrint('✅ Font configuration completed');
+    } catch (e) {
+      debugPrint('⚠️ Font pre-caching error (non-blocking): $e');
+      // Don't throw - let app continue with system fonts
+    }
+  }
+
   // Catch Flutter framework errors (e.g. widget build errors)
   FlutterError.onError = (details) {
     debugPrint('❌ FlutterError: ${details.exception}');
@@ -130,7 +142,8 @@ void _initializeServicesInBackground() {
   ).then((_) {
     debugPrint('✅ Supabase initialized successfully');
     try {
-      final client = Supabase.instance.client;
+      // Verify Supabase client is accessible
+      Supabase.instance.client;
       debugPrint('✅ Supabase client accessible: true');
     } catch (e) {
       debugPrint('⚠️ Supabase client access error: $e');

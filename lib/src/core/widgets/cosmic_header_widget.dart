@@ -452,10 +452,10 @@ class CosmicHeader extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(colors: [
-                        Color(0xFF50A0FF).withOpacity(0.48),
-                        Color(0xFF2864DC).withOpacity(0.18),
+                        const Color(0xFF50A0FF).withOpacity(0.48),
+                        const Color(0xFF2864DC).withOpacity(0.18),
                         Colors.transparent,
-                      ], stops: [
+                      ], stops: const [
                         0.0,
                         0.36,
                         0.65
@@ -464,15 +464,15 @@ class CosmicHeader extends StatelessWidget {
                   ),
                 ),
                 const NikonyxLogo.medium(),
-                Positioned(
+                const Positioned(
                   top: 0,
                   child: _Flare(size: 11, opacity: 0.9),
                 ),
-                Positioned(
+                const Positioned(
                   right: 0,
                   child: _Flare(size: 7, opacity: 0.68),
                 ),
-                Positioned(
+                const Positioned(
                   left: 0,
                   child: _Flare(size: 7, opacity: 0.68),
                 ),

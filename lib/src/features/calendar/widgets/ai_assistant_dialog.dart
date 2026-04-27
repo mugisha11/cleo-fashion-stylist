@@ -4,6 +4,7 @@ import '../../../core/theme/fashion_design_system.dart';
 import '../../../core/widgets/theme_wrapper.dart';
 import '../theme/calendar_theme.dart';
 import '../services/calendar_ai_integration.dart';
+import '../../../core/services/open_router_service.dart';
 
 /// AI Assistant Dialog - Natural language outfit planning
 /// Integrated with calendar system for automatic event creation
@@ -20,16 +21,16 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
   final List<AIMessage> _messages = [];
   late AnimationController _slideController;
   late Animation<Offset> _slideAnimation;
-
+  bool _isTyping = false;
   @override
   void initState() {
     super.initState();
-    
+
     _slideController = AnimationController(
       vsync: this,
       duration: CalendarTheme.mediumAnimation,
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 1),
       end: Offset.zero,
@@ -39,12 +40,13 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
         curve: CalendarTheme.springCurve,
       ),
     );
-    
+
     _slideController.forward();
-    
+
     // Initial AI greeting
     _messages.add(AIMessage(
-      text: "Hi! I'm your AI style assistant. How can I help you plan your outfits?",
+      text:
+          "Hi! I'm your AI style assistant. How can I help you plan your outfits?",
       isAI: true,
     ));
   }
@@ -63,21 +65,23 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
     setState(() {
       _messages.add(AIMessage(text: text, isAI: false));
       _textController.clear();
+      _isTyping = true;
     });
 
     // Process message and check if it's a calendar request
     final aiIntegration = ref.read(calendarAIIntegrationProvider);
     final lowerText = text.toLowerCase();
-    
+
     // Check if user wants to plan an outfit for a specific date
     if (lowerText.contains('plan') && lowerText.contains('outfit') ||
-        lowerText.contains('friday') || lowerText.contains('saturday') ||
-        lowerText.contains('sunday') || lowerText.contains('tomorrow')) {
-      
+        lowerText.contains('friday') ||
+        lowerText.contains('saturday') ||
+        lowerText.contains('sunday') ||
+        lowerText.contains('tomorrow')) {
       // Parse date from text
       final eventDate = aiIntegration.parseDateTimeFromText(text);
       final eventType = aiIntegration.extractEventType(text);
-      
+
       if (eventDate != null) {
         // Create calendar event
         try {
@@ -89,11 +93,12 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
             eventName: _extractEventName(text),
             confidenceScore: 0.85,
           );
-          
+
           if (mounted) {
             setState(() {
               _messages.add(AIMessage(
-                text: "✅ I've created a calendar event for ${_formatDate(eventDate)}! I'll suggest an outfit for that day. Would you like me to generate outfit options now?",
+                text:
+                    "✅ I've created a calendar event for ${_formatDate(eventDate)}! I'll suggest an outfit for that day. Would you like me to generate outfit options now?",
                 isAI: true,
               ));
             });
@@ -103,9 +108,11 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
           if (mounted) {
             setState(() {
               _messages.add(AIMessage(
-                text: 'I had trouble creating the calendar event. Please try again or create it manually.',
+                text:
+                    'I had trouble creating the calendar event. Please try again or create it manually.',
                 isAI: true,
               ));
+              _isTyping = false;
             });
           }
           return;
@@ -113,34 +120,92 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
       }
     }
 
-    // Simulate AI response (in production, call actual AI service)
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (!mounted) return;
-      setState(() {
-        _messages.add(AIMessage(
-          text: _generateAIResponse(text),
-          isAI: true,
-        ));
-      });
-    });
-  }
+    // Use OpenRouter service for AI response
+    try {
+      final openRouter = OpenRouterService();
+      final systemPrompt = OpenRouterService.buildFashionSystemPrompt(
+        userName: 'Fashion User',
+        userPreferencesSummary:
+            'User is interested in fashion planning and calendar organization. Use chat to handle all calendar scheduling requests. When the user asks to schedule an outfit, respond with SCHEDULE_FOR=<YYYY-MM-DD> and a short plan. Do not ask them to open another screen to schedule.',
+      );
 
-  String _generateAIResponse(String input) {
-    final lower = input.toLowerCase();
-    
-    if (lower.contains('friday') || lower.contains('friday night')) {
-      return "I'll plan a stylish outfit for Friday night! What's the occasion? (party, dinner, casual?)";
+      // Convert conversation history to OpenRouter format
+      final conversationMessages = _messages
+          .map((msg) => {
+                'role': msg.isAI ? 'assistant' : 'user',
+                'content': msg.text,
+              })
+          .toList();
+
+      final response = await openRouter.chatWithFallback(
+        messages: conversationMessages,
+        systemPrompt: systemPrompt,
+        model: OpenRouterService.defaultModel,
+        temperature: 0.7,
+        maxTokens: 512,
+      );
+
+      final scheduleMatch = RegExp(
+              r'SCHEDULE_FOR\s*=\s*([0-9]{4}-[0-9]{2}-[0-9]{2})',
+              caseSensitive: false)
+          .firstMatch(response);
+      if (scheduleMatch != null) {
+        final dateText = scheduleMatch.group(1);
+        final plannedDate =
+            dateText != null ? DateTime.tryParse(dateText) : null;
+        final cleanedResponse = response
+            .replaceAll(
+                RegExp(r'SCHEDULE_FOR\s*=\s*[0-9]{4}-[0-9]{2}-[0-9]{2}',
+                    caseSensitive: false),
+                '')
+            .trim();
+
+        if (plannedDate != null) {
+          final eventType = aiIntegration.extractEventType(text);
+          await aiIntegration.createEventFromAI(
+            date: plannedDate,
+            outfitName: 'AI Suggested Outfit',
+            outfitImageUrl: '',
+            eventType: eventType,
+            eventName: _extractEventName(text),
+            confidenceScore: 0.85,
+          );
+
+          if (mounted) {
+            setState(() {
+              _messages.add(AIMessage(
+                text: cleanedResponse.isNotEmpty
+                    ? '$cleanedResponse\n\n✅ Scheduled for ${_formatDate(plannedDate)}.'
+                    : '✅ I have scheduled your outfit for ${_formatDate(plannedDate)}.',
+                isAI: true,
+              ));
+            });
+          }
+          return;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _messages.add(AIMessage(
+            text: response,
+            isAI: true,
+          ));
+          _isTyping = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _messages.add(AIMessage(
+            text:
+                'Sorry, I\'m having trouble connecting right now. Please try again later.',
+            isAI: true,
+          ));
+          _isTyping = false;
+        });
+      }
     }
-    
-    if (lower.contains('retry') || lower.contains('failed')) {
-      return 'I can help you retry that try-on! When would you like to schedule it?';
-    }
-    
-    if (lower.contains('outfit') && lower.contains('work')) {
-      return "For work, I'd suggest something professional yet stylish. Should I show you some options?";
-    }
-    
-    return 'I understand! Let me help you with that. Can you tell me more about the event or occasion?';
   }
 
   String? _extractEventName(String text) {
@@ -154,10 +219,14 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+    if (date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day) {
       return 'today';
     }
-    if (date.year == now.year && date.month == now.month && date.day == now.day + 1) {
+    if (date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day + 1) {
       return 'tomorrow';
     }
     return '${date.month}/${date.day}';
@@ -166,13 +235,13 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
   @override
   Widget build(BuildContext context) {
     final theme = context.appTheme;
-    
+
     return SlideTransition(
       position: _slideAnimation,
       child: Container(
         height: MediaQuery.of(context).size.height * 0.75,
         decoration: BoxDecoration(
-          color: theme.surface,
+          color: Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: CalendarTheme.deepShadow,
         ),
@@ -187,7 +256,8 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Row(
                 children: [
@@ -211,11 +281,13 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
                       children: [
                         Text(
                           'AI Style Assistant',
-                          style: CalendarTheme.headlineText(color: Colors.white),
+                          style:
+                              CalendarTheme.headlineText(color: Colors.white),
                         ),
                         Text(
                           'Plan outfits with natural language',
-                          style: CalendarTheme.captionText(color: Colors.white70),
+                          style:
+                              CalendarTheme.captionText(color: Colors.white70),
                         ),
                       ],
                     ),
@@ -227,19 +299,22 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
                 ],
               ),
             ),
-            
+
             // Messages
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
-                itemCount: _messages.length,
+                itemCount: _messages.length + (_isTyping ? 1 : 0),
                 itemBuilder: (context, index) {
+                  if (_isTyping && index == _messages.length) {
+                    return _buildTypingIndicator();
+                  }
                   final message = _messages[index];
                   return _buildMessageBubble(message);
                 },
               ),
             ),
-            
+
             // Input
             Container(
               padding: const EdgeInsets.all(16),
@@ -296,6 +371,60 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
     );
   }
 
+  Widget _buildTypingIndicator() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              gradient: CalendarTheme.primaryGradient,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.auto_awesome,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: CalendarTheme.electricAccent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      CalendarTheme.deepCharcoal,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'AI is thinking...',
+                  style: CalendarTheme.bodyText(
+                    color: CalendarTheme.deepCharcoal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMessageBubble(AIMessage message) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -326,17 +455,14 @@ class _AIAssistantDialogState extends ConsumerState<AIAssistantDialog>
                 color: message.isAI
                     ? CalendarTheme.electricAccent.withOpacity(0.1)
                     : null,
-                gradient: message.isAI
-                    ? null
-                    : CalendarTheme.primaryGradient,
+                gradient: message.isAI ? null : CalendarTheme.primaryGradient,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 message.text,
                 style: CalendarTheme.bodyText(
-                  color: message.isAI
-                      ? CalendarTheme.deepCharcoal
-                      : Colors.white,
+                  color:
+                      message.isAI ? CalendarTheme.deepCharcoal : Colors.white,
                 ),
               ),
             ),

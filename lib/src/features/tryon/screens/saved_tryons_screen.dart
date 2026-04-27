@@ -3,8 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
-import '../../../core/widgets/fashion_scaffold.dart';
 import '../../../core/widgets/theme_wrapper.dart';
+import '../../../core/widgets/cosmic_footer_widget.dart';
+import '../../../core/widgets/cosmic_header_widget.dart';
 import '../../../core/theme/app_theme_data.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/luxury_theme.dart';
@@ -12,29 +13,87 @@ import '../../../core/models/tryon_session_model.dart';
 import '../../../core/providers/tryon_memory_provider.dart';
 import '../../../routes.dart';
 
+// ─── Route shims ──────────────────────────────────────────────────────────────
+const _rWardrobe = Routes.wardrobe;
+const _rTryOn = '/tryon';
+const _rSocial = '/style-feed';
+
 /// Saved Try-Ons Screen - Displays all saved try-on sessions
-class SavedTryOnsScreen extends ConsumerWidget {
+class SavedTryOnsScreen extends ConsumerStatefulWidget {
   const SavedTryOnsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = context.appTheme;
-    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
-    final savedTryOnsAsync = ref.watch(savedTryOnsProvider);
+  ConsumerState<SavedTryOnsScreen> createState() => _SavedTryOnsScreenState();
+}
 
-    return FashionScaffold(
-      title: 'Saved Try-Ons',
-      currentBottomNavIndex: 2,
-      currentRoute: Routes.tryon,
-      backgroundColor: theme.backgroundPrimary,
-      body: Container(
-        decoration: theme.backgroundGradient != null
-            ? BoxDecoration(gradient: theme.backgroundGradient)
-            : BoxDecoration(color: theme.backgroundPrimary),
-        child: savedTryOnsAsync.when(
-          loading: () => _buildLoadingState(theme, accentPink),
-          error: (error, stack) => _buildErrorState(error, theme),
-          data: (tryOns) => _buildTryOnsGrid(context, theme, accentPink, tryOns),
+class _SavedTryOnsScreenState extends ConsumerState<SavedTryOnsScreen> {
+  int _navIndex = 4; // Outfits tab is active
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.appTheme;
+    final accentPink =
+        context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+    final savedTryOnsAsync = ref.watch(savedTryOnsProvider);
+    final mq = MediaQuery.of(context);
+
+    return ThemeWrapper(
+      child: Scaffold(
+        backgroundColor: theme.backgroundPrimary,
+        body: Container(
+          decoration: theme.backgroundGradient != null
+              ? BoxDecoration(gradient: theme.backgroundGradient)
+              : BoxDecoration(color: theme.backgroundPrimary),
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Cosmic Header
+                CosmicHeader(
+                  topPadding: mq.padding.top,
+                  hasNotification: false,
+                  onMenuTap: () => Navigator.of(context).pop(),
+                  onBellTap: () {},
+                  onAvatarTap: () => Navigator.pushNamed(context, Routes.settings),
+                ),
+
+                // Content
+                Expanded(
+                  child: savedTryOnsAsync.when(
+                    loading: () => _buildLoadingState(theme, accentPink),
+                    error: (error, stack) => _buildErrorState(error, theme),
+                    data: (tryOns) =>
+                        _buildTryOnsGrid(context, theme, accentPink, tryOns),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Cosmic Footer
+        bottomNavigationBar: CosmicFooter(
+          bottomPadding: mq.padding.bottom,
+          activeIndex: _navIndex,
+          onTryOn: () {
+            setState(() => _navIndex = 0);
+            Navigator.pushNamed(context, _rTryOn);
+          },
+          onWardrobe: () {
+            setState(() => _navIndex = 1);
+            Navigator.pushNamed(context, _rWardrobe);
+          },
+          onHome: () {
+            setState(() => _navIndex = 2);
+            Navigator.pushNamed(context, Routes.dashboard);
+          },
+          onFriends: () {
+            setState(() => _navIndex = 3);
+            Navigator.pushNamed(context, _rSocial);
+          },
+          onOutfits: () {
+            setState(() => _navIndex = 4);
+            // Already on outfits page
+          },
         ),
       ),
     );
@@ -239,7 +298,8 @@ class SavedTryOnsScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _TryOnDetailSheet(session: session, accentPink: accentPink),
+      builder: (context) =>
+          _TryOnDetailSheet(session: session, accentPink: accentPink),
     );
   }
 }

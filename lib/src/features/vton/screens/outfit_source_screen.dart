@@ -214,7 +214,7 @@ class _ArcPainter extends CustomPainter {
 //  REUSED WIDGETS
 // ══════════════════════════════════════════════════════════════════════════════
 class _IBtn extends StatelessWidget {
-  const _IBtn({required this.child, required this.onTap, this.badge = 0});
+  const _IBtn({required this.child, required this.onTap, required this.badge});
   final Widget child;
   final VoidCallback onTap;
   final int badge;
@@ -557,8 +557,9 @@ class _OutfitSourceScreenState extends ConsumerState<OutfitSourceScreen>
                 child: AnimatedBuilder(
                   animation: _trayAnim,
                   builder: (_, __) {
-                    if (_selectedSource == 'web')
+                    if (_selectedSource == 'web') {
                       return const SizedBox.shrink();
+                    }
                     final show = _selectedIds.isNotEmpty;
                     return show
                         ? FadeTransition(
@@ -620,6 +621,7 @@ class _OutfitSourceScreenState extends ConsumerState<OutfitSourceScreen>
                 child: Row(children: [
                   _IBtn(
                     onTap: () => Navigator.of(context).pop(),
+                    badge: 0,
                     child: const Icon(Icons.chevron_left,
                         color: Color(0xFFC8DCF4), size: 18),
                   ),
@@ -628,6 +630,7 @@ class _OutfitSourceScreenState extends ConsumerState<OutfitSourceScreen>
                   const Spacer(),
                   _IBtn(
                     onTap: () {},
+                    badge: 0,
                     child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -1453,8 +1456,9 @@ class _WebUrlPanel extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             ),
             onChanged: (value) {
-              if (value.isNotEmpty && Uri.tryParse(value) != null)
+              if (value.isNotEmpty && Uri.tryParse(value) != null) {
                 onUrlSet(value);
+              }
             },
           ),
         ),

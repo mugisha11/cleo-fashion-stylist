@@ -37,6 +37,7 @@ from .api import proxy_image
 from .api import try_on_openai
 from .api import production_vton_v2
 from .api import fashion_scraper
+from .api import wardrobe_ai
 
 # Optional: clothing_recognition needs torch/scikit-learn (VC++ Build Tools on Windows)
 try:
@@ -142,6 +143,9 @@ logger.info("✅ Health check endpoints registered")
 
 app.include_router(recommend.router)
 logger.info("✅ Registered: recommend router")
+
+app.include_router(wardrobe_ai.router)
+logger.info("✅ Registered: wardrobe_ai router")
 
 if _has_clothing_recognition:
     app.include_router(clothing_recognition.router)

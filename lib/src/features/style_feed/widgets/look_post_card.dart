@@ -24,6 +24,8 @@ class LookPostCard extends ConsumerStatefulWidget {
   final bool isSaved;
   final VoidCallback? onTryThisLook;
   final VoidCallback? onPostSimilar;
+  final VoidCallback? onLike;
+  final VoidCallback? onSave;
 
   const LookPostCard({
     super.key,
@@ -32,6 +34,8 @@ class LookPostCard extends ConsumerStatefulWidget {
     required this.isSaved,
     this.onTryThisLook,
     this.onPostSimilar,
+    this.onLike,
+    this.onSave,
   });
 
   @override
@@ -46,7 +50,11 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
     HapticFeedback.mediumImpact();
     SoundService.play(AppSound.like);
     setState(() => _showHeartBurst = true);
-    ref.read(styleFeedProvider.notifier).toggleLike(widget.post.id);
+    if (widget.onLike != null) {
+      widget.onLike!();
+    } else {
+      ref.read(styleFeedProvider.notifier).toggleLike(widget.post.id);
+    }
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) setState(() => _showHeartBurst = false);
     });
@@ -64,10 +72,22 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
         isSaved: widget.isSaved,
         onLike: () {
           SoundService.play(AppSound.like);
-          ref.read(styleFeedProvider.notifier).toggleLike(widget.post.id);
+          if (widget.onLike != null) {
+            widget.onLike!();
+          } else {
+            ref.read(styleFeedProvider.notifier).toggleLike(widget.post.id);
+          }
         },
-        onSave: () => ref.read(styleFeedProvider.notifier).toggleSavePost(widget.post.id),
-        onShare: () => ref.read(styleFeedProvider.notifier).incrementShareCount(widget.post.id),
+        onSave: () {
+          if (widget.onSave != null) {
+            widget.onSave!();
+          } else {
+            ref.read(styleFeedProvider.notifier).toggleSavePost(widget.post.id);
+          }
+        },
+        onShare: () => ref
+            .read(styleFeedProvider.notifier)
+            .incrementShareCount(widget.post.id),
         onTryThisLook: widget.onTryThisLook,
       ),
     );
@@ -77,9 +97,12 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final accent = isDark ? DesignTokens.darkAccent : DesignTokens.lightAccent;
-    final surface = isDark ? DesignTokens.darkSurface : DesignTokens.lightSurface;
+    final surface =
+        isDark ? DesignTokens.darkSurface : DesignTokens.lightSurface;
     final textColor = isDark ? DesignTokens.darkText : DesignTokens.lightText;
-    final textSecondary = isDark ? DesignTokens.darkTextSecondary : DesignTokens.lightTextSecondary;
+    final textSecondary = isDark
+        ? DesignTokens.darkTextSecondary
+        : DesignTokens.lightTextSecondary;
     final post = widget.post;
 
     return Padding(
@@ -100,18 +123,25 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                     height: 36,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isDark ? DesignTokens.darkBorder : DesignTokens.lightBorder,
+                      color: isDark
+                          ? DesignTokens.darkBorder
+                          : DesignTokens.lightBorder,
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: post.userAvatarUrl != null && post.userAvatarUrl!.startsWith('http')
+                    child: post.userAvatarUrl != null &&
+                            post.userAvatarUrl!.startsWith('http')
                         ? Image.network(
                             post.userAvatarUrl!,
                             fit: BoxFit.cover,
                             width: 36,
                             height: 36,
-                            errorBuilder: (_, __, ___) => Icon(Icons.person_rounded, color: textSecondary, size: 20),
+                            errorBuilder: (_, __, ___) => Icon(
+                                Icons.person_rounded,
+                                color: textSecondary,
+                                size: 20),
                           )
-                        : Icon(Icons.person_rounded, color: textSecondary, size: 20),
+                        : Icon(Icons.person_rounded,
+                            color: textSecondary, size: 20),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -120,22 +150,25 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                       children: [
                         Text(
                           post.userName,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: textColor,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: textColor,
+                                  ),
                         ),
                         Text(
                           _formatDate(post.createdAt),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: textSecondary,
-                            fontSize: 12,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: textSecondary,
+                                    fontSize: 12,
+                                  ),
                         ),
                       ],
                     ),
                   ),
-                  if (ref.watch(authStateProvider).valueOrNull?.uid != post.userId)
+                  if (ref.watch(authStateProvider).valueOrNull?.uid !=
+                      post.userId)
                     Padding(
                       padding: const EdgeInsets.only(right: 4),
                       child: FriendRequestButton(
@@ -143,7 +176,8 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                         otherUserName: post.userName,
                         size: const Size(100, 32),
                         onFriendsTap: () {
-                          Navigator.of(context).pushNamed(Routes.chat, arguments: {
+                          Navigator.of(context)
+                              .pushNamed(Routes.chat, arguments: {
                             'otherUserId': post.userId,
                             'otherUserName': post.userName,
                             'otherUserAvatar': post.userAvatarUrl,
@@ -183,16 +217,23 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                         fit: BoxFit.cover,
                         placeholder: _ShimmerPlaceholder(),
                         errorWidget: Container(
-                          color: isDark ? DesignTokens.darkCard : DesignTokens.lightCard,
-                          child: Icon(Icons.image_not_supported_rounded, size: 48, color: textSecondary),
+                          color: isDark
+                              ? DesignTokens.darkCard
+                              : DesignTokens.lightCard,
+                          child: Icon(Icons.image_not_supported_rounded,
+                              size: 48, color: textSecondary),
                         ),
                       ),
                     ),
                   ),
                   if (_showHeartBurst)
-                    Icon(Icons.favorite_rounded, size: 100, color: Colors.red.withValues(alpha: 0.9))
+                    Icon(Icons.favorite_rounded,
+                            size: 100, color: Colors.red.withValues(alpha: 0.9))
                         .animate()
-                        .scale(begin: const Offset(0.2, 0.2), end: const Offset(1.2, 1.2), curve: Curves.elasticOut)
+                        .scale(
+                            begin: const Offset(0.2, 0.2),
+                            end: const Offset(1.2, 1.2),
+                            curve: Curves.elasticOut)
                         .fadeOut(duration: 600.ms),
                 ],
               ),
@@ -203,7 +244,9 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
               child: Row(
                 children: [
                   _ActionButton(
-                    icon: widget.isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                    icon: widget.isLiked
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
                     color: widget.isLiked ? Colors.red : textColor,
                     count: post.likeCount,
                     onTap: () {
@@ -224,7 +267,9 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                     icon: Icons.send_outlined,
                     color: textColor,
                     count: post.shareCount,
-                    onTap: () => ref.read(styleFeedProvider.notifier).incrementShareCount(post.id),
+                    onTap: () => ref
+                        .read(styleFeedProvider.notifier)
+                        .incrementShareCount(post.id),
                   ),
                   const Spacer(),
                   Material(
@@ -232,13 +277,17 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                     child: InkWell(
                       onTap: () {
                         HapticFeedback.selectionClick();
-                        ref.read(styleFeedProvider.notifier).toggleSavePost(post.id);
+                        ref
+                            .read(styleFeedProvider.notifier)
+                            .toggleSavePost(post.id);
                       },
                       borderRadius: BorderRadius.circular(20),
                       child: Padding(
                         padding: const EdgeInsets.all(6),
                         child: Icon(
-                          widget.isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                          widget.isSaved
+                              ? Icons.bookmark_rounded
+                              : Icons.bookmark_border_rounded,
                           size: 24,
                           color: widget.isSaved ? accent : textColor,
                         ),
@@ -261,23 +310,29 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 14),
                       decoration: BoxDecoration(
                         color: accent.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: accent.withValues(alpha: 0.3)),
+                        border:
+                            Border.all(color: accent.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.checkroom_rounded, size: 20, color: accent),
+                          Icon(Icons.checkroom_rounded,
+                              size: 20, color: accent),
                           const SizedBox(width: 8),
                           Text(
                             'Try This Look',
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: accent,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: accent,
+                                ),
                           ),
                         ],
                       ),
@@ -295,13 +350,19 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                     if (post.caption.isNotEmpty) ...[
                       RichText(
                         maxLines: _captionExpanded ? null : 3,
-                        overflow: _captionExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                        overflow: _captionExpanded
+                            ? TextOverflow.visible
+                            : TextOverflow.ellipsis,
                         text: TextSpan(
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: textColor),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: textColor),
                           children: [
                             TextSpan(
                               text: '${post.userName} ',
-                              style: const TextStyle(fontWeight: FontWeight.w700),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w700),
                             ),
                             TextSpan(text: post.caption),
                           ],
@@ -317,10 +378,13 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
                               'more',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: textSecondary,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                             ),
                           ),
                         ),
@@ -330,13 +394,18 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                       Wrap(
                         spacing: 6,
                         runSpacing: 4,
-                        children: post.tags.map((t) => Text(
-                          '#$t',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: accent,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        )).toList(),
+                        children: post.tags
+                            .map((t) => Text(
+                                  '#$t',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: accent,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                ))
+                            .toList(),
                       ),
                     ],
                   ],
@@ -347,7 +416,10 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
           ],
         ),
       ),
-    ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.03, end: 0, curve: Curves.easeOutCubic);
+    )
+        .animate()
+        .fadeIn(duration: 350.ms)
+        .slideY(begin: 0.03, end: 0, curve: Curves.easeOutCubic);
   }
 
   void _showPostOptions(BuildContext context) {
@@ -378,7 +450,9 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
               title: const Text('Share'),
               onTap: () {
                 Navigator.pop(ctx);
-                ref.read(styleFeedProvider.notifier).incrementShareCount(widget.post.id);
+                ref
+                    .read(styleFeedProvider.notifier)
+                    .incrementShareCount(widget.post.id);
               },
             ),
             ListTile(
@@ -438,7 +512,8 @@ class _ShimmerPlaceholderState extends State<_ShimmerPlaceholder>
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
     final base = isDark ? DesignTokens.darkCard : DesignTokens.lightCard;
-    final highlight = isDark ? DesignTokens.darkBorder : DesignTokens.lightBorder;
+    final highlight =
+        isDark ? DesignTokens.darkBorder : DesignTokens.lightBorder;
 
     return AnimatedBuilder(
       animation: _animation,
@@ -475,7 +550,9 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary = context.isDarkMode ? DesignTokens.darkTextSecondary : DesignTokens.lightTextSecondary;
+    final textSecondary = context.isDarkMode
+        ? DesignTokens.darkTextSecondary
+        : DesignTokens.lightTextSecondary;
 
     return Material(
       color: Colors.transparent,
@@ -493,9 +570,9 @@ class _ActionButton extends StatelessWidget {
                 Text(
                   _formatCount(count),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
+                        color: textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
               ],
             ],

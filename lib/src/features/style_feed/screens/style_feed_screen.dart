@@ -6,7 +6,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../routes.dart';
@@ -16,7 +15,6 @@ import '../providers/style_feed_provider.dart';
 import '../widgets/look_post_card.dart';
 import '../widgets/style_feed_story_strip.dart';
 import '../widgets/style_feed_skeleton.dart';
-import '../models/look_post_model.dart';
 
 // ─── Route shims ──────────────────────────────────────────────────────────────
 const _rChat = Routes.chats;

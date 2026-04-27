@@ -52,3 +52,6 @@ firebase_options.dart
 # Environment
 .env
 .env.local
+
+# Node dependencies
+node_modules/

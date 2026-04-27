@@ -64,8 +64,9 @@ class Settings(BaseSettings):
     
     # OpenRouter Configuration (for GPT-4.1 Vision reasoning and Claude analysis in production-vton)
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
+    OPENROUTER_MODEL: str = os.getenv("OPENROUTER_MODEL", "")
     OPENROUTER_MODEL_VISION: str = os.getenv("OPENROUTER_MODEL_VISION", "openai/gpt-4o")  # GPT-4.1 Vision
-    OPENROUTER_MODEL_MINI: str = os.getenv("OPENROUTER_MODEL_MINI", "openai/gpt-4o-mini")  # GPT-4.1-mini
+    OPENROUTER_MODEL_MINI: str = os.getenv("OPENROUTER_MODEL_MINI", os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini"))  # GPT-4.1-mini
     OPENROUTER_BASE_URL: str = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
     
     # Google Cloud Retail fallback (optional)

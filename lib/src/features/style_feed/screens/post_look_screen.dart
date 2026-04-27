@@ -379,9 +379,9 @@ class _PostLookScreenState extends ConsumerState<PostLookScreen> {
             setState(() => _navIndex = 3);
             Navigator.pushNamed(context, _rSocial);
           },
-          onProfile: () {
+          onOutfits: () {
             setState(() => _navIndex = 4);
-            Navigator.pushNamed(context, _rProfile);
+            Navigator.pushNamed(context, Routes.savedTryOns);
           },
         ),
       ),
