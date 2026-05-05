@@ -2,11 +2,15 @@
 /// Header, full-width image, double-tap heart, actions, caption with "Read more"
 library;
 
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
+import 'package:palette_generator/palette_generator.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/theme/luxury_theme.dart';
 import '../../../core/services/sound_service.dart';
@@ -49,7 +53,7 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
   void _onDoubleTap() {
     HapticFeedback.mediumImpact();
     SoundService.play(AppSound.like);
-    setState(() => _showHeartBurst = true);
+    if (mounted) setState(() => _showHeartBurst = true);
     if (widget.onLike != null) {
       widget.onLike!();
     } else {
@@ -61,16 +65,19 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
   }
 
   void _openComments() {
-    ref.read(styleFeedProvider.notifier).incrementViewCount(widget.post.id);
+    if (mounted) {
+      ref.read(styleFeedProvider.notifier).incrementViewCount(widget.post.id);
+    }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color.fromARGB(0, 193, 181, 181),
       builder: (ctx) => CommentDrawer(
         post: widget.post,
         isLiked: widget.isLiked,
         isSaved: widget.isSaved,
         onLike: () {
+          if (!mounted) return;
           SoundService.play(AppSound.like);
           if (widget.onLike != null) {
             widget.onLike!();
@@ -79,18 +86,53 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
           }
         },
         onSave: () {
+          if (!mounted) return;
           if (widget.onSave != null) {
             widget.onSave!();
           } else {
             ref.read(styleFeedProvider.notifier).toggleSavePost(widget.post.id);
           }
         },
-        onShare: () => ref
-            .read(styleFeedProvider.notifier)
-            .incrementShareCount(widget.post.id),
+        onShare: () {
+          if (!mounted) return;
+          ref
+              .read(styleFeedProvider.notifier)
+              .incrementShareCount(widget.post.id);
+        },
         onTryThisLook: widget.onTryThisLook,
       ),
     );
+  }
+
+  void _openFullScreen() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (ctx) => _StyleFeedImageViewer(
+        post: widget.post,
+        heroTag: 'style-feed-image-${widget.post.id}',
+        isLiked: widget.isLiked,
+        isSaved: widget.isSaved,
+        onLike: widget.onLike ??
+            () {
+              if (!mounted) return;
+              ref.read(styleFeedProvider.notifier).toggleLike(widget.post.id);
+            },
+        onSave: widget.onSave ??
+            () {
+              if (!mounted) return;
+              ref
+                  .read(styleFeedProvider.notifier)
+                  .toggleSavePost(widget.post.id);
+            },
+        onShare: () {
+          if (!mounted) return;
+          ref
+              .read(styleFeedProvider.notifier)
+              .incrementShareCount(widget.post.id);
+        },
+        onComment: _openComments,
+        onTryThisLook: widget.onTryThisLook,
+      ),
+    ));
   }
 
   @override
@@ -202,8 +244,9 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                 ],
               ),
             ),
-            // ② Image: full-width, rounded, double-tap heart, shimmer
+            // ② Image: full-width, rounded, tap to view fullscreen, double-tap heart, shimmer
             GestureDetector(
+              onTap: _openFullScreen,
               onDoubleTap: _onDoubleTap,
               child: Stack(
                 alignment: Alignment.center,
@@ -212,16 +255,19 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                     borderRadius: BorderRadius.circular(0),
                     child: AspectRatio(
                       aspectRatio: 1,
-                      child: StyleFeedImage(
-                        imagePath: post.imagePath,
-                        fit: BoxFit.cover,
-                        placeholder: _ShimmerPlaceholder(),
-                        errorWidget: Container(
-                          color: isDark
-                              ? DesignTokens.darkCard
-                              : DesignTokens.lightCard,
-                          child: Icon(Icons.image_not_supported_rounded,
-                              size: 48, color: textSecondary),
+                      child: Hero(
+                        tag: 'style-feed-image-${post.id}',
+                        child: StyleFeedImage(
+                          imagePath: post.imagePath,
+                          fit: BoxFit.cover,
+                          placeholder: _ShimmerPlaceholder(),
+                          errorWidget: Container(
+                            color: isDark
+                                ? DesignTokens.darkCard
+                                : DesignTokens.lightCard,
+                            child: Icon(Icons.image_not_supported_rounded,
+                                size: 48, color: textSecondary),
+                          ),
                         ),
                       ),
                     ),
@@ -241,59 +287,72 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
             // ③ Actions: Like, Comment, Share, Save, Try This Look
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ActionButton(
-                    icon: widget.isLiked
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    color: widget.isLiked ? Colors.red : textColor,
-                    count: post.likeCount,
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      SoundService.play(AppSound.like);
-                      ref.read(styleFeedProvider.notifier).toggleLike(post.id);
-                    },
-                  ),
-                  const SizedBox(width: 16),
-                  _ActionButton(
-                    icon: Icons.chat_bubble_outline_rounded,
-                    color: textColor,
-                    count: post.commentCount,
-                    onTap: _openComments,
-                  ),
-                  const SizedBox(width: 16),
-                  _ActionButton(
-                    icon: Icons.send_outlined,
-                    color: textColor,
-                    count: post.shareCount,
-                    onTap: () => ref
-                        .read(styleFeedProvider.notifier)
-                        .incrementShareCount(post.id),
-                  ),
-                  const Spacer(),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        ref
-                            .read(styleFeedProvider.notifier)
-                            .toggleSavePost(post.id);
-                      },
-                      borderRadius: BorderRadius.circular(20),
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Icon(
-                          widget.isSaved
-                              ? Icons.bookmark_rounded
-                              : Icons.bookmark_border_rounded,
-                          size: 24,
-                          color: widget.isSaved ? accent : textColor,
+                  Row(
+                    children: [
+                      _ActionButton(
+                        icon: widget.isLiked
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: widget.isLiked ? Colors.red : textColor,
+                        count: post.likeCount,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          SoundService.play(AppSound.like);
+                          ref
+                              .read(styleFeedProvider.notifier)
+                              .toggleLike(post.id);
+                        },
+                      ),
+                      const SizedBox(width: 16),
+                      _ActionButton(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        color: textColor,
+                        count: post.commentCount,
+                        onTap: _openComments,
+                      ),
+                      const SizedBox(width: 16),
+                      _ActionButton(
+                        icon: Icons.send_outlined,
+                        color: textColor,
+                        count: post.shareCount,
+                        onTap: () {
+                          if (!mounted) return;
+                          ref
+                              .read(styleFeedProvider.notifier)
+                              .incrementShareCount(post.id);
+                        },
+                      ),
+                      const Spacer(),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            if (!mounted) return;
+                            ref
+                                .read(styleFeedProvider.notifier)
+                                .toggleSavePost(post.id);
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.all(6),
+                            child: Icon(
+                              widget.isSaved
+                                  ? Icons.bookmark_rounded
+                                  : Icons.bookmark_border_rounded,
+                              size: 24,
+                              color: widget.isSaved ? accent : textColor,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
+                  // Error messages for engagement actions
+                  _ErrorMessageWidget(postId: post.id),
                 ],
               ),
             ),
@@ -372,6 +431,7 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                         GestureDetector(
                           onTap: () {
                             HapticFeedback.selectionClick();
+                            if (!mounted) return;
                             setState(() => _captionExpanded = true);
                           },
                           child: Padding(
@@ -462,6 +522,368 @@ class _LookPostCardState extends ConsumerState<LookPostCard> {
                 Navigator.pop(ctx);
                 // No backend — could copy caption
               },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime d) {
+    final now = DateTime.now();
+    final diff = now.difference(d);
+    if (diff.inDays > 7) return DateFormat.MMMd().format(d);
+    if (diff.inDays > 0) return '${diff.inDays}d';
+    if (diff.inHours > 0) return '${diff.inHours}h';
+    if (diff.inMinutes > 0) return '${diff.inMinutes}m';
+    return 'Now';
+  }
+}
+
+class _ViewerIconButton extends StatelessWidget {
+  const _ViewerIconButton({
+    required this.icon,
+    required this.label,
+    this.active = false,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: active ? Colors.pinkAccent : Colors.white,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StyleFeedImageViewer extends StatefulWidget {
+  const _StyleFeedImageViewer({
+    required this.post,
+    required this.heroTag,
+    this.isLiked = false,
+    this.isSaved = false,
+    this.onLike,
+    this.onSave,
+    this.onShare,
+    this.onComment,
+    this.onTryThisLook,
+  });
+
+  final LookPost post;
+  final String heroTag;
+  final bool isLiked;
+  final bool isSaved;
+  final VoidCallback? onLike;
+  final VoidCallback? onSave;
+  final VoidCallback? onShare;
+  final VoidCallback? onComment;
+  final VoidCallback? onTryThisLook;
+
+  @override
+  State<_StyleFeedImageViewer> createState() => _StyleFeedImageViewerState();
+}
+
+class _StyleFeedImageViewerState extends State<_StyleFeedImageViewer> {
+  Color? _dominantColor;
+  bool _isLoadingPalette = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _generatePalette();
+  }
+
+  Future<void> _generatePalette() async {
+    try {
+      final PaletteGenerator paletteGenerator =
+          await PaletteGenerator.fromImageProvider(
+        _getImageProvider(widget.post.imagePath),
+        size: const Size(200, 200),
+        region: const Rect.fromLTRB(0, 0, 200, 200),
+        maximumColorCount: 20,
+      );
+
+      if (mounted) {
+        setState(() {
+          _dominantColor =
+              paletteGenerator.dominantColor?.color ?? Colors.black;
+          _isLoadingPalette = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _dominantColor = Colors.black;
+          _isLoadingPalette = false;
+        });
+      }
+    }
+  }
+
+  ImageProvider _getImageProvider(String imagePath) {
+    if (imagePath.startsWith('data:')) {
+      // For data URLs, we need to decode and create MemoryImage
+      final base64 =
+          imagePath.contains(',') ? imagePath.split(',').last : imagePath;
+      final bytes = base64Decode(base64);
+      return MemoryImage(bytes);
+    } else if (imagePath.startsWith('http')) {
+      return NetworkImage(imagePath);
+    } else {
+      return FileImage(File(imagePath));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundColor =
+        _isLoadingPalette ? Colors.black : _dominantColor ?? Colors.black;
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      backgroundColor.withValues(alpha: 0.9),
+                      backgroundColor.withValues(alpha: 0.7),
+                      backgroundColor.withValues(alpha: 0.9),
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: InteractiveViewer(
+                    clipBehavior: Clip.none,
+                    minScale: 1.0,
+                    maxScale: 3.0,
+                    child: Hero(
+                      tag: widget.heroTag,
+                      child: StyleFeedImage(
+                        imagePath: widget.post.imagePath,
+                        fit: BoxFit.contain,
+                        placeholder:
+                            const Center(child: CircularProgressIndicator()),
+                        errorWidget: const Center(
+                          child: Icon(Icons.image_not_supported_rounded,
+                              size: 64, color: Colors.white54),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (widget.post.userAvatarUrl != null &&
+                      widget.post.userAvatarUrl!.startsWith('http'))
+                    ClipOval(
+                      child: Image.network(
+                        widget.post.userAvatarUrl!,
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.person_outline,
+                          color: Colors.white54,
+                          size: 28,
+                        ),
+                      ),
+                    )
+                  else
+                    const CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.white24,
+                      child: Icon(Icons.person_outline,
+                          color: Colors.white70, size: 22),
+                    ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.post.userName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          _formatDate(widget.post.createdAt),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Material(
+                    color: Colors.black45,
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              bottom: 26,
+              left: 16,
+              right: 16,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            _ViewerIconButton(
+                              icon: widget.isLiked
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              label: '${widget.post.likeCount}',
+                              active: widget.isLiked,
+                              onTap: widget.onLike,
+                            ),
+                            const SizedBox(width: 12),
+                            _ViewerIconButton(
+                              icon: Icons.chat_bubble_outline_rounded,
+                              label: '${widget.post.commentCount}',
+                              onTap: widget.onComment,
+                            ),
+                            const SizedBox(width: 12),
+                            _ViewerIconButton(
+                              icon: Icons.send_outlined,
+                              label: '${widget.post.shareCount}',
+                              onTap: widget.onShare,
+                            ),
+                            const Spacer(),
+                            _ViewerIconButton(
+                              icon: widget.isSaved
+                                  ? Icons.bookmark_rounded
+                                  : Icons.bookmark_border_rounded,
+                              label: 'Save',
+                              active: widget.isSaved,
+                              onTap: widget.onSave,
+                            ),
+                          ],
+                        ),
+                        if (widget.post.caption.isNotEmpty ||
+                            widget.post.tags.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (widget.post.caption.isNotEmpty)
+                                  Text(
+                                    widget.post.caption,
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 13,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                if (widget.post.tags.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Wrap(
+                                      spacing: 8,
+                                      children: widget.post.tags
+                                          .map((tag) => Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 6),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white10,
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  '#$tag',
+                                                  style: const TextStyle(
+                                                    color: Colors.white70,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ))
+                                          .toList(),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (widget.onTryThisLook != null) ...[
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: widget.onTryThisLook,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.checkroom_rounded),
+                      label: const Text('Try This Look'),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
         ),
@@ -586,5 +1008,80 @@ class _ActionButton extends StatelessWidget {
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
     if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
     return '$n';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Error Message Widget - Extracted to avoid nested Consumer in gesture handlers
+// ══════════════════════════════════════════════════════════════════════════════
+class _ErrorMessageWidget extends ConsumerWidget {
+  final String postId;
+
+  const _ErrorMessageWidget({required this.postId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(styleFeedProvider);
+    final errorMessages = state.valueOrNull?.errorMessages ?? {};
+
+    final likeError = errorMessages['like_$postId'];
+    final commentError = errorMessages['comment_$postId'];
+    final shareError = errorMessages['share_$postId'];
+    final saveError = errorMessages['save_$postId'];
+
+    if (likeError?.isNotEmpty == true ||
+        commentError?.isNotEmpty == true ||
+        shareError?.isNotEmpty == true ||
+        saveError?.isNotEmpty == true) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.red.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.error_outline, size: 16, color: Colors.red),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  likeError ?? commentError ?? shareError ?? saveError ?? '',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.red,
+                        fontSize: 12,
+                      ),
+                ),
+              ),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    final key = likeError != null
+                        ? 'like_$postId'
+                        : commentError != null
+                            ? 'comment_$postId'
+                            : shareError != null
+                                ? 'share_$postId'
+                                : 'save_$postId';
+                    ref
+                        .read(styleFeedProvider.notifier)
+                        .clearEngagementError(key);
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.close, size: 14, color: Colors.red),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 }

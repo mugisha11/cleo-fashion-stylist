@@ -129,8 +129,18 @@ class _IntelligentSidebarState extends ConsumerState<IntelligentSidebar>
     return GestureDetector(
       onTap: _handleSidebarTap,
       child: MouseRegion(
-        onEnter: (_) => _handleHover(true),
-        onExit: (_) => _handleHover(false),
+        onEnter: (_) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _handleHover(true);
+          });
+        },
+        onExit: (_) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _handleHover(false);
+          });
+        },
         child: AnimatedBuilder(
           animation: _expandController,
           builder: (context, child) {

@@ -54,7 +54,8 @@ class _CommentDrawerState extends ConsumerState<CommentDrawer> {
   @override
   Widget build(BuildContext context) {
     final theme = context.appTheme;
-    final accentPink = context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
+    final accentPink =
+        context.isDarkMode ? DesignTokens.darkAccent : DesignTokens.lightAccent;
     final feedState = ref.watch(styleFeedProvider).valueOrNull;
     LookPost post = widget.post;
     if (feedState != null) {
@@ -73,7 +74,8 @@ class _CommentDrawerState extends ConsumerState<CommentDrawer> {
       ),
       decoration: BoxDecoration(
         color: theme.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(theme.borderRadiusLarge)),
+        borderRadius: BorderRadius.vertical(
+            top: Radius.circular(theme.borderRadiusLarge)),
         boxShadow: [
           BoxShadow(
             color: theme.shadowColor.withValues(alpha: 0.15),
@@ -97,24 +99,89 @@ class _CommentDrawerState extends ConsumerState<CommentDrawer> {
               ),
             ),
           ),
-          // Title
+          // Professional Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppThemeData.spacingLG),
-            child: Row(
+            padding:
+                const EdgeInsets.symmetric(horizontal: AppThemeData.spacingLG),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Comments',
-                  style: theme.titleLarge(),
+                // Main Title
+                Row(
+                  children: [
+                    Icon(
+                      Icons.forum_rounded,
+                      size: 24,
+                      color: accentPink,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Community Discussion',
+                      style: theme.titleLarge().copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: theme.textPrimary,
+                          ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(height: 12),
+                // Engagement Stats
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: theme.backgroundSecondary.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: theme.borderLight.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Likes
+                      _buildEngagementStat(
+                        icon: Icons.favorite_rounded,
+                        count: post.likeCount,
+                        label: 'Likes',
+                        color: Colors.red.shade400,
+                      ),
+                      // Comments
+                      _buildEngagementStat(
+                        icon: Icons.chat_bubble_rounded,
+                        count: post.commentCount,
+                        label: 'Comments',
+                        color: accentPink,
+                      ),
+                      // Shares
+                      _buildEngagementStat(
+                        icon: Icons.share_rounded,
+                        count: post.shareCount,
+                        label: 'Shares',
+                        color: Colors.green.shade500,
+                      ),
+                      // Views
+                      _buildEngagementStat(
+                        icon: Icons.visibility_rounded,
+                        count: post.viewCount,
+                        label: 'Views',
+                        color: theme.textTertiary,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Subtitle
                 Text(
-                  '${post.commentCount}',
-                  style: theme.bodySmall(color: theme.textTertiary),
+                  'Join the conversation and share your thoughts!',
+                  style: theme.bodyMedium(color: theme.textSecondary).copyWith(
+                        fontStyle: FontStyle.italic,
+                      ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Divider(height: 1, color: theme.borderLight),
           // Comments list
           Flexible(
@@ -138,7 +205,8 @@ class _CommentDrawerState extends ConsumerState<CommentDrawer> {
                     itemBuilder: (context, index) {
                       final c = comments[index];
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: AppThemeData.spacingMD),
+                        padding: const EdgeInsets.only(
+                            bottom: AppThemeData.spacingMD),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -146,8 +214,11 @@ class _CommentDrawerState extends ConsumerState<CommentDrawer> {
                               radius: 16,
                               backgroundColor: theme.borderLight,
                               child: Text(
-                                c.userName.isNotEmpty ? c.userName[0].toUpperCase() : '?',
-                                style: theme.bodySmall(color: theme.textSecondary),
+                                c.userName.isNotEmpty
+                                    ? c.userName[0].toUpperCase()
+                                    : '?',
+                                style:
+                                    theme.bodySmall(color: theme.textSecondary),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -160,21 +231,23 @@ class _CommentDrawerState extends ConsumerState<CommentDrawer> {
                                       Text(
                                         c.userName,
                                         style: theme.bodyMedium().copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: theme.textPrimary,
-                                        ),
+                                              fontWeight: FontWeight.w600,
+                                              color: theme.textPrimary,
+                                            ),
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
                                         _formatDate(c.createdAt),
-                                        style: theme.bodySmall(color: theme.textTertiary),
+                                        style: theme.bodySmall(
+                                            color: theme.textTertiary),
                                       ),
                                     ],
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     c.text,
-                                    style: theme.bodyMedium(color: theme.textPrimary),
+                                    style: theme.bodyMedium(
+                                        color: theme.textPrimary),
                                   ),
                                 ],
                               ),
@@ -186,6 +259,8 @@ class _CommentDrawerState extends ConsumerState<CommentDrawer> {
                   ),
           ),
           Divider(height: 1, color: theme.borderLight),
+          // Error message display
+          _CommentErrorWidget(postId: widget.post.id),
           // Input
           Padding(
             padding: EdgeInsets.fromLTRB(
@@ -217,17 +292,14 @@ class _CommentDrawerState extends ConsumerState<CommentDrawer> {
                     style: theme.bodyMedium(color: theme.textPrimary),
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => _submitComment(),
+                    maxLength: 1000, // Enforce character limit
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton.filled(
-                  onPressed: _submitComment,
-                  icon: const Icon(Icons.send_rounded, size: 20),
-                  style: IconButton.styleFrom(
-                    backgroundColor: accentPink,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
+                _CommentSendButton(
+                    postId: widget.post.id,
+                    onPressed: _submitComment,
+                    accentColor: accentPink),
               ],
             ),
           ),
@@ -244,5 +316,148 @@ class _CommentDrawerState extends ConsumerState<CommentDrawer> {
     if (diff.inHours > 0) return '${diff.inHours}h ago';
     if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
     return 'Just now';
+  }
+
+  Widget _buildEngagementStat({
+    required IconData icon,
+    required int count,
+    required String label,
+    required Color color,
+  }) {
+    final theme = context.appTheme;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: color,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _formatCount(count),
+          style: theme.bodySmall().copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.textPrimary,
+                fontSize: 12,
+              ),
+        ),
+        Text(
+          label,
+          style: theme.bodySmall(color: theme.textTertiary).copyWith(
+                fontSize: 10,
+              ),
+        ),
+      ],
+    );
+  }
+
+  String _formatCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    } else {
+      return count.toString();
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Comment Error Widget - Extracted to avoid nested Consumer in gesture handlers
+// ══════════════════════════════════════════════════════════════════════════════
+class _CommentErrorWidget extends ConsumerWidget {
+  final String postId;
+
+  const _CommentErrorWidget({required this.postId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = context.appTheme;
+    final state = ref.watch(styleFeedProvider);
+    final errorMessage = state.valueOrNull?.errorMessages['comment_$postId'];
+
+    if (errorMessage?.isNotEmpty == true) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: AppThemeData.spacingMD),
+        padding: const EdgeInsets.all(AppThemeData.spacingSM),
+        decoration: BoxDecoration(
+          color: Colors.red.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.error_outline, size: 16, color: Colors.red),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                errorMessage!,
+                style: theme.bodySmall(color: Colors.red).copyWith(
+                      fontSize: 12,
+                    ),
+              ),
+            ),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  ref
+                      .read(styleFeedProvider.notifier)
+                      .clearEngagementError('comment_$postId');
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.close, size: 14, color: Colors.red),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Comment Send Button - Extracted to avoid nested Consumer in gesture handlers
+// ══════════════════════════════════════════════════════════════════════════════
+class _CommentSendButton extends ConsumerWidget {
+  final String postId;
+  final VoidCallback onPressed;
+  final Color accentColor;
+
+  const _CommentSendButton({
+    required this.postId,
+    required this.onPressed,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(styleFeedProvider);
+    final isLoading =
+        state.valueOrNull?.engagementStatuses['comment_$postId'] ==
+            EngagementStatus.loading;
+
+    return IconButton.filled(
+      onPressed: isLoading ? null : onPressed,
+      icon: isLoading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
+          : const Icon(Icons.send_rounded, size: 20),
+      style: IconButton.styleFrom(
+        backgroundColor: accentColor,
+        foregroundColor: Colors.white,
+      ),
+    );
   }
 }

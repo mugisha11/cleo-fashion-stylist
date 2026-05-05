@@ -29,7 +29,8 @@ class StyleFeedTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDarkMode;
-    final surface = isDark ? DesignTokens.darkSurface : DesignTokens.lightSurface;
+    final surface =
+        isDark ? DesignTokens.darkSurface : DesignTokens.lightSurface;
     final textColor = isDark ? DesignTokens.darkText : DesignTokens.lightText;
 
     Widget content = SafeArea(
@@ -55,16 +56,30 @@ class StyleFeedTopBar extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            // Title
+            const SizedBox(width: 10),
+            // Title and subtitle
             Expanded(
-              child: Text(
-                'Style Feed',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
-                  color: textColor,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Style Feed',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.3,
+                          color: textColor,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Discover curated fashion inspiration from your community.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: textColor.withValues(alpha: 0.75),
+                          height: 1.2,
+                        ),
+                  ),
+                ],
               ),
             ),
             // Right icons: Discover, Post Look, Messages
@@ -112,7 +127,9 @@ class StyleFeedTopBar extends StatelessWidget {
               color: surface.withValues(alpha: isDark ? 0.75 : 0.85),
               border: Border(
                 bottom: BorderSide(
-                  color: (isDark ? DesignTokens.darkBorder : DesignTokens.lightBorder)
+                  color: (isDark
+                          ? DesignTokens.darkBorder
+                          : DesignTokens.lightBorder)
                       .withValues(alpha: 0.5),
                 ),
               ),

@@ -67,21 +67,29 @@ class _PremiumButtonState extends State<PremiumButton>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
-    
-    final bgColor = widget.backgroundColor ?? 
-        (widget.isSecondary 
-            ? AuthDesignSystem.surfaceWhite 
+
+    final bgColor = widget.backgroundColor ??
+        (widget.isSecondary
+            ? AuthDesignSystem.surfaceWhite
             : AuthDesignSystem.accentTeal);
-    final txtColor = widget.isSecondary 
-        ? AuthDesignSystem.textPrimary 
-        : Colors.white;
-    final borderColor = widget.isSecondary 
-        ? AuthDesignSystem.borderLight 
-        : Colors.transparent;
+    final txtColor =
+        widget.isSecondary ? AuthDesignSystem.textPrimary : Colors.white;
+    final borderColor =
+        widget.isSecondary ? AuthDesignSystem.borderLight : Colors.transparent;
 
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onEnter: (_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() => _isHovered = true);
+        });
+      },
+      onExit: (_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() => _isHovered = false);
+        });
+      },
       child: GestureDetector(
         onTapDown: widget.onPressed != null ? _handleTapDown : null,
         onTapUp: widget.onPressed != null ? _handleTapUp : null,
@@ -104,9 +112,9 @@ class _PremiumButtonState extends State<PremiumButton>
               border: widget.isSecondary
                   ? Border.all(color: borderColor, width: 1.5)
                   : null,
-              boxShadow: widget.onPressed != null && 
-                         !widget.isLoading && 
-                         !widget.isSecondary
+              boxShadow: widget.onPressed != null &&
+                      !widget.isLoading &&
+                      !widget.isSecondary
                   ? AuthDesignSystem.buttonShadow
                   : null,
             ),
@@ -135,7 +143,8 @@ class _PremiumButtonState extends State<PremiumButton>
                             ],
                             Text(
                               widget.text,
-                              style: AuthDesignSystem.buttonText(isMobile: isMobile),
+                              style: AuthDesignSystem.buttonText(
+                                  isMobile: isMobile),
                             ),
                           ],
                         ),
@@ -151,6 +160,3 @@ class _PremiumButtonState extends State<PremiumButton>
         );
   }
 }
-
-
-

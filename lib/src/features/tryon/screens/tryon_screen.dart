@@ -1061,7 +1061,10 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
   void initState() {
     super.initState();
     _stars = _mkStars(42);
-    _loadUserPhoto();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _loadUserPhoto();
+    });
   }
 
   @override
@@ -1301,7 +1304,7 @@ class _TryOnScreenState extends ConsumerState<TryOnScreen> {
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
     final ward = ref.watch(wardrobeItemsProvider);
-    final unread = ref.watch(socialUnreadCountProvider) ?? 0;
+    final unread = ref.watch(socialUnreadCountProvider);
     return AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light,
         child: Scaffold(

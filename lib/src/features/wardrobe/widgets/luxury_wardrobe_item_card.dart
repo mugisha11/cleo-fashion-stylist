@@ -52,15 +52,24 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
 
   IconData _getCategoryIcon(String category) {
     final cat = category.toLowerCase();
-    if (cat.contains('top') || cat.contains('shirt') || cat.contains('blouse')) {
+    if (cat.contains('top') ||
+        cat.contains('shirt') ||
+        cat.contains('blouse')) {
       return Icons.checkroom;
-    } else if (cat.contains('bottom') || cat.contains('pant') || cat.contains('jean') || cat.contains('skirt')) {
+    } else if (cat.contains('bottom') ||
+        cat.contains('pant') ||
+        cat.contains('jean') ||
+        cat.contains('skirt')) {
       return Icons.style;
     } else if (cat.contains('dress')) {
       return Icons.woman;
-    } else if (cat.contains('shoe') || cat.contains('sneaker') || cat.contains('boot')) {
+    } else if (cat.contains('shoe') ||
+        cat.contains('sneaker') ||
+        cat.contains('boot')) {
       return Icons.shopping_bag;
-    } else if (cat.contains('jacket') || cat.contains('coat') || cat.contains('outer')) {
+    } else if (cat.contains('jacket') ||
+        cat.contains('coat') ||
+        cat.contains('outer')) {
       return Icons.ac_unit;
     } else {
       return Icons.diamond;
@@ -74,11 +83,12 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
         ? DesignTokens.darkAccent
         : DesignTokens.lightAccent;
     final isMobile = MediaQuery.of(context).size.width < 768;
-    
+
     // CRITICAL: Always use processed image (background-removed) if available
     // Never show original image with background in wardrobe UI
-    final displayImageUrl = widget.item.processedImageUrl ?? widget.item.imageUrl;
-    
+    final displayImageUrl =
+        widget.item.processedImageUrl ?? widget.item.imageUrl;
+
     // If no processed image exists, show a placeholder indicating processing needed
     final hasProcessedImage = widget.item.processedImageUrl != null;
 
@@ -88,14 +98,20 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
       child: MouseRegion(
         onEnter: (_) {
           if (!isMobile) {
-            setState(() => _isHovered = true);
-            _scaleController.forward();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              setState(() => _isHovered = true);
+              _scaleController.forward();
+            });
           }
         },
         onExit: (_) {
           if (!isMobile) {
-            setState(() => _isHovered = false);
-            _scaleController.reverse();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              setState(() => _isHovered = false);
+              _scaleController.reverse();
+            });
           }
         },
         child: AnimatedBuilder(
@@ -139,7 +155,7 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
                           ),
                         ),
                       ),
-                      
+
                       // Clothing image with transparent background
                       Positioned.fill(
                         child: CachedNetworkImage(
@@ -153,7 +169,8 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
                                 height: 24,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(accent),
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(accent),
                                 ),
                               ),
                             ),
@@ -168,7 +185,7 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
                           ),
                         ),
                       ),
-                      
+
                       // Category icon overlay (top-right)
                       Positioned(
                         top: 8,
@@ -193,7 +210,7 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
                           ),
                         ),
                       ),
-                      
+
                       // Selection indicator
                       if (widget.isSelected)
                         Positioned.fill(
@@ -229,7 +246,7 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
                             ),
                           ),
                         ),
-                      
+
                       // More menu button (top-left, only on hover/desktop)
                       if (_isHovered || isMobile)
                         Positioned(
@@ -266,15 +283,18 @@ class _LuxuryWardrobeItemCardState extends State<LuxuryWardrobeItemCard>
           },
         ),
       ),
-    ).animate(
-      delay: const Duration(milliseconds: 50),
-    ).fadeIn(
-      duration: 300.ms,
-      curve: Curves.easeOut,
-    ).scale(
-      begin: const Offset(0.9, 0.9),
-      duration: 250.ms,
-      curve: Curves.easeOut,
-    );
+    )
+        .animate(
+          delay: const Duration(milliseconds: 50),
+        )
+        .fadeIn(
+          duration: 300.ms,
+          curve: Curves.easeOut,
+        )
+        .scale(
+          begin: const Offset(0.9, 0.9),
+          duration: 250.ms,
+          curve: Curves.easeOut,
+        );
   }
 }

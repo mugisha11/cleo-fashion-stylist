@@ -219,6 +219,20 @@ class TryOnService {
       return [];
     }
   }
+
+  /// Delete an outfit from user's collection
+  Future<void> deleteOutfit(String outfitId) async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) {
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      await _firestore.collection('outfits').doc(outfitId).delete();
+    } catch (e) {
+      throw Exception('Failed to delete outfit: $e');
+    }
+  }
 }
 
 /// Custom exception for try-on errors with user-friendly messages

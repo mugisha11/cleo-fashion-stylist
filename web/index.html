@@ -22,21 +22,15 @@
   <meta name="description" content="Virtual Twin - AI Fashion Try-On App">
 
   <!-- Google Sign-In Client ID -->
-  <!-- 
-    ⚠️ IMPORTANT: Replace YOUR_GOOGLE_CLIENT_ID with your actual Client ID
-    
-    To get your Client ID:
-    1. Go to: https://console.firebase.google.com/project/ai-styling-c45cf/authentication/providers
-    2. Enable Google Sign-In provider
-    3. Copy the Web client ID (looks like: 123456789-xxxxx.apps.googleusercontent.com)
-    4. Replace YOUR_GOOGLE_CLIENT_ID below with your actual Client ID
-    
-    OR get it from:
-    https://console.cloud.google.com/apis/credentials?project=ai-styling-c45cf
-    
-    See GOOGLE_SIGNIN_SETUP.md for detailed instructions
+  <!--
+    This app uses Firebase Auth popup sign-in for Google on web.
+    You only need to set a web OAuth client ID here if you switch to
+    the google_sign_in web flow instead of Firebase popup auth.
+
+    If you do provide a client ID, use the Web OAuth client ID from
+    Firebase Auth provider settings, not an Android or iOS client ID.
   -->
-  <meta name="google-signin-client_id" content="102834305158-oh2sl7huahdeg6p1cr7601iaj0on51dj.apps.googleusercontent.com">
+  <meta name="google-signin-client_id" content="">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">

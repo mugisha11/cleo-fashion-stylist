@@ -13,15 +13,9 @@ import '../../../routes.dart';
 import '../providers/style_feed_provider.dart';
 import '../widgets/style_feed_image.dart';
 
-// ─── Route shims ──────────────────────────────────────────────────────────────
-const _rCalendar = Routes.calendar;
 const _rWardrobe = Routes.wardrobe;
-const _rChat = Routes.chat;
-const _rProfile = '/settings';
-const _rTryOn = '/tryon';
-const _rSocial = '/style-feed';
-const _rShopping = '/shopping';
-const _rAddItem = '/wardrobe/add';
+const _rTryOn = Routes.tryon;
+const _rSocial = Routes.styleFeed;
 
 class PostLookScreen extends ConsumerStatefulWidget {
   /// Pre-filled image path (e.g. from Try-On or last shared).
@@ -211,153 +205,194 @@ class _PostLookScreenState extends ConsumerState<PostLookScreen> {
     final previewPath = _imagePathForPreview;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
+      value: SystemUiOverlayStyle.dark,
       child: Scaffold(
         key: _scaffoldKey,
         drawer: const AppDrawer(currentRoute: Routes.postLook),
-        backgroundColor: const Color(0xFF0B1D4C),
+        backgroundColor: Colors.white,
         extendBody: true,
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppThemeData.spacingMD),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Preview or pick image
-              if (previewPath != null)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(theme.borderRadiusLarge),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: StyleFeedImage(
-                      imagePath: previewPath,
-                      fit: BoxFit.cover,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          title: const Text('Post New Look',
+              style: TextStyle(color: Colors.black)),
+          centerTitle: true,
+        ),
+        body: Container(
+          color: Colors.white,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppThemeData.spacingMD),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Preview or pick image
+                if (previewPath != null)
+                  ClipRRect(
+                    borderRadius:
+                        BorderRadius.circular(theme.borderRadiusLarge),
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: StyleFeedImage(
+                        imagePath: previewPath,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius:
+                            BorderRadius.circular(theme.borderRadiusLarge),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.2)),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_outlined,
+                            size: 48,
+                            color: Colors.black.withValues(alpha: 0.7),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Tap to add photo',
+                            style: TextStyle(
+                                color: Colors.black.withValues(alpha: 0.7)),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                )
-              else
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: theme.backgroundSecondary,
-                      borderRadius:
-                          BorderRadius.circular(theme.borderRadiusLarge),
-                      border: Border.all(color: theme.borderLight),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.add_photo_alternate_outlined,
-                          size: 48,
-                          color: theme.textTertiary,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Tap to add photo',
-                          style: theme.bodyMedium(color: theme.textTertiary),
-                        ),
-                      ],
+                if (previewPath != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: TextButton.icon(
+                      onPressed: _pickImage,
+                      icon:
+                          const Icon(Icons.edit, size: 18, color: Colors.black),
+                      label: const Text('Change photo',
+                          style: TextStyle(color: Colors.black)),
                     ),
                   ),
-                ),
-              if (previewPath != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: TextButton.icon(
-                    onPressed: _pickImage,
-                    icon: const Icon(Icons.edit, size: 18),
-                    label: const Text('Change photo'),
-                  ),
-                ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: _captionController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Describe your look…',
-                  hintStyle: theme.bodyMedium(color: theme.textTertiary),
-                  border: OutlineInputBorder(
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(theme.borderRadius),
                   ),
+                  child: TextField(
+                    controller: _captionController,
+                    maxLines: 3,
+                    style: const TextStyle(color: Colors.black),
+                    decoration: InputDecoration(
+                      hintText: 'Describe your look…',
+                      hintStyle:
+                          TextStyle(color: Colors.black.withValues(alpha: 0.5)),
+                      border: InputBorder.none,
+                    ),
+                  ),
                 ),
-                style: theme.bodyMedium(color: theme.textPrimary),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Text(
-                    'Tags',
-                    style: theme.bodyMedium().copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: theme.textPrimary,
-                        ),
-                  ),
-                  const SizedBox(width: 8),
-                  TextButton.icon(
-                    onPressed: _addTag,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Add'),
-                  ),
-                ],
-              ),
-              if (_tags.isNotEmpty)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: _tags.map((t) {
-                    return Chip(
-                      label: Text('#$t'),
-                      onDeleted: () => setState(() => _tags.remove(t)),
-                      deleteIcon: const Icon(Icons.close, size: 16),
-                    );
-                  }).toList(),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Text(
+                      'Tags',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton.icon(
+                      onPressed: _addTag,
+                      icon:
+                          const Icon(Icons.add, size: 18, color: Colors.black),
+                      label: const Text('Add',
+                          style: TextStyle(color: Colors.black)),
+                    ),
+                  ],
                 ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Text(
-                    'Visibility',
-                    style: theme.bodyMedium().copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: theme.textPrimary,
-                        ),
+                if (_tags.isNotEmpty)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: _tags.map((t) {
+                      return Chip(
+                        label: Text('#$t',
+                            style: const TextStyle(color: Colors.black)),
+                        backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                        onDeleted: () => setState(() => _tags.remove(t)),
+                        deleteIcon: const Icon(Icons.close,
+                            size: 16, color: Colors.black),
+                      );
+                    }).toList(),
                   ),
-                  const SizedBox(width: 16),
-                  ChoiceChip(
-                    label: const Text('Public'),
-                    selected: _isPublic,
-                    onSelected: (v) => setState(() => _isPublic = true),
-                  ),
-                  const SizedBox(width: 8),
-                  ChoiceChip(
-                    label: const Text('Private'),
-                    selected: !_isPublic,
-                    onSelected: (v) => setState(() => _isPublic = false),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              FilledButton(
-                onPressed: _isPosting ? null : _post,
-                style: FilledButton.styleFrom(
-                  backgroundColor: accentPink,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Text(
+                      'Visibility',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    ChoiceChip(
+                      label: const Text('Public'),
+                      selected: _isPublic,
+                      onSelected: (v) => setState(() => _isPublic = true),
+                      selectedColor: accentPink,
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
+                      labelStyle: TextStyle(
+                          color: _isPublic
+                              ? Colors.black
+                              : Colors.black.withValues(alpha: 0.7)),
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: const Text('Private'),
+                      selected: !_isPublic,
+                      onSelected: (v) => setState(() => _isPublic = false),
+                      selectedColor: accentPink,
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
+                      labelStyle: TextStyle(
+                          color: !_isPublic
+                              ? Colors.black
+                              : Colors.black.withValues(alpha: 0.7)),
+                    ),
+                  ],
                 ),
-                child: _isPosting
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Post'),
-              ),
-            ],
+                const SizedBox(height: 32),
+                FilledButton(
+                  onPressed: _isPosting ? null : _post,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: accentPink,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                  child: _isPosting
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Post Look',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
           ),
         ),
         bottomNavigationBar: CosmicFooter(
@@ -381,7 +416,7 @@ class _PostLookScreenState extends ConsumerState<PostLookScreen> {
           },
           onOutfits: () {
             setState(() => _navIndex = 4);
-            Navigator.pushNamed(context, Routes.savedTryOns);
+            Navigator.pushNamed(context, Routes.outfitPlanner);
           },
         ),
       ),

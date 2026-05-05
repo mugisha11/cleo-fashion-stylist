@@ -71,8 +71,18 @@ class _SocialAuthButtonState extends State<SocialAuthButton>
     final isMobile = screenWidth < 600;
 
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onEnter: (_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() => _isHovered = true);
+        });
+      },
+      onExit: (_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() => _isHovered = false);
+        });
+      },
       child: GestureDetector(
         onTapDown: widget.onPressed != null ? _handleTapDown : null,
         onTapUp: widget.onPressed != null ? _handleTapUp : null,
@@ -117,11 +127,13 @@ class _SocialAuthButtonState extends State<SocialAuthButton>
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(widget.icon, color: widget.iconColor, size: 20),
+                            Icon(widget.icon,
+                                color: widget.iconColor, size: 20),
                             const SizedBox(width: 12),
                             Text(
                               widget.text,
-                              style: TextStyle(fontFamily: 'system-ui', 
+                              style: TextStyle(
+                                fontFamily: 'system-ui',
                                 fontSize: isMobile ? 15 : 16,
                                 fontWeight: FontWeight.w600,
                                 color: AuthDesignSystem.textPrimary,
@@ -142,4 +154,3 @@ class _SocialAuthButtonState extends State<SocialAuthButton>
         );
   }
 }
-

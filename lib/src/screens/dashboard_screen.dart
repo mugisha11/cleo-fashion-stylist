@@ -4,7 +4,18 @@
 //  Backend: ALL original logic preserved exactly — no backend changes.
 // ══════════════════════════════════════════════════════════════════════════════
 
-import 'dart:ui' show PlatformDispatcher;
+import 'dart:ui'
+    show
+        PlatformDispatcher,
+        Color,
+        FontWeight,
+        Offset,
+        Radius,
+        Clip,
+        TextAlign,
+        Size,
+        VoidCallback,
+        Shadow;
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -2927,7 +2938,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final displayName =
         user?.displayName ?? firebaseUser?.displayName ?? 'there';
     final photoUrl = user?.avatarUrl ?? firebaseUser?.photoURL;
-    final unreadCount = ref.watch(socialUnreadCountProvider) ?? 0;
+    final unreadCount = ref.watch(socialUnreadCountProvider);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,

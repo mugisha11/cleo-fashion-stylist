@@ -689,7 +689,7 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
     final mq = MediaQuery.of(context);
     final mobile = mq.size.width < 768;
     final ward = ref.watch(wardrobeItemsProvider);
-    final unread = ref.watch(socialUnreadCountProvider) ?? 0;
+    final unread = ref.watch(socialUnreadCountProvider);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,

@@ -1,8 +1,18 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
+
+const String _googleWebClientId =
+    'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com';
+
+String get _resolvedGoogleWebClientId {
+  return _googleWebClientId.contains('YOUR_WEB_CLIENT_ID')
+      ? ''
+      : _googleWebClientId;
+}
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -38,7 +48,10 @@ class AuthService {
         createdAt: DateTime.now(),
       );
 
-      await _firestore.collection('users').doc(user.uid).set(userModel.toFirestore());
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .set(userModel.toFirestore());
 
       return userModel;
     } catch (e) {
@@ -78,26 +91,27 @@ class AuthService {
     try {
       final doc = await _firestore.collection('users').doc(userId).get();
       final firebaseUser = _auth.currentUser;
-      
+
       if (doc.exists) {
         final userModel = UserModel.fromFirestore(doc);
         // Update Firestore if Firebase user has more recent info (e.g., from Google)
         if (firebaseUser != null) {
-          final needsUpdate = 
-              (userModel.displayName == null && firebaseUser.displayName != null) ||
+          final needsUpdate = (userModel.displayName == null &&
+                  firebaseUser.displayName != null) ||
               (userModel.email.isEmpty && firebaseUser.email != null) ||
               (userModel.avatarUrl == null && firebaseUser.photoURL != null);
-          
+
           if (needsUpdate) {
             await _firestore.collection('users').doc(userId).update({
-              if (userModel.displayName == null && firebaseUser.displayName != null)
+              if (userModel.displayName == null &&
+                  firebaseUser.displayName != null)
                 'displayName': firebaseUser.displayName,
               if (userModel.email.isEmpty && firebaseUser.email != null)
                 'email': firebaseUser.email!,
               if (userModel.avatarUrl == null && firebaseUser.photoURL != null)
                 'avatarUrl': firebaseUser.photoURL,
             });
-            
+
             // Return updated model
             return UserModel(
               id: userId,
@@ -120,7 +134,10 @@ class AuthService {
           avatarUrl: firebaseUser?.photoURL,
           createdAt: DateTime.now(),
         );
-        await _firestore.collection('users').doc(userId).set(userModel.toFirestore());
+        await _firestore
+            .collection('users')
+            .doc(userId)
+            .set(userModel.toFirestore());
         return userModel;
       }
     } catch (e) {
@@ -129,7 +146,8 @@ class AuthService {
   }
 
   /// Update user onboarding data
-  Future<void> updateOnboardingData(String userId, OnboardingData onboardingData) async {
+  Future<void> updateOnboardingData(
+      String userId, OnboardingData onboardingData) async {
     try {
       await _firestore.collection('users').doc(userId).update({
         'onboardingData': onboardingData.toMap(),
@@ -142,99 +160,125 @@ class AuthService {
   /// Sign in with Google
   Future<UserModel> signInWithGoogle() async {
     try {
-      // Initialize Google Sign-In
-      // Using minimal scopes - Firebase Auth will handle user info
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        scopes: ['email'], // Minimal scope - doesn't require People API
-      );
+      UserCredential userCredential;
+      String? googleEmail;
+      String? googleDisplayName;
+      String? googlePhotoUrl;
 
-      // Trigger the authentication flow
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      
-      if (googleUser == null) {
-        // User canceled the sign-in
-        throw Exception('Sign in was canceled');
+      if (kIsWeb) {
+        // Use Firebase Auth popup flow on web. This avoids needing a separate
+        // google_signin client_id configuration in most cases.
+        final GoogleAuthProvider provider = GoogleAuthProvider();
+        provider.addScope('email');
+        provider.setCustomParameters({'prompt': 'select_account'});
+
+        userCredential = await _auth.signInWithPopup(provider);
+        final user = userCredential.user;
+        if (user == null) {
+          throw Exception('Sign in failed');
+        }
+
+        googleEmail = user.email;
+        googleDisplayName = user.displayName;
+        googlePhotoUrl = user.photoURL;
+      } else {
+        // Mobile / desktop flow: use google_sign_in package for native auth.
+        final GoogleSignIn googleSignIn = GoogleSignIn(
+          clientId: kIsWeb && _resolvedGoogleWebClientId.isNotEmpty
+              ? _resolvedGoogleWebClientId
+              : null,
+          scopes: ['email'],
+        );
+
+        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+        if (googleUser == null) {
+          throw Exception('Sign in was canceled');
+        }
+
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        userCredential = await _auth.signInWithCredential(credential);
+        final user = userCredential.user;
+        if (user == null) {
+          throw Exception('Sign in failed');
+        }
+
+        googleEmail = googleUser.email;
+        googleDisplayName = googleUser.displayName;
+        googlePhotoUrl = googleUser.photoUrl;
       }
 
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-      // Create a new credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in to Firebase with the Google credential
-      final userCredential = await _auth.signInWithCredential(credential);
       final user = userCredential.user;
-
       if (user == null) {
         throw Exception('Sign in failed');
       }
 
-      // Get Google user info (name and email from Google account)
-      final googleDisplayName = googleUser.displayName;
-      final googleEmail = googleUser.email;
-      final googlePhotoUrl = googleUser.photoUrl;
-
       // Update Firebase user profile with Google info if not already set
       if (googleDisplayName != null && user.displayName != googleDisplayName) {
         await user.updateDisplayName(googleDisplayName);
-        await user.reload();
       }
       if (googlePhotoUrl != null && user.photoURL != googlePhotoUrl) {
         await user.updatePhotoURL(googlePhotoUrl);
-        await user.reload();
       }
 
-      // Reload Firebase user to get updated profile info
       await user.reload();
       final reloadedUser = _auth.currentUser;
-      
-      // Update Firestore with Google info immediately
+
       final doc = await _firestore.collection('users').doc(user.uid).get();
-      
       final updateData = <String, dynamic>{
-        'email': googleEmail ?? reloadedUser?.email ?? user.email ?? '',
-        'displayName': googleDisplayName ?? reloadedUser?.displayName ?? user.displayName,
+        'email': googleEmail?.isNotEmpty == true
+            ? googleEmail
+            : reloadedUser?.email ?? user.email,
+        'displayName': googleDisplayName ??
+            reloadedUser?.displayName ??
+            user.displayName,
         'avatarUrl': googlePhotoUrl ?? reloadedUser?.photoURL ?? user.photoURL,
       };
-      
-      // Preserve createdAt if document exists, otherwise set new timestamp
+
       if (doc.exists && doc.data()?['createdAt'] != null) {
         updateData['createdAt'] = doc.data()!['createdAt'];
       } else {
         updateData['createdAt'] = Timestamp.fromDate(DateTime.now());
       }
-      
-      // Preserve onboardingData if it exists
       if (doc.exists && doc.data()?['onboardingData'] != null) {
         updateData['onboardingData'] = doc.data()!['onboardingData'];
       }
-      
-      // Always update to ensure Google info is saved
-      await _firestore.collection('users').doc(user.uid).set(updateData, SetOptions(merge: true));
-      
-      // Return updated user model with Google info
+
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .set(updateData, SetOptions(merge: true));
+
       return UserModel(
         id: user.uid,
-        email: googleEmail ?? reloadedUser?.email ?? user.email ?? '',
-        displayName: googleDisplayName ?? reloadedUser?.displayName ?? user.displayName,
+        email: googleEmail?.isNotEmpty == true
+            ? googleEmail!
+            : (reloadedUser?.email ?? user.email ?? ''),
+        displayName: googleDisplayName ??
+            reloadedUser?.displayName ??
+            user.displayName,
         avatarUrl: googlePhotoUrl ?? reloadedUser?.photoURL ?? user.photoURL,
-        createdAt: doc.exists 
-            ? (doc.data()?['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now()
+        createdAt: doc.exists
+            ? (doc.data()?['createdAt'] as Timestamp?)?.toDate() ??
+                DateTime.now()
             : DateTime.now(),
         onboardingData: doc.exists && doc.data()?['onboardingData'] != null
-            ? OnboardingData.fromMap(doc.data()!['onboardingData'] as Map<String, dynamic>)
+            ? OnboardingData.fromMap(
+                doc.data()!['onboardingData'] as Map<String, dynamic>)
             : null,
       );
     } catch (e) {
-      // Check if it's a configuration error
-      if (e.toString().contains('client_id') || 
+      if (e.toString().contains('client_id') ||
           e.toString().contains('not configured') ||
           e.toString().contains('CLIENT_ID')) {
-        throw Exception('Google Sign-In is not configured. Please add your Google Client ID to web/index.html');
+        throw Exception(
+            'Google Sign-In is not configured. Please verify Firebase Google provider and web client settings.');
       }
       throw Exception('Google sign in failed: ${e.toString()}');
     }
@@ -291,7 +335,7 @@ class AuthService {
 
       final userCredential = await _auth.signInWithCredential(credential);
       final user = userCredential.user;
-      
+
       if (user == null) {
         throw Exception('Sign in failed');
       }
@@ -302,4 +346,3 @@ class AuthService {
     }
   }
 }
-

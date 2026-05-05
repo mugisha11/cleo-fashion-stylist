@@ -706,8 +706,7 @@ class _GeneratedOutfitsScreenState
                   // ── HEADER ──────────────────────────────────────────
                   CosmicHeader(
                     topPadding: mq.padding.top,
-                    hasNotification:
-                        (ref.watch(socialUnreadCountProvider) ?? 0) > 0,
+                    hasNotification: (ref.watch(socialUnreadCountProvider)) > 0,
                     onMenuTap: () => Navigator.maybePop(context),
                     onBellTap: () =>
                         Navigator.pushNamed(context, Routes.notificationCenter),
@@ -1490,7 +1489,8 @@ class _GeneratedOutfitsScreenState
                     child: LinearProgressIndicator(
                       value: entry.value / 20.0,
                       backgroundColor: Colors.grey[300],
-                      valueColor: const AlwaysStoppedAnimation(NXColors.accentGlow),
+                      valueColor:
+                          const AlwaysStoppedAnimation(NXColors.accentGlow),
                     ),
                   ),
                 ],

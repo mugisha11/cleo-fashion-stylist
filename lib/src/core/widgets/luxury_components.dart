@@ -177,6 +177,7 @@ class ChatMessageBubble extends StatelessWidget {
   final bool isUser;
   final DateTime timestamp;
   final Widget? imagePreview;
+
   /// When set, show a "Buy this outfit" link (only for AI messages)
   final String? buyLinkUrl;
 
@@ -244,23 +245,30 @@ class ChatMessageBubble extends StatelessWidget {
                         color: isUser ? Colors.white : Colors.black,
                       ),
                 ),
-                if (buyLinkUrl != null && buyLinkUrl!.isNotEmpty && !isUser) ...[
+                if (buyLinkUrl != null &&
+                    buyLinkUrl!.isNotEmpty &&
+                    !isUser) ...[
                   const SizedBox(height: DesignTokens.spacingSm),
                   InkWell(
                     onTap: () async {
                       try {
                         final uri = Uri.parse(buyLinkUrl!);
                         if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          await launchUrl(uri,
+                              mode: LaunchMode.externalApplication);
                         } else if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Cannot open: $buyLinkUrl'), behavior: SnackBarBehavior.floating),
+                            SnackBar(
+                                content: Text('Cannot open: $buyLinkUrl'),
+                                behavior: SnackBarBehavior.floating),
                           );
                         }
                       } catch (_) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Could not open link'), behavior: SnackBarBehavior.floating),
+                            const SnackBar(
+                                content: Text('Could not open link'),
+                                behavior: SnackBarBehavior.floating),
                           );
                         }
                       }
@@ -272,7 +280,8 @@ class ChatMessageBubble extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: context.accentColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.radiusMd),
                         border: Border.all(
                           color: context.accentColor.withOpacity(0.5),
                           width: 1,
@@ -289,7 +298,10 @@ class ChatMessageBubble extends StatelessWidget {
                           const SizedBox(width: DesignTokens.spacingXs),
                           Text(
                             'Buy this outfit',
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelLarge
+                                ?.copyWith(
                                   color: context.accentColor,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -381,8 +393,18 @@ class _RecommendationCardState extends State<RecommendationCard>
     final isDark = context.isDarkMode;
 
     return MouseRegion(
-      onEnter: (_) => _hoverController.forward(),
-      onExit: (_) => _hoverController.reverse(),
+      onEnter: (_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _hoverController.forward();
+        });
+      },
+      onExit: (_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _hoverController.reverse();
+        });
+      },
       child: ScaleTransition(
         scale: Tween(begin: 1.0, end: 1.02).animate(
           CurvedAnimation(parent: _hoverController, curve: Curves.easeOut),
